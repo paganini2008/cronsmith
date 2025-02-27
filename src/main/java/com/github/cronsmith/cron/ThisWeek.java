@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -135,8 +135,9 @@ public class ThisWeek implements TheWeek, Serializable {
     public Week next() {
         Map.Entry<Integer, LocalDateTime> entry = new ArrayList<>(siblings.entrySet()).get(index++);
         week = entry.getValue();
-        week.withYear(month.getYear()).withMonth(month.getMonth())
-                .with(WeekFields.ISO.weekOfMonth(), Math.min(entry.getKey(), month.getWeekCount()));
+        week = week.withYear(month.getYear()).withMonth(month.getMonth()).with(
+                WeekFields.ISO.weekOfMonth(),
+                Math.min(entry.getKey(), month.getWeekCountOfMonth()));
         return this;
     }
 

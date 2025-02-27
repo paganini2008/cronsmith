@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 

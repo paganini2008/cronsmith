@@ -16,8 +16,8 @@ package com.github.cronsmith.cron;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.function.Consumer;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
-import com.github.paganini2008.devtools.io.SerializationUtils;
+import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.SerializationUtils;
 
 /**
  * 
@@ -26,6 +26,7 @@ import com.github.paganini2008.devtools.io.SerializationUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
+@SuppressWarnings("unchecked")
 public interface CronExpression extends CronStringBuilder {
 
     LocalDateTime getTime();
@@ -39,18 +40,21 @@ public interface CronExpression extends CronStringBuilder {
         return SerializationUtils.copy(this);
     }
 
-    @SuppressWarnings("unchecked")
     default void forEach(final Consumer<LocalDateTime> consumer, final int n) {
+        forEach(consumer, LocalDateTime.now(), n);
+    }
+
+    default void forEach(final Consumer<LocalDateTime> consumer, final LocalDateTime baseline,
+            final int n) {
         if (!(this instanceof Iterator)) {
             throw new UnsupportedOperationException();
         }
-        LocalDateTime now = LocalDateTime.now();
         int i = 0;
         LocalDateTime dateTime;
         for (CronExpression cronExpression : CollectionUtils
                 .forEach((Iterator<CronExpression>) copy())) {
             dateTime = cronExpression.getTime();
-            if (dateTime.compareTo(now) < 0) {
+            if (dateTime.compareTo(baseline) < 0) {
                 continue;
             }
             if (n < 0 || i++ < n) {

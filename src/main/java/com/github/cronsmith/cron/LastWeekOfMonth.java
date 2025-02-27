@@ -20,7 +20,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -88,7 +88,8 @@ public class LastWeekOfMonth implements Week, Serializable {
             if (month.hasNext()) {
                 month = month.next();
                 week = week.withYear(month.getYear()).withMonth(month.getMonth()).with(
-                        WeekFields.of(Locale.getDefault()).weekOfMonth(), month.getWeekCount());
+                        WeekFields.of(Locale.getDefault()).weekOfMonth(),
+                        month.getWeekCountOfMonth());
                 next = true;
             }
         }

@@ -19,7 +19,6 @@ import com.github.cronsmith.cron.EveryYear;
 import com.github.cronsmith.cron.TheYear;
 import com.github.cronsmith.cron.ThisYear;
 import com.github.cronsmith.cron.Year;
-import com.github.paganini2008.devtools.time.DateUtils;
 
 /**
  * 
@@ -41,7 +40,7 @@ public final class Epoch implements CronExpression {
     }
 
     public Year everyYear(int interval) {
-        return new EveryYear(DateUtils.getYear(), y -> Year.MAX_YEAR, interval);
+        return new EveryYear(LocalDateTime.now().getYear(), y -> Year.MAX_YEAR, interval);
     }
 
     public TheYear year(int year) {

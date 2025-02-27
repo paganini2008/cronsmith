@@ -20,7 +20,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -38,7 +38,7 @@ public class EveryMonth implements Month, Serializable {
     private final int toMonth;
     private final int interval;
     private boolean self;
-    private boolean forward = true;
+    private boolean forward;
 
     EveryMonth(Year year, Function<Year, Integer> from, Function<Year, Integer> to, int interval) {
         if (interval <= 0) {
@@ -50,9 +50,10 @@ public class EveryMonth implements Month, Serializable {
         this.month = year.getTime().withMonth(fromMonth).withDayOfMonth(1).withHour(0).withMinute(0)
                 .withSecond(0);
         this.interval = interval;
-        this.self = true;
         this.toMonth = to.apply(year);
         FieldAssertions.checkMonth(toMonth);
+        this.self = true;
+        this.forward = true;
     }
 
     @Override
@@ -90,7 +91,7 @@ public class EveryMonth implements Month, Serializable {
 
     @Override
     public int getMonth() {
-        return month.getMonth().getValue();
+        return month.getMonthValue();
     }
 
     @Override
@@ -130,7 +131,7 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public int getWeekCount() {
+    public int getWeekCountOfMonth() {
         return month.get(WeekFields.ISO.weekOfMonth());
     }
 
@@ -140,9 +141,9 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public TheDay day(int day) {
+    public TheDay day(int dayOfMonth) {
         final Month copy = (Month) this.copy();
-        return new ThisDay(CollectionUtils.getFirst(copy), day);
+        return new ThisDay(CollectionUtils.getFirst(copy), dayOfMonth);
     }
 
     @Override
@@ -158,9 +159,9 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public TheWeek week(int week) {
+    public TheWeek week(int weekOfMonth) {
         final Month copy = (Month) this.copy();
-        return new ThisWeek(CollectionUtils.getFirst(copy), week);
+        return new ThisWeek(CollectionUtils.getFirst(copy), weekOfMonth);
     }
 
     @Override

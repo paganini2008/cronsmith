@@ -34,7 +34,7 @@ public class EverySecond implements Second, Serializable {
     private final int toSecond;
     private final int interval;
     private boolean self;
-    private boolean forward = true;
+    private boolean forward;
 
     EverySecond(Minute minute, Function<Minute, Integer> from, Function<Minute, Integer> to,
             int interval) {
@@ -46,9 +46,10 @@ public class EverySecond implements Second, Serializable {
         FieldAssertions.checkSecond(fromSecond);
         this.second = minute.getTime().withSecond(fromSecond);
         this.interval = interval;
-        this.self = true;
         this.toSecond = to.apply(minute);
         FieldAssertions.checkSecond(toSecond);
+        this.self = true;
+        this.forward = true;
     }
 
 
@@ -89,7 +90,7 @@ public class EverySecond implements Second, Serializable {
 
     @Override
     public int getMonth() {
-        return second.getMonth().getValue();
+        return second.getMonthValue();
     }
 
     @Override
@@ -134,12 +135,14 @@ public class EverySecond implements Second, Serializable {
     }
 
     public static void main(String[] args) {
-        Year everyYear = CronExpressionBuilder.everyYear(2);
-        Month everyMonth = everyYear.everyMonth(5, 10, 2);
-        Day everyDay = everyMonth.everyDay(1, 15, 3);
-        Hour everyHour = everyDay.everyHour(4);
-        Second second = everyHour.at(12, 0);
-        System.out.println(second);
+        // Year everyYear = CronExpressionBuilder.everyYear(2);
+        // Month everyMonth = everyYear.everyMonth(5, 10, 2);
+        // Day everyDay = everyMonth.everyDay(1, 15, 3);
+        // Hour everyHour = everyDay.everyHour(4);
+        // Second second = everyHour.at(12, 0);
+
+
+        // System.out.println(second);
     }
 
 }

@@ -19,7 +19,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -135,7 +135,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public int getWeekCount() {
+    public int getWeekCountOfMonth() {
         return month.get(WeekFields.ISO.weekOfMonth());
     }
 

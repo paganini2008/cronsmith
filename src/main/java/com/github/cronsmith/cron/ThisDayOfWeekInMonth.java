@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -63,7 +63,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
         ldt = ldt.with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek + "#" + weekOfMonth, ldt);
         this.day = ldt;
-        this.cron.append(month.getWeekCount() == weekOfMonth ? dayOfWeek + "L"
+        this.cron.append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
                 : dayOfWeek + "#" + weekOfMonth);
     }
 
@@ -125,7 +125,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
         day = entry.getValue();
         day = day.withYear(month.getYear()).withMonth(month.getMonth())
                 .with(WeekFields.ISO.weekOfMonth(),
-                        Math.min(Integer.parseInt(args[1]), month.getWeekCount()))
+                        Math.min(Integer.parseInt(args[1]), month.getWeekCountOfMonth()))
                 .with(WeekFields.ISO.dayOfWeek(), Integer.parseInt(args[0]));
         return this;
     }
@@ -142,14 +142,14 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
         LocalDateTime ldt = month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
         ldt = ldt.with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek + "#" + weekOfMonth, ldt);
-        this.cron.append(",").append(month.getWeekCount() == weekOfMonth ? dayOfWeek + "L"
+        this.cron.append(",").append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
                 : dayOfWeek + "#" + weekOfMonth);
         return this;
     }
 
     @Override
     public TheDayOfWeekInMonth andLast(int datOfWeek) {
-        return and(month.getWeekCount(), datOfWeek);
+        return and(month.getWeekCountOfMonth(), datOfWeek);
     }
 
     @Override

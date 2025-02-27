@@ -19,7 +19,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -93,15 +93,15 @@ public class EveryYear implements Year, Serializable {
     }
 
     @Override
-    public TheDay day(int day) {
+    public TheDay day(int dayOfMonth) {
         final Year copy = (Year) this.copy();
-        return new ThisDayOfYear(CollectionUtils.getFirst(copy), day);
+        return new ThisDayOfYear(CollectionUtils.getFirst(copy), dayOfMonth);
     }
 
     @Override
-    public TheWeek week(int week) {
+    public TheWeek week(int weekOfYear) {
         final Year copy = (Year) this.copy();
-        return new ThisWeekOfYear(CollectionUtils.getFirst(copy), week);
+        return new ThisWeekOfYear(CollectionUtils.getFirst(copy), weekOfYear);
     }
 
     @Override

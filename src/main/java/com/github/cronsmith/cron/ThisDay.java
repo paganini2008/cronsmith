@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -141,7 +141,7 @@ public class ThisDay implements TheDay, Serializable {
     public Day next() {
         Map.Entry<Integer, LocalDateTime> entry = List.copyOf(siblings.entrySet()).get(index++);
         day = entry.getValue();
-        day.withYear(month.getYear()).withMonth(month.getMonth())
+        day = day.withYear(month.getYear()).withMonth(month.getMonth())
                 .withDayOfMonth(Math.min(entry.getKey(), month.getLastDay()));
         return this;
     }

@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class EveryMinute implements Minute, Serializable {
     private final int toMinute;
     private final int interval;
     private boolean self;
-    private boolean forward = true;
+    private boolean forward;
 
     EveryMinute(Hour hour, Function<Hour, Integer> from, Function<Hour, Integer> to, int interval) {
         if (interval <= 0) {
@@ -46,9 +46,10 @@ public class EveryMinute implements Minute, Serializable {
         this.minute = hour.getTime().withMinute(fromMinute).withSecond(0);
         FieldAssertions.checkMinute(fromMinute);
         this.interval = interval;
-        this.self = true;
         this.toMinute = to.apply(hour);
         FieldAssertions.checkMinute(toMinute);
+        this.self = true;
+        this.forward = true;
     }
 
     @Override
@@ -88,7 +89,7 @@ public class EveryMinute implements Minute, Serializable {
 
     @Override
     public int getMonth() {
-        return minute.getMonth().getValue();
+        return minute.getMonthValue();
     }
 
     @Override

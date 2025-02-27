@@ -13,8 +13,8 @@
  */
 package com.github.cronsmith.cron;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
-import com.github.paganini2008.devtools.time.DateUtils;
 
 /**
  * 
@@ -26,7 +26,7 @@ import com.github.paganini2008.devtools.time.DateUtils;
 public abstract class FieldAssertions {
 
     public static void checkYear(int year) {
-        int thisYear = DateUtils.getYear();
+        int thisYear = LocalDateTime.now().getYear();
         if (year < thisYear) {
             throw new IllegalArgumentException("Year '" + year + "' is past.");
         }
@@ -37,9 +37,10 @@ public abstract class FieldAssertions {
     }
 
     public static void checkMonth(int month) {
-        if (month < Calendar.JANUARY || month > Calendar.DECEMBER) {
-            throw new IllegalArgumentException(
-                    "Month's range is " + Calendar.JANUARY + " to " + Calendar.DECEMBER);
+        int start = java.time.Month.JANUARY.getValue();
+        int end = java.time.Month.DECEMBER.getValue();
+        if (month < start || month > end) {
+            throw new IllegalArgumentException("Month's range is " + start + " to " + end);
         }
     }
 
@@ -56,8 +57,9 @@ public abstract class FieldAssertions {
     }
 
     public static void checkWeekOfMonth(Month month, int week) {
-        if (week < 1 || week > month.getWeekCount()) {
-            throw new IllegalArgumentException("Week's range is 1 to " + month.getWeekCount());
+        if (week < 1 || week > month.getWeekCountOfMonth()) {
+            throw new IllegalArgumentException(
+                    "Week's range is 1 to " + month.getWeekCountOfMonth());
         }
     }
 

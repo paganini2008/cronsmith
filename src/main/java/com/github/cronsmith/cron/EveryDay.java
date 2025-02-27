@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class EveryDay implements Day, Serializable {
     private final int toDay;
     private final int interval;
     private boolean self;
-    private boolean forward = true;
+    private boolean forward;
 
     EveryDay(Month month, Function<Month, Integer> from, Function<Month, Integer> to,
             int interval) {
@@ -47,9 +47,10 @@ public class EveryDay implements Day, Serializable {
         FieldAssertions.checkDayOfMonth(month, fromDay);
         this.day = month.getTime().withDayOfMonth(fromDay).withHour(0).withMinute(0).withSecond(0);
         this.interval = interval;
-        this.self = true;
         this.toDay = to.apply(month);
         FieldAssertions.checkDayOfMonth(month, toDay);
+        this.self = true;
+        this.forward = true;
     }
 
     @Override
@@ -88,7 +89,7 @@ public class EveryDay implements Day, Serializable {
 
     @Override
     public int getMonth() {
-        return day.getMonth().getValue();
+        return day.getMonthValue();
     }
 
     @Override

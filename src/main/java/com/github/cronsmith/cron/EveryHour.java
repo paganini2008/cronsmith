@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.paganini2008.devtools.collection.CollectionUtils;
+import com.github.cronsmith.CollectionUtils;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class EveryHour implements Hour, Serializable {
     private final int toHour;
     private final int interval;
     private boolean self;
-    private boolean forward = true;
+    private boolean forward;
 
     EveryHour(Day day, Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
         if (interval <= 0) {
@@ -47,6 +47,7 @@ public class EveryHour implements Hour, Serializable {
         this.hour = day.getTime().withHour(fromHour).withMinute(0).withSecond(0);
         this.interval = interval;
         this.self = true;
+        this.forward = true;
         this.toHour = to.apply(day);
         FieldAssertions.checkHourOfDay(toHour);
     }
@@ -87,7 +88,7 @@ public class EveryHour implements Hour, Serializable {
 
     @Override
     public int getMonth() {
-        return hour.getMonth().getValue();
+        return hour.getMonthValue();
     }
 
     @Override

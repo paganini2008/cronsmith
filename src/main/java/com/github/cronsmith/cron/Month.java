@@ -18,11 +18,10 @@ import java.util.function.Function;
 
 /**
  * 
- * Month
- * 
- * @author Fred Feng
- *
- * @since 2.0.1
+ * @Description: Month
+ * @Author: Fred Feng
+ * @Date: 27/02/2025
+ * @Version 1.0.0
  */
 public interface Month extends Iterator<Month>, CronExpression {
 
@@ -36,7 +35,7 @@ public interface Month extends Iterator<Month>, CronExpression {
 
     int getLatestWeekday(int dayOfMonth);
 
-    int getWeekCount();
+    int getWeekCountOfMonth();
 
     default Day everyDay() {
         return everyDay(1);
@@ -60,12 +59,12 @@ public interface Month extends Iterator<Month>, CronExpression {
 
     Day everyDay(Function<Month, Integer> from, Function<Month, Integer> to, int interval);
 
-    TheWeek week(int week);
+    TheWeek week(int weekOfMonth);
 
-    TheDayOfWeekInMonth dayOfWeek(int week, int dayOfWeek);
+    TheDayOfWeekInMonth dayOfWeek(int weekOfMonth, int dayOfWeek);
 
     default TheDayOfWeekInMonth lastDayOfWeek(int dayOfWeek) {
-        return dayOfWeek(getWeekCount(), dayOfWeek);
+        return dayOfWeek(getWeekCountOfMonth(), dayOfWeek);
     }
 
     Week lastWeek();
@@ -76,7 +75,7 @@ public interface Month extends Iterator<Month>, CronExpression {
 
     default Week everyWeek(int interval) {
         return everyWeek(m -> 1, m -> {
-            return m.getWeekCount();
+            return m.getWeekCountOfMonth();
         }, interval);
     }
 

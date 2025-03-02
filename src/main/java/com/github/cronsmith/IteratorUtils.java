@@ -4,14 +4,14 @@ import java.util.Iterator;
 
 /**
  * 
- * @Description: CollectionUtils
+ * @Description: IteratorUtils
  * @Author: Fred Feng
  * @Date: 27/02/2025
  * @Version 1.0.0
  */
-public abstract class CollectionUtils {
+public abstract class IteratorUtils {
 
-    public static <T> Iterable<T> forEach(final Iterator<T> delegate) {
+    public static <T> Iterable<T> forEach(Iterator<T> delegate) {
         if (delegate == null) {
             throw new NullPointerException("Null iterator");
         }

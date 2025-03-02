@@ -20,7 +20,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -72,13 +72,13 @@ public class LastWeekOfMonth implements Week, Serializable {
     @Override
     public TheDayOfWeek day(int day) {
         final Week copy = (Week) this.copy();
-        return new ThisDayOfWeek(CollectionUtils.getFirst(copy), day);
+        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), day);
     }
 
     @Override
     public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
         final Week copy = (Week) this.copy();
-        return new EveryDayOfWeek(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

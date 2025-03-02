@@ -19,7 +19,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -75,8 +75,7 @@ public class EveryWeek implements Week, Serializable {
     private boolean shoudNext() {
         if (month.getMonth() == week.getMonthValue()) {
             boolean next = (week.getDayOfMonth() + 7 <= month.getLastDay());
-            next &= (week.get(WeekFields.of(Locale.getDefault()).weekOfMonth())
-                    + interval <= toWeek);
+            next &= (week.get(WeekFields.ISO.weekOfMonth()) + interval <= toWeek);
             return next;
         }
         return false;
@@ -109,12 +108,12 @@ public class EveryWeek implements Week, Serializable {
 
     @Override
     public int getWeek() {
-        return week.get(WeekFields.of(Locale.getDefault()).weekOfMonth());
+        return week.get(WeekFields.ISO.weekOfMonth());
     }
 
     @Override
     public int getWeekOfYear() {
-        return week.get(WeekFields.of(Locale.getDefault()).weekOfYear());
+        return week.get(WeekFields.ISO.weekOfYear());
     }
 
     @Override
@@ -125,13 +124,13 @@ public class EveryWeek implements Week, Serializable {
     @Override
     public TheDayOfWeek day(int day) {
         final Week copy = (Week) this.copy();
-        return new ThisDayOfWeek(CollectionUtils.getFirst(copy), day);
+        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), day);
     }
 
     @Override
     public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
         final Week copy = (Week) this.copy();
-        return new EveryDayOfWeek(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

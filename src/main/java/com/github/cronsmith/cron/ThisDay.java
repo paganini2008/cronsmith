@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -115,13 +115,13 @@ public class ThisDay implements TheDay, Serializable {
     @Override
     public TheHour hour(int hour) {
         final Day copy = (Day) this.copy();
-        return new ThisHour(CollectionUtils.getFirst(copy), hour);
+        return new ThisHour(IteratorUtils.getFirst(copy), hour);
     }
 
     @Override
     public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

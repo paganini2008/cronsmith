@@ -17,6 +17,17 @@
 	<description>A light weight task scheduling tools</description>
 
 	<dependencies>
+	   <dependency> 
+		  <groupId>org.antlr</groupId> 
+		  <artifactId>antlr4</artifactId> 
+		  <version>4.13.0</version> 
+		</dependency>
+		<dependency>
+		  <groupId>junit</groupId>
+		  <artifactId>junit</artifactId>
+		  <version>4.13</version>
+		  <scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -44,6 +55,24 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+	            <groupId>org.antlr</groupId>
+	            <artifactId>antlr4-maven-plugin</artifactId>
+	            <version>4.13.0</version>
+	            <executions>
+	                <execution>
+	                    <phase>generate-sources</phase>
+	                    <goals>
+	                        <goal>antlr4</goal>
+	                    </goals>
+	                    <configuration>
+	                        <listener>true</listener>
+	                        <visitor>true</visitor>
+	                        <outputDirectory>${project.basedir}/src/main/java/com/github/cronsmith/antlr</outputDirectory>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
 		</plugins>
 	</build>
 </project>

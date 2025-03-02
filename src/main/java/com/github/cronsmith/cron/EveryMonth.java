@@ -20,7 +20,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -95,8 +95,12 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public int getLastDay() {
-        return month.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
+    public int getLastDay(int n) {
+        int lastDayOfMonth = month.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
+        if (n < lastDayOfMonth) {
+            lastDayOfMonth -= n;
+        }
+        return lastDayOfMonth;
     }
 
     @Override
@@ -143,44 +147,44 @@ public class EveryMonth implements Month, Serializable {
     @Override
     public TheDay day(int dayOfMonth) {
         final Month copy = (Month) this.copy();
-        return new ThisDay(CollectionUtils.getFirst(copy), dayOfMonth);
+        return new ThisDay(IteratorUtils.getFirst(copy), dayOfMonth);
     }
 
     @Override
-    public Day lastDay() {
+    public Day lastDay(int n) {
         final Month copy = (Month) this.copy();
-        return new LastDayOfMonth(CollectionUtils.getFirst(copy));
+        return new LastDayOfMonth(IteratorUtils.getFirst(copy), n);
     }
 
     @Override
     public Day everyDay(Function<Month, Integer> from, Function<Month, Integer> to, int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryDay(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryDay(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override
     public TheWeek week(int weekOfMonth) {
         final Month copy = (Month) this.copy();
-        return new ThisWeek(CollectionUtils.getFirst(copy), weekOfMonth);
+        return new ThisWeek(IteratorUtils.getFirst(copy), weekOfMonth);
     }
 
     @Override
-    public TheDayOfWeekInMonth dayOfWeek(int week, int dayOfWeek) {
+    public TheDayOfWeekInMonth dayOfWeek(int weekOfMonth, int dayOfWeek) {
         final Month copy = (Month) this.copy();
-        return new ThisDayOfWeekInMonth(CollectionUtils.getFirst(copy), week, dayOfWeek);
+        return new ThisDayOfWeekInMonth(IteratorUtils.getFirst(copy), weekOfMonth, dayOfWeek);
     }
 
     @Override
     public Week lastWeek() {
         final Month copy = (Month) this.copy();
-        return new LastWeekOfMonth(CollectionUtils.getFirst(copy));
+        return new LastWeekOfMonth(IteratorUtils.getFirst(copy));
     }
 
     @Override
     public Week everyWeek(Function<Month, Integer> from, Function<Month, Integer> to,
             int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryWeek(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

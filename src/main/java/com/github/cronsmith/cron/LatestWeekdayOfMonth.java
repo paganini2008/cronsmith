@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -49,7 +49,7 @@ public class LatestWeekdayOfMonth implements Day, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                day.withYear(month.getYear()).withMonth(month.getMonth()).withDayOfMonth(
+                day = day.withYear(month.getYear()).withMonth(month.getMonth()).withDayOfMonth(
                         month.getLatestWeekday(Math.min(dayOfMonth, month.getLastDay())));
                 next = true;
             }
@@ -103,13 +103,13 @@ public class LatestWeekdayOfMonth implements Day, Serializable {
     @Override
     public TheHour hour(int hourOfDay) {
         final Day copy = (Day) this.copy();
-        return new ThisHour(CollectionUtils.getFirst(copy), hourOfDay);
+        return new ThisHour(IteratorUtils.getFirst(copy), hourOfDay);
     }
 
     @Override
     public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

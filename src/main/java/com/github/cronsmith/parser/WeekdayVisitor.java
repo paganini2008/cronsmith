@@ -1,0 +1,82 @@
+package com.github.cronsmith.parser;
+
+import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.cron.CronExpressionUtils;
+import com.github.cronsmith.cron.Month;
+import com.github.cronsmith.cron.TheDay;
+
+/**
+ * 
+ * @Description: WeekdayVisitor
+ * @Author: Fred Feng
+ * @Date: 01/03/2025
+ * @Version 1.0.0
+ */
+public class WeekdayVisitor implements SymbolVisitor {
+
+    private SymbolVisitor nextVisitor;
+
+    @Override
+    public String getSymbol() {
+        return "W";
+    }
+
+    @Override
+    public void setNextVisitor(SymbolVisitor nextVisitor) {
+        this.nextVisitor = nextVisitor;
+    }
+
+    @Override
+    public CronExpression visitSecond(String text, String filter, CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitMinute(String text, String filter, CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitDayOfMonth(String text, String filter,
+            CronExpressionContext context) {
+        if (text.matches("\\d{1,2}W") && (filter == null || filter.contains("W"))) {
+            int dayOfMonth = Integer.parseInt(text.replace("W", ""));
+            CronExpression cronExpression = context.getCronExpression();
+            if (cronExpression != null) {
+                if (cronExpression instanceof TheDay) {
+                    Month month = (Month) cronExpression.getParent();
+                    return ((TheDay) cronExpression).andDay(month.getLatestWeekday(dayOfMonth));
+                } else if (cronExpression instanceof Month) {
+                    return ((Month) cronExpression).latestWeekday(dayOfMonth);
+                }
+            } else {
+                return CronExpressionUtils.everyMonth().latestWeekday(dayOfMonth);
+            }
+        } else if (nextVisitor != null) {
+            return nextVisitor.visitDayOfMonth(text, filter, context);
+        }
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitMonth(String text, String filter, CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitDayOfWeek(String text, String filter,
+            CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
+        throw new UnsupportedSymbolException(text);
+    }
+
+}

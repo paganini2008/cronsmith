@@ -13,7 +13,7 @@
  */
 package com.github.cronsmith.cron;
 
-import java.util.Calendar;
+import java.time.DayOfWeek;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -39,7 +39,7 @@ public interface Week extends Iterator<Week>, CronExpression {
     }
 
     default Day everyDay(int interval) {
-        return everyDay(Calendar.SUNDAY, Calendar.SATURDAY, interval);
+        return everyDay(DayOfWeek.MONDAY.getValue(), DayOfWeek.SUNDAY.getValue(), interval);
     }
 
     default Day everyDay(int from, int to, int interval) {
@@ -54,32 +54,32 @@ public interface Week extends Iterator<Week>, CronExpression {
         return Mon().toFri();
     }
 
-    default TheDayOfWeek Sun() {
-        return day(Calendar.SUNDAY);
-    }
-
     default TheDayOfWeek Mon() {
-        return day(Calendar.MONDAY);
+        return day(DayOfWeek.MONDAY.getValue());
     }
 
     default TheDayOfWeek Tues() {
-        return day(Calendar.TUESDAY);
+        return day(DayOfWeek.TUESDAY.getValue());
     }
 
     default TheDayOfWeek Wed() {
-        return day(Calendar.WEDNESDAY);
+        return day(DayOfWeek.WEDNESDAY.getValue());
     }
 
     default TheDayOfWeek Thur() {
-        return day(Calendar.THURSDAY);
+        return day(DayOfWeek.THURSDAY.getValue());
     }
 
     default TheDayOfWeek Fri() {
-        return day(Calendar.FRIDAY);
+        return day(DayOfWeek.FRIDAY.getValue());
     }
 
     default TheDayOfWeek Sat() {
-        return day(Calendar.SATURDAY);
+        return day(DayOfWeek.SATURDAY.getValue());
+    }
+
+    default TheDayOfWeek Sun() {
+        return day(DayOfWeek.SUNDAY.getValue());
     }
 
 }

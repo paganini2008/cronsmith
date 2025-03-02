@@ -16,7 +16,7 @@ package com.github.cronsmith.cron;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.function.Consumer;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 import com.github.cronsmith.SerializationUtils;
 
 /**
@@ -31,11 +31,6 @@ public interface CronExpression extends CronStringBuilder {
 
     LocalDateTime getTime();
 
-    /**
-     * copy this
-     * 
-     * @return
-     */
     default CronExpression copy() {
         return SerializationUtils.copy(this);
     }
@@ -51,11 +46,11 @@ public interface CronExpression extends CronStringBuilder {
         }
         int i = 0;
         LocalDateTime dateTime;
-        for (CronExpression cronExpression : CollectionUtils
+        for (CronExpression cronExpression : IteratorUtils
                 .forEach((Iterator<CronExpression>) copy())) {
             dateTime = cronExpression.getTime();
             if (dateTime.compareTo(baseline) < 0) {
-                continue;
+                // continue;
             }
             if (n < 0 || i++ < n) {
                 consumer.accept(dateTime);

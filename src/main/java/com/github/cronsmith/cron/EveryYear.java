@@ -19,7 +19,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -89,31 +89,31 @@ public class EveryYear implements Year, Serializable {
     public Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to,
             int interval) {
         final Year copy = (Year) this.copy();
-        return new EveryMonth(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override
     public TheDay day(int dayOfMonth) {
         final Year copy = (Year) this.copy();
-        return new ThisDayOfYear(CollectionUtils.getFirst(copy), dayOfMonth);
+        return new ThisDayOfYear(IteratorUtils.getFirst(copy), dayOfMonth);
     }
 
     @Override
     public TheWeek week(int weekOfYear) {
         final Year copy = (Year) this.copy();
-        return new ThisWeekOfYear(CollectionUtils.getFirst(copy), weekOfYear);
+        return new ThisWeekOfYear(IteratorUtils.getFirst(copy), weekOfYear);
     }
 
     @Override
     public TheMonth month(int month) {
         final Year copy = (Year) this.copy();
-        return new ThisMonth(CollectionUtils.getFirst(copy), month);
+        return new ThisMonth(IteratorUtils.getFirst(copy), month);
     }
 
     @Override
     public Week lastWeek() {
         final Year copy = (Year) this.copy();
-        return new LastWeekOfYear(CollectionUtils.getFirst(copy));
+        return new LastWeekOfYear(IteratorUtils.getFirst(copy));
     }
 
     @Override

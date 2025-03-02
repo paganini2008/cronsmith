@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -32,14 +32,24 @@ public class LastDayOfMonth implements Day, Serializable {
     private static final long serialVersionUID = 3379984313144390130L;
 
     private Month month;
+    private int n;
     private LocalDateTime day;
     private boolean self;
 
-    LastDayOfMonth(Month month) {
+    LastDayOfMonth(Month month, int n) {
         this.month = month;
-        this.day = month.getTime().with(TemporalAdjusters.lastDayOfMonth()).withHour(0)
-                .withMinute(0).withSecond(0);
+        this.n = n;
+        this.day = month.getTime().withDayOfMonth(getLastDayByN()).withHour(0).withMinute(0)
+                .withSecond(0);
         this.self = true;
+    }
+
+    private int getLastDayByN() {
+        int lastDay = month.getTime().with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
+        if (n < lastDay) {
+            lastDay -= n;
+        }
+        return lastDay;
     }
 
     @Override
@@ -75,13 +85,13 @@ public class LastDayOfMonth implements Day, Serializable {
     @Override
     public TheHour hour(int hour) {
         final Day copy = (Day) this.copy();
-        return new ThisHour(CollectionUtils.getFirst(copy), hour);
+        return new ThisHour(IteratorUtils.getFirst(copy), hour);
     }
 
     @Override
     public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override
@@ -91,7 +101,7 @@ public class LastDayOfMonth implements Day, Serializable {
             if (month.hasNext()) {
                 month = month.next();
                 day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(TemporalAdjusters.lastDayOfMonth());
+                        .withDayOfMonth(getLastDayByN());
                 next = true;
             }
         }

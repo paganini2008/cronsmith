@@ -13,15 +13,15 @@
  */
 package com.github.cronsmith.cron;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.util.Calendar;
 
 /**
  * 
- * CalendarAssert
- *
- * @author Fred Feng
- * @since 2.0.1
+ * @Description: FieldAssertions
+ * @Author: Fred Feng
+ * @Date: 27/02/2025
+ * @Version 1.0.0
  */
 public abstract class FieldAssertions {
 
@@ -71,9 +71,9 @@ public abstract class FieldAssertions {
     }
 
     public static void checkDayOfWeek(int dayOfWeek) {
-        if (dayOfWeek < Calendar.SUNDAY || dayOfWeek > Calendar.SATURDAY) {
-            throw new IllegalArgumentException(
-                    "WeekDay's range is " + Calendar.SUNDAY + " to " + Calendar.SATURDAY);
+        if (dayOfWeek < DayOfWeek.MONDAY.getValue() || dayOfWeek > DayOfWeek.SUNDAY.getValue()) {
+            throw new IllegalArgumentException("WeekDay's range is " + DayOfWeek.MONDAY.getValue()
+                    + " to " + DayOfWeek.SUNDAY.getValue());
         }
     }
 

@@ -17,7 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -109,14 +109,14 @@ public class EveryHour implements Hour, Serializable {
     @Override
     public TheMinute minute(int minute) {
         final Hour copy = (Hour) this.copy();
-        return new ThisMinute(CollectionUtils.getFirst(copy), minute);
+        return new ThisMinute(IteratorUtils.getFirst(copy), minute);
     }
 
     @Override
     public Minute everyMinute(Function<Hour, Integer> from, Function<Hour, Integer> to,
             int interval) {
         final Hour copy = (Hour) this.copy();
-        return new EveryMinute(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryMinute(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

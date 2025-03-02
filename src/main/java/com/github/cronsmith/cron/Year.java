@@ -13,7 +13,6 @@
  */
 package com.github.cronsmith.cron;
 
-import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.function.Function;
@@ -55,7 +54,7 @@ public interface Year extends Iterator<Year>, CronExpression {
     }
 
     default Month everyMonth(int interval) {
-        return everyMonth(Calendar.JANUARY, Calendar.DECEMBER, interval);
+        return everyMonth(1, 12, interval);
     }
 
     Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to, int interval);
@@ -67,50 +66,50 @@ public interface Year extends Iterator<Year>, CronExpression {
     TheMonth month(int month);
 
     default TheMonth Jan() {
-        return month(Calendar.JANUARY);
+        return month(1);
     }
 
     default TheMonth Feb() {
-        return month(Calendar.FEBRUARY);
+        return month(2);
     }
 
     default TheMonth Mar() {
-        return month(Calendar.MARCH);
+        return month(3);
     }
 
     default TheMonth Apr() {
-        return month(Calendar.APRIL);
+        return month(4);
     }
 
     default TheMonth May() {
-        return month(Calendar.MAY);
+        return month(5);
     }
 
     default TheMonth June() {
-        return month(Calendar.JUNE);
+        return month(6);
     }
 
     default TheMonth July() {
-        return month(Calendar.JULY);
+        return month(7);
     }
 
     default TheMonth Aug() {
-        return month(Calendar.AUGUST);
+        return month(8);
     }
 
     default TheMonth Sept() {
-        return month(Calendar.SEPTEMBER);
+        return month(9);
     }
 
     default TheMonth Oct() {
-        return month(Calendar.OCTOBER);
+        return month(10);
     }
 
     default TheMonth Nov() {
-        return month(Calendar.NOVEMBER);
+        return month(11);
     }
 
     default TheMonth Dec() {
-        return month(Calendar.DECEMBER);
+        return month(12);
     }
 }

@@ -20,7 +20,7 @@ import java.time.temporal.WeekFields;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -104,31 +104,31 @@ public class ThisYear implements TheYear, Serializable {
     public Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to,
             int interval) {
         final Year copy = (Year) this.copy();
-        return new EveryMonth(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override
     public TheDay day(int day) {
         final Year copy = (Year) this.copy();
-        return new ThisDayOfYear(CollectionUtils.getFirst(copy), day);
+        return new ThisDayOfYear(IteratorUtils.getFirst(copy), day);
     }
 
     @Override
     public TheWeek week(int week) {
         final Year copy = (Year) this.copy();
-        return new ThisWeekOfYear(CollectionUtils.getFirst(copy), week);
+        return new ThisWeekOfYear(IteratorUtils.getFirst(copy), week);
     }
 
     @Override
     public TheMonth month(int month) {
         final Year copy = (Year) this.copy();
-        return new ThisMonth(CollectionUtils.getFirst(copy), month);
+        return new ThisMonth(IteratorUtils.getFirst(copy), month);
     }
 
     @Override
     public Week lastWeek() {
         final Year copy = (Year) this.copy();
-        return new LastWeekOfYear(CollectionUtils.getFirst(copy));
+        return new LastWeekOfYear(IteratorUtils.getFirst(copy));
     }
 
     @Override
@@ -138,7 +138,7 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public Year next() {
-        year = CollectionUtils.get(siblings.values().iterator(), index++);
+        year = IteratorUtils.get(siblings.values().iterator(), index++);
         return this;
     }
 

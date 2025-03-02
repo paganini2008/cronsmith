@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.CollectionUtils;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -114,14 +114,14 @@ public class ThisMinute implements TheMinute, Serializable {
     @Override
     public TheSecond second(int second) {
         final Minute copy = (Minute) this.copy();
-        return new ThisSecond(CollectionUtils.getFirst(copy), second);
+        return new ThisSecond(IteratorUtils.getFirst(copy), second);
     }
 
     @Override
     public Second everySecond(Function<Minute, Integer> from, Function<Minute, Integer> to,
             int interval) {
         final Minute copy = (Minute) this.copy();
-        return new EverySecond(CollectionUtils.getFirst(copy), from, to, interval);
+        return new EverySecond(IteratorUtils.getFirst(copy), from, to, interval);
     }
 
     @Override

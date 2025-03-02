@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.Calendar;
 import java.util.function.Function;
@@ -48,8 +47,8 @@ public class EveryDayOfWeek implements Day, Serializable {
         this.week = week;
         this.fromDay = from.apply(week);
         FieldAssertions.checkDayOfWeek(fromDay);
-        this.day = week.getTime().with(ChronoField.DAY_OF_WEEK, fromDay).withHour(0).withMinute(0)
-                .withSecond(0);
+        this.day = week.getTime().with(WeekFields.ISO.dayOfWeek(), fromDay).withHour(0)
+                .withMinute(0).withSecond(0);
         this.interval = interval;
         this.toDay = to.apply(week);
         FieldAssertions.checkDayOfWeek(toDay);
@@ -64,7 +63,7 @@ public class EveryDayOfWeek implements Day, Serializable {
             if (week.hasNext()) {
                 week = week.next();
                 day = day.withYear(week.getYear()).withMonth(week.getMonth())
-                        .with(WeekFields.ISO.dayOfWeek(), week.getWeek())
+                        .with(WeekFields.ISO.weekOfMonth(), week.getWeek())
                         .with(WeekFields.ISO.dayOfWeek(), fromDay);
                 forward = false;
                 next = true;
@@ -94,7 +93,7 @@ public class EveryDayOfWeek implements Day, Serializable {
 
     @Override
     public int getMonth() {
-        return day.getMonth().getValue();
+        return day.getMonthValue();
     }
 
     @Override

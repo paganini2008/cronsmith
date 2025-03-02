@@ -38,28 +38,28 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
     private LocalDateTime week;
     private int lastWeek;
 
-    ThisWeekOfYear(Year year, int week) {
-        FieldAssertions.checkWeekOfYear(year, week);
+    ThisWeekOfYear(Year year, int weekOfYear) {
+        FieldAssertions.checkWeekOfYear(year, weekOfYear);
         this.year = year;
-        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), week);
-        this.siblings.put(week, ldt);
+        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), weekOfYear);
+        this.siblings.put(weekOfYear, ldt);
         this.week = ldt;
-        this.lastWeek = week;
+        this.lastWeek = weekOfYear;
     }
 
     @Override
-    public TheWeek andWeek(int week) {
-        FieldAssertions.checkWeekOfYear(year, week);
-        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), week);
-        this.siblings.put(week, ldt);
-        this.lastWeek = week;
+    public TheWeek andWeek(int weekOfYear) {
+        FieldAssertions.checkWeekOfYear(year, weekOfYear);
+        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), weekOfYear);
+        this.siblings.put(weekOfYear, ldt);
+        this.lastWeek = weekOfYear;
         return this;
     }
 
     @Override
-    public TheWeek toWeek(int week, int interval) {
-        FieldAssertions.checkWeekOfYear(year, week);
-        for (int i = lastWeek + interval; i < week; i += interval) {
+    public TheWeek toWeek(int weekOfYear, int interval) {
+        FieldAssertions.checkWeekOfYear(year, weekOfYear);
+        for (int i = lastWeek + interval; i < weekOfYear; i += interval) {
             andWeek(i);
         }
         return this;
@@ -91,9 +91,9 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
     }
 
     @Override
-    public TheDayOfWeek day(int day) {
+    public TheDayOfWeek day(int dayOfWeek) {
         final Week copy = (Week) this;
-        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), day);
+        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), dayOfWeek);
     }
 
     @Override

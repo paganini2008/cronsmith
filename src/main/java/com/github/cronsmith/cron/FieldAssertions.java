@@ -50,8 +50,8 @@ public abstract class FieldAssertions {
         }
     }
 
-    public static void checkWeekOfYear(Year year, int week) {
-        if (week < 1 || week > year.getWeekCountOfYear()) {
+    public static void checkWeekOfYear(Year year, int weekOfYear) {
+        if (weekOfYear < 1 || weekOfYear > year.getWeekCountOfYear()) {
             throw new IllegalArgumentException("Week's range is 1 to " + year.getWeekCountOfYear());
         }
     }

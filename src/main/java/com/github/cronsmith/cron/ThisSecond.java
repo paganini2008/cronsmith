@@ -15,9 +15,9 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.TreeMap;
 import com.github.cronsmith.CRON;
+import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -129,7 +129,7 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public Second next() {
-        second = List.copyOf(siblings.values()).get(index++);
+        second = IteratorUtils.get(siblings.values().iterator(), index++);
         second = second.withYear(minute.getYear()).withMonth(minute.getMonth())
                 .withDayOfMonth(minute.getDay()).withHour(minute.getHour())
                 .withMinute(minute.getMinute());

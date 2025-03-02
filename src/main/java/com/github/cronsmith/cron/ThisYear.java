@@ -33,14 +33,16 @@ public class ThisYear implements TheYear, Serializable {
 
     private static final long serialVersionUID = -5316436238766770045L;
     private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private Epoch epoch;
     private LocalDateTime year;
     private int index;
     private int lastYear;
     private final StringBuilder cron;
 
-    public ThisYear(int year) {
+    public ThisYear(Epoch epoch, int year) {
         FieldAssertions.checkYear(year);
-        LocalDateTime ldt = LocalDateTime.now().withYear(year);
+        this.epoch = epoch;
+        LocalDateTime ldt = epoch.getTime().withYear(year);
         this.siblings.put(year, ldt);
         this.year = ldt;
         this.lastYear = year;
@@ -54,7 +56,7 @@ public class ThisYear implements TheYear, Serializable {
 
     private TheYear andYear(int year, boolean writeCron) {
         FieldAssertions.checkYear(year);
-        LocalDateTime ldt = LocalDateTime.now().withYear(year);
+        LocalDateTime ldt = epoch.getTime().withYear(year);
         siblings.put(year, ldt);
         this.lastYear = year;
         if (writeCron) {
@@ -96,8 +98,12 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     @Override
-    public int getLastDayOfYear() {
-        return year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
+    public int getLastDayOfYear(int n) {
+        int lastDayOfYear = year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
+        if (n < lastDayOfYear) {
+            lastDayOfYear -= n;
+        }
+        return lastDayOfYear;
     }
 
     @Override
@@ -158,8 +164,8 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     public static void main(String[] args) {
-        TheYear singleYear = new ThisYear(2021);
-        singleYear = singleYear.andYear(2028).andYear(2024);
+        TheYear singleYear = Epoch.getInstance().year(2025);
+        singleYear = singleYear.andYear(2028).andYear(2030);
         Day day = singleYear.lastWeek().Mon().toFri();
         System.out.println(day);
     }

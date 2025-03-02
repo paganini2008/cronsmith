@@ -31,8 +31,8 @@ public class EveryDay implements Day, Serializable {
     private static final long serialVersionUID = -2114922383566430661L;
     private Month month;
     private LocalDateTime day;
-    private final int fromDay;
-    private final int toDay;
+    private final Function<Month, Integer> from;
+    private final Function<Month, Integer> to;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -43,24 +43,36 @@ public class EveryDay implements Day, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.month = month;
-        this.fromDay = from.apply(month);
-        FieldAssertions.checkDayOfMonth(month, fromDay);
-        this.day = month.getTime().withDayOfMonth(fromDay).withHour(0).withMinute(0).withSecond(0);
+        this.from = from;
+        this.to = to;
+
+        this.day = month.getTime().withDayOfMonth(getFromDay()).withHour(0).withMinute(0)
+                .withSecond(0);
         this.interval = interval;
-        this.toDay = to.apply(month);
-        FieldAssertions.checkDayOfMonth(month, toDay);
         this.self = true;
         this.forward = true;
     }
 
+    private int getFromDay() {
+        int fromDay = from.apply(month);
+        FieldAssertions.checkDayOfMonth(month, fromDay);
+        return fromDay;
+    }
+
+    private int getToDay() {
+        int toDay = to.apply(month);
+        FieldAssertions.checkDayOfMonth(month, toDay);
+        return toDay;
+    }
+
     @Override
     public boolean hasNext() {
-        boolean next = self || day.getDayOfMonth() + interval <= toDay;
+        boolean next = self || day.getDayOfMonth() + interval <= getToDay();
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
                 day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                        .withDayOfMonth(fromDay);
+                        .withDayOfMonth(getFromDay());
                 forward = false;
                 next = true;
             }
@@ -131,8 +143,19 @@ public class EveryDay implements Day, Serializable {
 
     @Override
     public String toCronString() {
-        String s = toDay != month.getLastDay() ? fromDay + "-" + toDay : fromDay + "";
-        return interval > 1 ? s + "/" + interval : "*";
+        boolean slashed = false;
+        String str;
+        int fromDay = getFromDay();
+        int toDay = getToDay();
+        if (fromDay == 1 && toDay == month.getLastDay()) {
+            str = "*";
+        } else if (fromDay != 1 && toDay == month.getLastDay()) {
+            str = fromDay + "";
+            slashed = true;
+        } else {
+            str = fromDay + "-" + toDay;
+        }
+        return interval > 1 ? str + "/" + interval : slashed ? str + "/1" : str;
     }
 
     @Override

@@ -32,7 +32,7 @@ public abstract class CronExpressionUtils {
     }
 
     public static TheYear year(int year) {
-        return new ThisYear(year);
+        return Epoch.getInstance().year(year);
     }
 
     public static TheMonth month() {
@@ -92,7 +92,7 @@ public abstract class CronExpressionUtils {
     }
 
     public static Year everyYear(int fromYear, int toYear, int interval) {
-        return new EveryYear(fromYear, y -> toYear, interval);
+        return Epoch.getInstance().everyYear(fromYear, toYear, interval);
     }
 
     public static Month everyMonth() {

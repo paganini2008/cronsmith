@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -39,45 +38,45 @@ public class ThisDay implements TheDay, Serializable {
     private int lastDay;
     private final StringBuilder cron;
 
-    ThisDay(Month month, int day) {
-        FieldAssertions.checkDayOfMonth(month, day);
+    ThisDay(Month month, int dayOfMonth) {
+        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
         this.month = month;
-        LocalDateTime ldt = month.getTime().withDayOfMonth(day);
-        this.siblings.put(day, ldt);
+        LocalDateTime ldt = month.getTime().withDayOfMonth(dayOfMonth);
+        this.siblings.put(dayOfMonth, ldt);
         this.day = ldt;
-        this.lastDay = day;
-        this.cron = new StringBuilder().append(day);
+        this.lastDay = dayOfMonth;
+        this.cron = new StringBuilder().append(dayOfMonth);
     }
 
     @Override
-    public TheDay andDay(int day) {
-        return andDay(day, true);
+    public TheDay andDay(int dayOfMonth) {
+        return andDay(dayOfMonth, true);
     }
 
-    private TheDay andDay(int day, boolean writeCron) {
-        FieldAssertions.checkDayOfMonth(month, day);
-        LocalDateTime ldt = month.getTime().withDayOfMonth(day);
-        this.siblings.put(day, ldt);
-        this.lastDay = day;
+    private TheDay andDay(int dayOfMonth, boolean writeCron) {
+        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
+        LocalDateTime ldt = month.getTime().withDayOfMonth(dayOfMonth);
+        this.siblings.put(dayOfMonth, ldt);
+        this.lastDay = dayOfMonth;
         if (writeCron) {
-            this.cron.append(",").append(day);
+            this.cron.append(",").append(dayOfMonth);
         }
         return this;
     }
 
     @Override
-    public TheDay toDay(int day, int interval) {
-        FieldAssertions.checkDayOfMonth(month, day);
+    public TheDay toDay(int dayOfMonth, int interval) {
+        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastDay + interval; i <= day; i += interval) {
+        for (int i = lastDay + interval; i <= dayOfMonth; i += interval) {
             andDay(i, false);
         }
         if (interval > 1) {
-            this.cron.append("-").append(day).append("/").append(interval);
+            this.cron.append("-").append(dayOfMonth).append("/").append(interval);
         } else {
-            this.cron.append("-").append(day);
+            this.cron.append("-").append(dayOfMonth);
         }
         return this;
     }
@@ -139,7 +138,8 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public Day next() {
-        Map.Entry<Integer, LocalDateTime> entry = List.copyOf(siblings.entrySet()).get(index++);
+        Map.Entry<Integer, LocalDateTime> entry =
+                IteratorUtils.get(siblings.entrySet().iterator(), index++);
         day = entry.getValue();
         day = day.withYear(month.getYear()).withMonth(month.getMonth())
                 .withDayOfMonth(Math.min(entry.getKey(), month.getLastDay()));

@@ -31,8 +31,8 @@ public class EveryHour implements Hour, Serializable {
     private static final long serialVersionUID = -5459905273757712271L;
     private Day day;
     private LocalDateTime hour;
-    private final int fromHour;
-    private final int toHour;
+    private final Function<Day, Integer> from;
+    private final Function<Day, Integer> to;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -42,22 +42,37 @@ public class EveryHour implements Hour, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.day = day;
-        this.fromHour = from.apply(day);
-        FieldAssertions.checkHourOfDay(fromHour);
+        this.from = from;
+        this.to = to;
+
+        int fromHour = getFromHour();
         this.hour = day.getTime().withHour(fromHour).withMinute(0).withSecond(0);
         this.interval = interval;
         this.self = true;
         this.forward = true;
-        this.toHour = to.apply(day);
+
+    }
+
+    private int getFromHour() {
+        int fromHour = from.apply(day);
+        FieldAssertions.checkHourOfDay(fromHour);
+        return fromHour;
+    }
+
+    public int getToHour() {
+        int toHour = to.apply(day);
         FieldAssertions.checkHourOfDay(toHour);
+        return toHour;
     }
 
     @Override
     public boolean hasNext() {
+        int toHour = getToHour();
         boolean next = self || hour.getHour() + interval <= toHour;
         if (!next) {
             if (day.hasNext()) {
                 day = day.next();
+                int fromHour = getFromHour();
                 hour = hour.withYear(day.getYear()).withMonth(day.getMonth())
                         .withDayOfMonth(day.getDay()).withHour(fromHour);
                 forward = false;
@@ -126,8 +141,15 @@ public class EveryHour implements Hour, Serializable {
 
     @Override
     public String toCronString() {
-        String s = toHour != 23 ? fromHour + "-" + toHour : fromHour + "";
-        return interval > 1 ? s + "/" + interval : "*";
+        int fromHour = getFromHour();
+        int toHour = getToHour();
+        String str;
+        if (fromHour == 0 && toHour == 23) {
+            str = "*";
+        } else {
+            str = fromHour + "-" + toHour;
+        }
+        return interval > 1 ? str + "/" + interval : str;
     }
 
     @Override

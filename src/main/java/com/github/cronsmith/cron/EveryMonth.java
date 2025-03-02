@@ -21,6 +21,7 @@ import java.time.temporal.WeekFields;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.parser.Utils;
 
 /**
  * 
@@ -34,8 +35,8 @@ public class EveryMonth implements Month, Serializable {
     private static final long serialVersionUID = -7085376125910878673L;
     private Year year;
     private LocalDateTime month;
-    private final int fromMonth;
-    private final int toMonth;
+    private final Function<Year, Integer> from;
+    private final Function<Year, Integer> to;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -45,24 +46,35 @@ public class EveryMonth implements Month, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.year = year;
-        this.fromMonth = from.apply(year);
-        FieldAssertions.checkMonth(fromMonth);
-        this.month = year.getTime().withMonth(fromMonth).withDayOfMonth(1).withHour(0).withMinute(0)
-                .withSecond(0);
+        this.from = from;
+        this.to = to;
+
+        this.month = year.getTime().withMonth(getFromMonth()).withDayOfMonth(1).withHour(0)
+                .withMinute(0).withSecond(0);
         this.interval = interval;
-        this.toMonth = to.apply(year);
-        FieldAssertions.checkMonth(toMonth);
         this.self = true;
         this.forward = true;
     }
 
+    private int getFromMonth() {
+        int fromMonth = from.apply(year);
+        FieldAssertions.checkMonth(fromMonth);
+        return fromMonth;
+    }
+
+    private int getToMonth() {
+        int toMonth = to.apply(year);
+        FieldAssertions.checkMonth(toMonth);
+        return toMonth;
+    }
+
     @Override
     public boolean hasNext() {
-        boolean next = self || month.getMonth().getValue() + interval <= toMonth;
+        boolean next = self || month.getMonthValue() + interval <= getToMonth();
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                month = month.withYear(year.getYear()).withMonth(fromMonth);
+                month = month.withYear(year.getYear()).withMonth(getFromMonth());
                 forward = false;
                 next = true;
             }
@@ -194,8 +206,16 @@ public class EveryMonth implements Month, Serializable {
 
     @Override
     public String toCronString() {
-        String s = toMonth != 12 ? fromMonth + "-" + toMonth : fromMonth + "";
-        return interval > 1 ? s + "/" + interval : "*";
+        int fromMonth = getFromMonth();
+        int toMonth = getToMonth();
+        String str;
+        if (fromMonth == 1 && toMonth == 12) {
+            str = "*";
+        } else {
+            str = String.format("%s-%s", Utils.getMonthName(fromMonth),
+                    Utils.getMonthName(toMonth));
+        }
+        return interval > 1 ? str + "/" + interval : str;
     }
 
     @Override

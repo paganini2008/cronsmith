@@ -31,8 +31,8 @@ public class EveryMinute implements Minute, Serializable {
     private static final long serialVersionUID = -7939881133025374416L;
     private Hour hour;
     private LocalDateTime minute;
-    private final int fromMinute;
-    private final int toMinute;
+    private final Function<Hour, Integer> from;
+    private final Function<Hour, Integer> to;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -42,25 +42,36 @@ public class EveryMinute implements Minute, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.hour = hour;
-        this.fromMinute = from.apply(hour);
-        this.minute = hour.getTime().withMinute(fromMinute).withSecond(0);
-        FieldAssertions.checkMinute(fromMinute);
+        this.from = from;
+        this.to = to;
+
+        this.minute = hour.getTime().withMinute(getFromMinute()).withSecond(0);
         this.interval = interval;
-        this.toMinute = to.apply(hour);
-        FieldAssertions.checkMinute(toMinute);
         this.self = true;
         this.forward = true;
     }
 
+    private int getFromMinute() {
+        int fromMinute = from.apply(hour);
+        FieldAssertions.checkMinute(fromMinute);
+        return fromMinute;
+    }
+
+    private int getToMinute() {
+        int toMinute = to.apply(hour);
+        FieldAssertions.checkMinute(toMinute);
+        return toMinute;
+    }
+
     @Override
     public boolean hasNext() {
-        boolean next = self || minute.getMinute() + interval <= toMinute;
+        boolean next = self || minute.getMinute() + interval <= getToMinute();
         if (!next) {
             if (hour.hasNext()) {
                 hour = hour.next();
                 minute = minute.withYear(hour.getYear()).withMonth(hour.getMonth())
                         .withDayOfMonth(hour.getDay()).withHour(hour.getHour())
-                        .withMinute(fromMinute);
+                        .withMinute(getFromMinute());
                 forward = false;
                 next = true;
             }
@@ -132,8 +143,15 @@ public class EveryMinute implements Minute, Serializable {
 
     @Override
     public String toCronString() {
-        String s = toMinute != 59 ? fromMinute + "-" + toMinute : fromMinute + "";
-        return interval > 1 ? s + "/" + interval : "*";
+        int fromMinute = getFromMinute();
+        int toMinute = getToMinute();
+        String str;
+        if (fromMinute == 1 && toMinute == 59) {
+            str = "*";
+        } else {
+            str = fromMinute + "-" + toMinute;
+        }
+        return interval > 1 ? str + "/" + interval : str;
     }
 
     @Override

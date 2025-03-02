@@ -16,6 +16,7 @@
 package com.github.cronsmith.parser;
 
 import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.cron.Epoch;
 import com.github.cronsmith.cron.TheYear;
 import com.github.cronsmith.cron.Year;
 

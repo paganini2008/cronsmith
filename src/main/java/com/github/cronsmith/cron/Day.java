@@ -13,7 +13,6 @@
  */
 package com.github.cronsmith.cron;
 
-import java.time.LocalTime;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -41,12 +40,14 @@ public interface Day extends Iterator<Day>, CronExpression {
     }
 
     default Hour everyHour(int interval) {
-        return everyHour(LocalTime.now().getHour(), 23, interval);
+        return everyHour(0, 23, interval);
     }
 
     default Hour everyHour(int from, int to, int interval) {
         return everyHour(d -> from, d -> to, interval);
     }
+
+    Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval);
 
     TheHour hour(int hourOfDay);
 
@@ -58,6 +59,6 @@ public interface Day extends Iterator<Day>, CronExpression {
         return hour(hourOfDay).minute(minute).second(second);
     }
 
-    Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval);
+
 
 }

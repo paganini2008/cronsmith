@@ -22,12 +22,12 @@ package com.github.cronsmith.cron;
  */
 public interface TheDay extends Day {
 
-    TheDay andDay(int day);
+    TheDay andDay(int dayOfMonth);
 
-    default TheDay toDay(int day) {
-        return toDay(day, 1);
+    default TheDay toDay(int dayOfMonth) {
+        return toDay(dayOfMonth, 1);
     }
 
-    TheDay toDay(int day, int interval);
+    TheDay toDay(int dayOfMonth, int interval);
 
 }

@@ -13,7 +13,6 @@
  */
 package com.github.cronsmith.cron;
 
-import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -26,13 +25,17 @@ import java.util.function.Function;
  */
 public interface Year extends Iterator<Year>, CronExpression {
 
-    static final int MAX_YEAR = 9999;
+    static final int MAX_YEAR = 2099;
 
     int getYear();
 
     int getWeekCountOfYear();
 
-    int getLastDayOfYear();
+    default int getLastDayOfYear() {
+        return getLastDayOfYear(0);
+    }
+
+    int getLastDayOfYear(int n);
 
     TheDay day(int day);
 
@@ -45,8 +48,7 @@ public interface Year extends Iterator<Year>, CronExpression {
     Week lastWeek();
 
     default boolean isLeapYear() {
-        GregorianCalendar calendar = new GregorianCalendar();
-        return calendar.isLeapYear(getYear());
+        return getTime().toLocalDate().isLeapYear();
     }
 
     default Month everyMonth() {
@@ -57,11 +59,11 @@ public interface Year extends Iterator<Year>, CronExpression {
         return everyMonth(1, 12, interval);
     }
 
-    Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to, int interval);
-
     default Month everyMonth(int from, int to, int interval) {
         return everyMonth(y -> from, y -> to, interval);
     }
+
+    Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to, int interval);
 
     TheMonth month(int month);
 

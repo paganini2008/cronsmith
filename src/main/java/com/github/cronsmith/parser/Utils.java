@@ -2,8 +2,9 @@ package com.github.cronsmith.parser;
 
 import java.time.DayOfWeek;
 import java.time.Month;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import com.github.cronsmith.MapUtils;
 
 /**
  * 
@@ -14,8 +15,10 @@ import java.util.Map;
  */
 public abstract class Utils {
 
-    private static final Map<String, Integer> dayOfWeekNameValues = new HashMap<>();
-    private static final Map<String, Integer> monthNameValues = new HashMap<>();
+    private static final Map<String, Integer> dayOfWeekNameValues = new LinkedHashMap<>();
+    private static final Map<Integer, String> dayOfWeekNames;
+    private static final Map<String, Integer> monthNameValues = new LinkedHashMap<>();
+    private static final Map<Integer, String> monthNames;
 
     static {
         dayOfWeekNameValues.put("MON", DayOfWeek.MONDAY.getValue());
@@ -25,6 +28,8 @@ public abstract class Utils {
         dayOfWeekNameValues.put("FRI", DayOfWeek.FRIDAY.getValue());
         dayOfWeekNameValues.put("SAT", DayOfWeek.SATURDAY.getValue());
         dayOfWeekNameValues.put("SUN", DayOfWeek.SUNDAY.getValue());
+
+        dayOfWeekNames = MapUtils.exchange(dayOfWeekNameValues);
 
         monthNameValues.put("JAN", Month.JANUARY.getValue());
         monthNameValues.put("FEB", Month.FEBRUARY.getValue());
@@ -38,6 +43,8 @@ public abstract class Utils {
         monthNameValues.put("OCT", Month.OCTOBER.getValue());
         monthNameValues.put("NOV", Month.NOVEMBER.getValue());
         monthNameValues.put("DEC", Month.DECEMBER.getValue());
+
+        monthNames = MapUtils.exchange(monthNameValues);
     }
 
     public static int getDayOfWeekValue(String repr) {
@@ -46,6 +53,14 @@ public abstract class Utils {
 
     public static int getMonthValue(String repr) {
         return monthNameValues.getOrDefault(repr, -1);
+    }
+
+    public static String getDayOfWeekName(int dayOfWeek) {
+        return dayOfWeekNames.get(dayOfWeek);
+    }
+
+    public static String getMonthName(int month) {
+        return monthNames.get(month);
     }
 
 }

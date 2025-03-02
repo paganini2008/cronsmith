@@ -13,11 +13,15 @@
  */
 package com.github.cronsmith;
 
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
+import com.github.cronsmith.cron.Epoch;
 import com.github.cronsmith.cron.EveryYear;
 import com.github.cronsmith.cron.Hour;
 import com.github.cronsmith.cron.Minute;
@@ -29,7 +33,6 @@ import com.github.cronsmith.cron.Year;
 import com.github.cronsmith.parser.CronOption;
 import com.github.cronsmith.parser.DayOfWeekOption;
 import com.github.cronsmith.parser.DayOption;
-import com.github.cronsmith.parser.Epoch;
 import com.github.cronsmith.parser.HourOption;
 import com.github.cronsmith.parser.MalformedCronException;
 import com.github.cronsmith.parser.MinuteOption;
@@ -39,13 +42,15 @@ import com.github.cronsmith.parser.YearOption;
 
 /**
  * 
- * CRON
- *
- * @author Fred Feng
- *
- * @since 2.0.1
+ * @Description: CRON
+ * @Author: Fred Feng
+ * @Date: 02/03/2025
+ * @Version 1.0.0
  */
 public abstract class CRON {
+
+    public static TemporalField NON_ISO_WEEKS_FIELD =
+            WeekFields.of(DayOfWeek.MONDAY, 7).dayOfWeek();
 
     public static String toCronString(CronExpression cronExpression) {
         CronExpression copy = cronExpression.copy();

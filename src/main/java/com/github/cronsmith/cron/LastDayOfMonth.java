@@ -123,6 +123,9 @@ public class LastDayOfMonth implements Day, Serializable {
 
     @Override
     public String toCronString() {
+        if (n > 0) {
+            return "L-" + n;
+        }
         return "L";
     }
 

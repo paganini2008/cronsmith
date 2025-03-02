@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
@@ -139,7 +138,7 @@ public class ThisMinute implements TheMinute, Serializable {
 
     @Override
     public Minute next() {
-        minute = List.copyOf(siblings.values()).get(index++);
+        minute = IteratorUtils.get(siblings.values().iterator(), index++);
         minute = minute.withYear(hour.getYear()).withMonth(hour.getMonth())
                 .withDayOfMonth(hour.getDay()).withHour(hour.getHour());
         return this;

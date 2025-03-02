@@ -14,7 +14,6 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
@@ -44,9 +43,6 @@ public class LastWeekOfYear implements Week, Serializable {
 
     private LocalDateTime init(LocalDateTime ldt) {
         LocalDateTime lastDayOfYear = ldt.with(TemporalAdjusters.lastDayOfYear());
-        if (lastDayOfYear.getDayOfWeek() != DayOfWeek.SUNDAY) {
-            lastDayOfYear = lastDayOfYear.minusWeeks(1);
-        }
         return lastDayOfYear.with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0)
                 .withSecond(0);
     }

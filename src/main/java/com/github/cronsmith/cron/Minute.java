@@ -13,7 +13,6 @@
  */
 package com.github.cronsmith.cron;
 
-import java.time.LocalTime;
 import java.util.Iterator;
 import java.util.function.Function;
 
@@ -41,7 +40,7 @@ public interface Minute extends Iterator<Minute>, CronExpression {
     }
 
     default Second everySecond(int interval) {
-        return everySecond(LocalTime.now().getSecond(), 59, interval);
+        return everySecond(0, 59, interval);
     }
 
     default Second everySecond(int from, int to, int interval) {

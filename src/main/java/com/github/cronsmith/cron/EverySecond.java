@@ -30,8 +30,8 @@ public class EverySecond implements Second, Serializable {
     private static final long serialVersionUID = -2606684197757806223L;
     private Minute minute;
     private LocalDateTime second;
-    private final int fromSecond;
-    private final int toSecond;
+    private final Function<Minute, Integer> from;
+    private final Function<Minute, Integer> to;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -42,26 +42,36 @@ public class EverySecond implements Second, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.minute = minute;
-        this.fromSecond = from.apply(minute);
-        FieldAssertions.checkSecond(fromSecond);
-        this.second = minute.getTime().withSecond(fromSecond);
+        this.from = from;
+        this.to = to;
+
+        this.second = minute.getTime().withSecond(getFromSecond());
         this.interval = interval;
-        this.toSecond = to.apply(minute);
-        FieldAssertions.checkSecond(toSecond);
         this.self = true;
         this.forward = true;
     }
 
+    private int getFromSecond() {
+        int fromSecond = from.apply(minute);
+        FieldAssertions.checkSecond(fromSecond);
+        return fromSecond;
+    }
+
+    private int getToSecond() {
+        int toSecond = to.apply(minute);
+        FieldAssertions.checkSecond(toSecond);
+        return toSecond;
+    }
 
     @Override
     public boolean hasNext() {
-        boolean next = self || second.getSecond() + interval <= toSecond;
+        boolean next = self || second.getSecond() + interval <= getToSecond();
         if (!next) {
             if (minute.hasNext()) {
                 minute = minute.next();
                 second = second.withYear(minute.getYear()).withMonth(minute.getMonth())
                         .withDayOfMonth(minute.getDay()).withHour(minute.getHour())
-                        .withMinute(minute.getMinute()).withSecond(fromSecond);
+                        .withMinute(minute.getMinute()).withSecond(getFromSecond());
                 forward = false;
                 next = true;
             }
@@ -125,8 +135,15 @@ public class EverySecond implements Second, Serializable {
 
     @Override
     public String toCronString() {
-        String s = toSecond != 60 ? fromSecond + "-" + toSecond : fromSecond + "";
-        return interval > 1 ? s + "/" + interval : "*";
+        int fromSecond = getFromSecond();
+        int toSecond = getToSecond();
+        String str;
+        if (fromSecond == 0 && toSecond == 59) {
+            str = "*";
+        } else {
+            str = fromSecond + "-" + toSecond;
+        }
+        return interval > 1 ? str + "/" + interval : str;
     }
 
     @Override

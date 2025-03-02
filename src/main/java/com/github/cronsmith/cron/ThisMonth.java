@@ -18,7 +18,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
@@ -199,7 +198,7 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public Month next() {
-        month = List.copyOf(siblings.values()).get(index++);
+        month = IteratorUtils.get(siblings.values().iterator(), index++);
         month = month.withYear(year.getYear());
         return this;
     }
@@ -220,7 +219,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     public static void main(String[] args) {
-        TheYear singleYear = new ThisYear(2021);
+        TheYear singleYear = Epoch.getInstance().year(2021);
         singleYear = singleYear.andYear(2024).andYear(2028);
         TheMonth singleMonth = singleYear.July().andAug().andMonth(11);
         Day every = singleMonth.lastWeek().Fri().andSat();

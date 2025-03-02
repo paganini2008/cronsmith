@@ -11,40 +11,45 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.github.cronsmith.parser;
+package com.github.cronsmith.cron;
 
+import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.cron.EveryYear;
-import com.github.cronsmith.cron.TheYear;
-import com.github.cronsmith.cron.ThisYear;
-import com.github.cronsmith.cron.Year;
+import java.util.TimeZone;
 
 /**
  * 
- * Epoch
- *
- * @author Fred Feng
- *
- * @since 2.0.1
+ * @Description: Epoch
+ * @Author: Fred Feng
+ * @Date: 02/03/2025
+ * @Version 1.0.0
  */
-public final class Epoch implements CronExpression {
+public final class Epoch implements CronExpression, Serializable {
 
-    private static final Epoch instance = new Epoch();
+    private static final long serialVersionUID = 1L;
 
-    private Epoch() {}
+    Epoch(TimeZone timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    private final TimeZone timeZone;
 
     @Override
     public LocalDateTime getTime() {
-        throw new UnsupportedOperationException();
+        return LocalDate.now(timeZone.toZoneId()).atStartOfDay();
     }
 
     public Year everyYear(int interval) {
-        return new EveryYear(LocalDateTime.now().getYear(), y -> Year.MAX_YEAR, interval);
+        return everyYear(getTime().getYear(), Year.MAX_YEAR, interval);
+    }
+
+    public Year everyYear(int fromYear, int toYear, int interval) {
+        return new EveryYear(this, e -> fromYear, e -> toYear, interval);
     }
 
     public TheYear year(int year) {
-        return new ThisYear(year);
+        return new ThisYear(this, year);
     }
 
     @Override
@@ -53,7 +58,11 @@ public final class Epoch implements CronExpression {
     }
 
     public static Epoch getInstance() {
-        return instance;
+        return getInstance(TimeZone.getDefault());
+    }
+
+    public static Epoch getInstance(TimeZone timeZone) {
+        return new Epoch(timeZone);
     }
 
 }

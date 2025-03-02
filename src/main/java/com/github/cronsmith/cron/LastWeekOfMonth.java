@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.Locale;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -39,8 +38,7 @@ public class LastWeekOfMonth implements Week, Serializable {
     LastWeekOfMonth(Month month) {
         this.month = month;
         this.week = month.getTime().with(TemporalAdjusters.lastDayOfMonth())
-                .with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1).withHour(0).withMinute(0)
-                .withSecond(0);
+                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
         this.self = true;
     }
 
@@ -61,12 +59,12 @@ public class LastWeekOfMonth implements Week, Serializable {
 
     @Override
     public int getWeek() {
-        return week.get(WeekFields.of(Locale.getDefault()).weekOfMonth());
+        return week.get(WeekFields.ISO.weekOfMonth());
     }
 
     @Override
     public int getWeekOfYear() {
-        return week.get(WeekFields.of(Locale.getDefault()).weekOfYear());
+        return week.get(WeekFields.ISO.weekOfYear());
     }
 
     @Override
@@ -87,9 +85,8 @@ public class LastWeekOfMonth implements Week, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                week = week.withYear(month.getYear()).withMonth(month.getMonth()).with(
-                        WeekFields.of(Locale.getDefault()).weekOfMonth(),
-                        month.getWeekCountOfMonth());
+                week = week.withYear(month.getYear()).withMonth(month.getMonth())
+                        .with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth());
                 next = true;
             }
         }
@@ -111,7 +108,7 @@ public class LastWeekOfMonth implements Week, Serializable {
 
     @Override
     public String toCronString() {
-        return "L";
+        return "";
     }
 
     @Override

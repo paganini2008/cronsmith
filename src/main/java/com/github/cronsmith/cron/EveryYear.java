@@ -14,6 +14,7 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
@@ -32,23 +33,39 @@ public class EveryYear implements Year, Serializable {
 
     private static final long serialVersionUID = 1487831872493410360L;
 
-    public EveryYear(int fromYear, Function<Year, Integer> to, int interval) {
-        FieldAssertions.checkYear(fromYear);
+    public EveryYear(Epoch epoch, Function<Epoch, Integer> from, Function<Epoch, Integer> to,
+            int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        this.year = LocalDateTime.now().withYear(fromYear);
-        this.fromYear = fromYear;
+        this.epoch = epoch;
+        this.from = from;
+        this.to = to;
+
+        this.year = epoch.getTime().withYear(getFromYear());
         this.interval = interval;
         this.self = true;
-        this.toYear = to.apply(this);
+
     }
 
+    private final Epoch epoch;
     private LocalDateTime year;
-    private final int fromYear;
-    private final int toYear;
+    private final Function<Epoch, Integer> from;
+    private final Function<Epoch, Integer> to;
     private final int interval;
     private boolean self;
+
+    private int getFromYear() {
+        int fromYear = from.apply(epoch);
+        FieldAssertions.checkYear(fromYear);
+        return fromYear;
+    }
+
+    private int getToYear() {
+        int toYear = to.apply(epoch);
+        FieldAssertions.checkYear(toYear);
+        return toYear;
+    }
 
     @Override
     public int getYear() {
@@ -66,13 +83,17 @@ public class EveryYear implements Year, Serializable {
     }
 
     @Override
-    public int getLastDayOfYear() {
-        return year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
+    public int getLastDayOfYear(int n) {
+        int lastDayOfYear = year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
+        if (n < lastDayOfYear) {
+            lastDayOfYear -= n;
+        }
+        return lastDayOfYear;
     }
 
     @Override
     public boolean hasNext() {
-        return self || year.getYear() + interval <= toYear;
+        return self || year.getYear() + interval <= getToYear();
     }
 
     @Override
@@ -123,7 +144,19 @@ public class EveryYear implements Year, Serializable {
 
     @Override
     public String toCronString() {
-        return interval > 1 ? fromYear + "-" + toYear + "/" + interval : "";
+        int fromYear = getFromYear();
+        int toYear = getToYear();
+        boolean slashed = false;
+        String str;
+        if (fromYear == LocalDate.now().getYear() && toYear == MAX_YEAR) {
+            str = "*";
+        } else if (fromYear != LocalDate.now().getYear() && toYear == MAX_YEAR) {
+            str = String.valueOf(fromYear);
+            slashed = true;
+        } else {
+            str = fromYear + "-" + toYear;
+        }
+        return interval > 1 ? str + "/" + interval : slashed ? str + "/1" : str;
     }
 
     @Override

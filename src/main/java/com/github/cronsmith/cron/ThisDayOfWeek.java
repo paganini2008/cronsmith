@@ -22,6 +22,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.parser.Utils;
 
 /**
  * 
@@ -71,7 +72,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
         } else if (week instanceof ThisWeek) {
             return week.toCronString().replaceAll("%s", String.valueOf(dayOfWeek));
         }
-        return CalendarUtils.getDayOfWeekName(dayOfWeek);
+        return Utils.getDayOfWeekName(dayOfWeek);
     }
 
     @Override
@@ -145,7 +146,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
 
     @Override
     public Day next() {
-        day = new ArrayList<LocalDateTime>(siblings.values()).get(index++);
+        day = IteratorUtils.get(siblings.values().iterator(), index++);
         day.withYear(week.getYear()).withMonth(week.getMonth()).with(WeekFields.ISO.weekOfMonth(),
                 week.getWeek());
         return this;

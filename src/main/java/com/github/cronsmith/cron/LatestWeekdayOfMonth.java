@@ -113,6 +113,9 @@ public class LatestWeekdayOfMonth implements Day, Serializable {
 
     @Override
     public String toCronString() {
+        if (dayOfMonth == month.getLastDay()) {
+            return "LW";
+        }
         return dayOfMonth + "W";
     }
 

@@ -72,7 +72,7 @@ public class AbbreviationHyphenVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
-        if (text.contains("-")) {
+        if (text.contains("-") && (filter == null || filter.contains("-"))) {
             String[] args = text.split("\\-", 2);
             int from = Utils.getDayOfWeekValue(args[0]);
             int to = Utils.getDayOfWeekValue(args[1]);

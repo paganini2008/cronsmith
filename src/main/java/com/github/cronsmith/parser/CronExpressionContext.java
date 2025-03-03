@@ -1,5 +1,6 @@
 package com.github.cronsmith.parser;
 
+import java.util.TimeZone;
 import com.github.cronsmith.antlr.CronExpressionBaseVisitor;
 import com.github.cronsmith.antlr.CronExpressionParser.CronContext;
 import com.github.cronsmith.antlr.CronExpressionParser.DayOfMonthContext;
@@ -20,8 +21,42 @@ import com.github.cronsmith.cron.CronExpression;
  */
 public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpression> {
 
+    public CronExpressionContext() {
+        AsteriskVisitor asteriskVisitor = new AsteriskVisitor();
+        IntegerVisitor integerVisitor = new IntegerVisitor();
+        AbbreviationVisitor abbreviationVisitor = new AbbreviationVisitor();
+        IntegerHyphenVisitor integerHyphenVisitor = new IntegerHyphenVisitor();
+        AbbreviationHyphenVisitor abbreviationHyphenVisitor = new AbbreviationHyphenVisitor();
+        SlashVisitor slashVisitor = new SlashVisitor();
+        IgnoredVistor ignoredVistor = new IgnoredVistor();
+        LastToVisitor lastToVisitor = new LastToVisitor();
+        WeekdayVisitor weekdayVisitor = new WeekdayVisitor();
+        CommaVisitor commaVisitor = new CommaVisitor();
+
+        asteriskVisitor.setNextVisitor(integerVisitor);
+        integerVisitor.setNextVisitor(abbreviationVisitor);
+        abbreviationVisitor.setNextVisitor(integerHyphenVisitor);
+        integerHyphenVisitor.setNextVisitor(abbreviationHyphenVisitor);
+        abbreviationHyphenVisitor.setNextVisitor(slashVisitor);
+        slashVisitor.setNextVisitor(ignoredVistor);
+        ignoredVistor.setNextVisitor(lastToVisitor);
+        lastToVisitor.setNextVisitor(weekdayVisitor);
+        weekdayVisitor.setNextVisitor(commaVisitor);
+        this.symbolVisitor = asteriskVisitor;
+    }
+
     private CronExpression cronExpression;
-    private SymbolVisitor symbolVisitor;
+    private final SymbolVisitor symbolVisitor;
+
+    private TimeZone timeZone = TimeZone.getDefault();
+
+    public TimeZone getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(TimeZone timeZone) {
+        this.timeZone = timeZone;
+    }
 
     @Override
     public CronExpression visitCron(CronContext ctx) {
@@ -88,7 +123,5 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
     public SymbolVisitor getSymbolVisitor() {
         return symbolVisitor;
     }
-
-
 
 }

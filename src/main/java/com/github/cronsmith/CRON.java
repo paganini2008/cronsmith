@@ -111,4 +111,9 @@ public abstract class CRON {
         return context.visit(tree);
     }
 
+    public static void main(String[] args) {
+        String cronString = "5-30/7 * * * * ?";
+        System.out.println(parse(cronString));
+    }
+
 }

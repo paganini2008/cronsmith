@@ -69,6 +69,7 @@ public class TestMain {
         cronExpr = "0,3,6,9 12 0/4 * * SUN-MON 2025-2030,2032-2038/2";
         // cronExpr = "0/1 0 12 5 * ?";
         // cronExpr = "0 0 12 ? * 5L";
+        cronExpr = "5-30/7 * * * * ?";
         CharStream input = CharStreams.fromString(cronExpr);
         CronExpressionLexer lexer = new CronExpressionLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

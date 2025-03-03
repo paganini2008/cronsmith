@@ -20,8 +20,8 @@ fieldList  : field (',' field)* ;
 field      : '*' 
            | INT 
            | STAR_SLASH 
-           | range 
            | rangeWithStep 
+           | range
            | weekdayRange 
            | INT_SLASH
            | 'L'
@@ -30,7 +30,7 @@ field      : '*'
            ;
 
 range      : INT '-' INT ;
-rangeWithStep : range '/' INT ;
+rangeWithStep : INT '-' INT '/' INT ;
 STAR_SLASH : '*' '/' INT ;
 INT_SLASH  : INT '/' INT ;
 weekdayRange : WEEKDAY ('-' WEEKDAY)?;

@@ -112,7 +112,7 @@ public abstract class CRON {
     }
 
     public static void main(String[] args) {
-        String cronString = "5-30/7 * * * * ?";
+        String cronString = "5-30/7 0-12/3,15-45/2 2,3,4-17/2 1,15,LW JAN-JUL ? 2025-2030";
         System.out.println(parse(cronString));
     }
 

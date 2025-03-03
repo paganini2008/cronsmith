@@ -65,11 +65,11 @@ public class TestMain {
     }
 
     public static void main(String[] args) {
-        String cronExpr = "0 15-20 10 1-5 1,2,3,4,5 SUN-FRI";
-        cronExpr = "0,3,6,9 12 0/4 * * SUN-MON 2025-2030,2032-2038/2";
+        String cronExpr = "5-30/7 0-12/3,15-45/2 2,3,4-17/2 1,15,LW JAN-JUL ? 2025-2030";
+        // cronExpr = "0,3,6,9 12 0/4 * * SUN-MON 2025-2030,2032-2038/2";
         // cronExpr = "0/1 0 12 5 * ?";
         // cronExpr = "0 0 12 ? * 5L";
-        cronExpr = "5-30/7 * * * * ?";
+        // cronExpr = "5-30/7 * * * * ?";
         CharStream input = CharStreams.fromString(cronExpr);
         CronExpressionLexer lexer = new CronExpressionLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

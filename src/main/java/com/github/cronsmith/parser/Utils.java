@@ -36,10 +36,10 @@ public abstract class Utils {
         monthNameValues.put("MAR", Month.MARCH.getValue());
         monthNameValues.put("APR", Month.APRIL.getValue());
         monthNameValues.put("MAY", Month.MAY.getValue());
-        monthNameValues.put("JUNE", Month.JUNE.getValue());
-        monthNameValues.put("JULY", Month.JULY.getValue());
+        monthNameValues.put("JUN", Month.JUNE.getValue());
+        monthNameValues.put("JUL", Month.JULY.getValue());
         monthNameValues.put("AUG", Month.AUGUST.getValue());
-        monthNameValues.put("SEPT", Month.SEPTEMBER.getValue());
+        monthNameValues.put("SEP", Month.SEPTEMBER.getValue());
         monthNameValues.put("OCT", Month.OCTOBER.getValue());
         monthNameValues.put("NOV", Month.NOVEMBER.getValue());
         monthNameValues.put("DEC", Month.DECEMBER.getValue());

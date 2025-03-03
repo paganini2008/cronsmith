@@ -28,16 +28,25 @@ public class WeekdayVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitSecond(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitSecond(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitMinute(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitMinute(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitMonth(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
@@ -65,17 +74,26 @@ public class WeekdayVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMonth(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitMonth(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitDayOfWeek(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitYear(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 

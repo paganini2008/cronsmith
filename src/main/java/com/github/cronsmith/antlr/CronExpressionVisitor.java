@@ -61,23 +61,47 @@ public interface CronExpressionVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitYear(CronExpressionParser.YearContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CronExpressionParser#fieldList}.
+	 * Visit a parse tree produced by {@link CronExpressionParser#secondField}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFieldList(CronExpressionParser.FieldListContext ctx);
+	T visitSecondField(CronExpressionParser.SecondFieldContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CronExpressionParser#field}.
+	 * Visit a parse tree produced by {@link CronExpressionParser#minuteField}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitField(CronExpressionParser.FieldContext ctx);
+	T visitMinuteField(CronExpressionParser.MinuteFieldContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CronExpressionParser#range}.
+	 * Visit a parse tree produced by {@link CronExpressionParser#hourField}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitRange(CronExpressionParser.RangeContext ctx);
+	T visitHourField(CronExpressionParser.HourFieldContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfMonthField}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDayOfMonthField(CronExpressionParser.DayOfMonthFieldContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthField}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMonthField(CronExpressionParser.MonthFieldContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfWeekField}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDayOfWeekField(CronExpressionParser.DayOfWeekFieldContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#yearField}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitYearField(CronExpressionParser.YearFieldContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#rangeWithStep}.
 	 * @param ctx the parse tree
@@ -85,15 +109,33 @@ public interface CronExpressionVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRangeWithStep(CronExpressionParser.RangeWithStepContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#range}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRange(CronExpressionParser.RangeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#weekdayRange}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitWeekdayRange(CronExpressionParser.WeekdayRangeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CronExpressionParser#weekdayWithHash}.
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthNameRange}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitWeekdayWithHash(CronExpressionParser.WeekdayWithHashContext ctx);
+	T visitMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfWeekName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDayOfWeekName(CronExpressionParser.DayOfWeekNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMonthName(CronExpressionParser.MonthNameContext ctx);
 }

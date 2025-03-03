@@ -8,35 +8,89 @@ cron
     : second SPACE minute SPACE hour SPACE dayOfMonth SPACE month SPACE dayOfWeek SPACE? year? EOF
     ;
 
-second     : fieldList ;
-minute     : fieldList ;
-hour       : fieldList ;
-dayOfMonth : fieldList | '?' | 'L' | INT 'W';
-month      : fieldList ;
-dayOfWeek  : fieldList | '?' | weekdayWithHash | INT_L;
-year       : fieldList ;
 
-fieldList  : field (',' field)* ;
-field      : '*' 
-           | INT 
-           | STAR_SLASH 
-           | rangeWithStep 
-           | range
-           | weekdayRange 
-           | INT_SLASH
-           | 'L'
-           | INT 'L'
-           | INT 'W'
-           ;
+second   : secondField (',' secondField)* ;
+minute   : minuteField (',' minuteField)* ;
+hour     : hourField (',' hourField)* ;
+dayOfMonth : dayOfMonthField (',' dayOfMonthField)* ;
+month    : monthField (',' monthField)* ;
+dayOfWeek : dayOfWeekField (',' dayOfWeekField)* ;
+year     : yearField (',' yearField)* ;
 
-range      : INT '-' INT ;
-rangeWithStep : INT '-' INT '/' INT ;
-STAR_SLASH : '*' '/' INT ;
-INT_SLASH  : INT '/' INT ;
-weekdayRange : WEEKDAY ('-' WEEKDAY)?;
-weekdayWithHash : WEEKDAY '#' INT ;
 
-WEEKDAY    : 'SUN' | 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' ;
+secondField
+    : rangeWithStep  
+    | range          
+    | INT '/' INT   
+    | '*'            
+    | INT      
+    ;
+
+minuteField
+    : rangeWithStep  
+    | range          
+    | INT '/' INT   
+    | '*'            
+    | INT      
+    ;
+    
+hourField
+    : rangeWithStep  
+    | range          
+    | INT '/' INT   
+    | '*'            
+    | INT      
+    ;
+    
+dayOfMonthField
+    : rangeWithStep 
+    | range
+    | '*'            
+    | INT      
+    | '?' 
+    | 'LW'      
+    | 'L' INT? 
+    | INT 'W'     
+    | INT '/' INT   
+    ;
+
+monthField
+    : rangeWithStep
+    | range
+    | '*'            
+    | INT      
+    | monthName
+    | monthNameRange
+    ;
+    
+dayOfWeekField
+    : rangeWithStep
+    | range
+    | '*'    
+    | INT '#' INT 
+    | INT 'L'              
+    | INT      
+    | weekdayRange
+    | dayOfWeekName '#' INT
+    | '?'
+    ;
+    
+yearField
+    : rangeWithStep  
+    | range          
+    | INT '/' INT   
+    | '*'            
+    | INT      
+    ;
+
+rangeWithStep : INT '-' INT '/' INT ; 
+range         : INT '-' INT ;
+
+weekdayRange  : dayOfWeekName ('-' dayOfWeekName)? (',' dayOfWeekName ('-' dayOfWeekName)? )* ;
+monthNameRange  : monthName ('-' monthName)? (',' monthName ('-' monthName)? )* ;
+
+dayOfWeekName    : 'SUN' | 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' ;
+monthName        : 'JAN' | 'FEB' | 'MAR' | 'APR' | 'MAY' | 'JUN' | 'JUL' | 'AUG' | 'SEP' | 'OCT' | 'NOV' | 'DEC'  ;
 
 INT : [0-9]+ ;
 INT_L : [0-9]+ 'L' ;

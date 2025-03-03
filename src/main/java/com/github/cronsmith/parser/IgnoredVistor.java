@@ -25,16 +25,25 @@ public class IgnoredVistor implements SymbolVisitor {
 
     @Override
     public CronExpression visitSecond(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitSecond(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitMinute(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitMinute(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitHour(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
@@ -51,6 +60,9 @@ public class IgnoredVistor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMonth(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitMonth(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 
@@ -67,6 +79,9 @@ public class IgnoredVistor implements SymbolVisitor {
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
+        if (nextVisitor != null) {
+            return nextVisitor.visitYear(text, filter, context);
+        }
         throw new UnsupportedSymbolException(text);
     }
 

@@ -20,7 +20,7 @@ package com.github.cronsmith.cron;
  * @Date: 02/03/2025
  * @Version 1.0.0
  */
-public interface TheDayOfWeek extends Day {
+public interface TheDayOfWeek extends DayOfWeek {
 
     TheDayOfWeek andDay(int day);
 

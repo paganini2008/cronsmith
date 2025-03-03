@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,8 +13,6 @@
  */
 package com.github.cronsmith.cron;
 
-import java.time.DayOfWeek;
-
 /**
  * 
  * @Description: TheDayOfWeekInMonth
@@ -22,37 +20,37 @@ import java.time.DayOfWeek;
  * @Date: 01/03/2025
  * @Version 1.0.0
  */
-public interface TheDayOfWeekInMonth extends Day {
+public interface TheDayOfWeekInMonth extends DayOfWeek {
 
     TheDayOfWeekInMonth and(int weekOfMonth, int dayOfWeek);
 
     TheDayOfWeekInMonth andLast(int dayOfWeek);
 
     default TheDayOfWeekInMonth andLastSun() {
-        return andLast(DayOfWeek.SUNDAY.getValue());
+        return andLast(7);
     }
 
     default TheDayOfWeekInMonth andLastSat() {
-        return andLast(DayOfWeek.SATURDAY.getValue());
+        return andLast(6);
     }
 
     default TheDayOfWeekInMonth andLastFri() {
-        return andLast(DayOfWeek.FRIDAY.getValue());
+        return andLast(5);
     }
 
     default TheDayOfWeekInMonth andLastThur() {
-        return andLast(DayOfWeek.THURSDAY.getValue());
+        return andLast(4);
     }
 
     default TheDayOfWeekInMonth andLastWed() {
-        return andLast(DayOfWeek.WEDNESDAY.getValue());
+        return andLast(3);
     }
 
     default TheDayOfWeekInMonth andLastTues() {
-        return andLast(DayOfWeek.TUESDAY.getValue());
+        return andLast(2);
     }
 
     default TheDayOfWeekInMonth andLastMon() {
-        return andLast(DayOfWeek.MONDAY.getValue());
+        return andLast(1);
     }
 }

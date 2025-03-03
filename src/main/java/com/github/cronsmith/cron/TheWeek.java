@@ -22,11 +22,11 @@ package com.github.cronsmith.cron;
  */
 public interface TheWeek extends Week {
 
-    TheWeek andWeek(int week);
+    TheWeek andWeek(int weekOfMonth);
 
-    default TheWeek toWeek(int week) {
-        return toWeek(week, 1);
+    default TheWeek toWeek(int weekOfMonth) {
+        return toWeek(weekOfMonth, 1);
     }
 
-    TheWeek toWeek(int week, int interval);
+    TheWeek toWeek(int weekOfMonth, int interval);
 }

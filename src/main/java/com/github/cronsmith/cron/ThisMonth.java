@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.TreeMap;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -33,7 +32,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisMonth implements TheMonth, Serializable {
 
     private static final long serialVersionUID = 229203112866380942L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Year year;
     private int index;
     private LocalDateTime month;
@@ -43,9 +42,9 @@ public class ThisMonth implements TheMonth, Serializable {
     ThisMonth(Year year, int month) {
         FieldAssertions.checkMonth(month);
         this.year = year;
-        LocalDateTime ldt = year.getTime().withMonth(month);
-        this.siblings.put(month, ldt);
-        this.month = ldt;
+        DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
+        this.siblings.put(month, supplier);
+        this.month = supplier.get();
         this.lastMonth = month;
         this.cron = new StringBuilder().append(month);
     }
@@ -57,11 +56,11 @@ public class ThisMonth implements TheMonth, Serializable {
 
     private TheMonth andMonth(int month, boolean writeCron) {
         FieldAssertions.checkMonth(month);
-        LocalDateTime ldt = year.getTime().withMonth(month);
-        this.siblings.put(month, ldt);
+        DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
+        this.siblings.put(month, supplier);
         this.lastMonth = month;
         if (writeCron) {
-            this.cron.append(",").append(CalendarUtils.getMonthName(month));
+            this.cron.append(",").append(month);
         }
         return this;
     }
@@ -137,7 +136,7 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public int getWeekCountOfMonth() {
-        return month.get(WeekFields.ISO.weekOfMonth());
+        return month.with(TemporalAdjusters.lastDayOfMonth()).get(WeekFields.ISO.weekOfMonth());
     }
 
     @Override
@@ -153,7 +152,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Month, Integer> from, Function<Month, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval) {
         final Month copy = (Month) this.copy();
         return new EveryDay(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -177,8 +176,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public Week everyWeek(Function<Month, Integer> from, Function<Month, Integer> to,
-            int interval) {
+    public Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval) {
         final Month copy = (Month) this.copy();
         return new EveryWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -198,7 +196,8 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public Month next() {
-        month = IteratorUtils.get(siblings.values().iterator(), index++);
+        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
+        month = supplier.get();
         month = month.withYear(year.getYear());
         return this;
     }
@@ -219,11 +218,12 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     public static void main(String[] args) {
-        TheYear singleYear = Epoch.getInstance().year(2021);
-        singleYear = singleYear.andYear(2024).andYear(2028);
+        TheYear singleYear = Epoch.getInstance().year(2025);
+        singleYear = singleYear.andYear(2030).andYear(2028);
         TheMonth singleMonth = singleYear.July().andAug().andMonth(11);
-        Day every = singleMonth.lastWeek().Fri().andSat();
-        System.out.println(every);
+        CronExpression cronExpression = singleMonth.lastWeek().Tues().andWed().toSun().everyHour(2)
+                .minute(10).toMinute(50, 3).second(6);
+        System.out.println(cronExpression);
     }
 
 }

@@ -16,10 +16,9 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
+import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
 /**
@@ -32,7 +31,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisWeekOfYear implements TheWeek, Serializable {
 
     private static final long serialVersionUID = -3294283555586718358L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Year year;
     private int index;
     private LocalDateTime week;
@@ -41,17 +40,19 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
     ThisWeekOfYear(Year year, int weekOfYear) {
         FieldAssertions.checkWeekOfYear(year, weekOfYear);
         this.year = year;
-        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), weekOfYear);
-        this.siblings.put(weekOfYear, ldt);
-        this.week = ldt;
+        DateTimeSupplier supplier = () -> year.getTime()
+                .with(WeekFields.ISO.weekOfYear(), weekOfYear).with(WeekFields.ISO.dayOfWeek(), 1);
+        this.siblings.put(weekOfYear, supplier);
+        this.week = supplier.get();
         this.lastWeek = weekOfYear;
     }
 
     @Override
     public TheWeek andWeek(int weekOfYear) {
         FieldAssertions.checkWeekOfYear(year, weekOfYear);
-        LocalDateTime ldt = year.getTime().with(WeekFields.ISO.weekOfYear(), weekOfYear);
-        this.siblings.put(weekOfYear, ldt);
+        DateTimeSupplier supplier = () -> year.getTime()
+                .with(WeekFields.ISO.weekOfYear(), weekOfYear).with(WeekFields.ISO.dayOfWeek(), 1);
+        this.siblings.put(weekOfYear, supplier);
         this.lastWeek = weekOfYear;
         return this;
     }
@@ -97,7 +98,7 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
         final Week copy = (Week) this;
         return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -117,8 +118,9 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
 
     @Override
     public Week next() {
-        Map.Entry<Integer, LocalDateTime> entry = new ArrayList<>(siblings.entrySet()).get(index++);
-        week = entry.getValue();
+        Map.Entry<Integer, DateTimeSupplier> entry =
+                IteratorUtils.get(siblings.entrySet().iterator(), index++);
+        week = entry.getValue().get();
         week.withYear(year.getYear()).with(WeekFields.ISO.weekOfYear(),
                 Math.min(entry.getKey(), year.getWeekCountOfYear()));
         return this;
@@ -126,6 +128,16 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return year;
+        return year.month(week.getMonthValue());
+    }
+
+    @Override
+    public String toCronString() {
+        return String.valueOf(week.getDayOfMonth());
+    }
+
+    @Override
+    public String toString() {
+        return CRON.toCronString(this);
     }
 }

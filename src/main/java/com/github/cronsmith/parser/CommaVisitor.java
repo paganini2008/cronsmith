@@ -129,7 +129,4 @@ public class CommaVisitor implements SymbolVisitor {
         }
         throw new UnsupportedSymbolException(text);
     }
-
-
-
 }

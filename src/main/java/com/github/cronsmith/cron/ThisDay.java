@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -31,7 +30,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisDay implements TheDay, Serializable {
 
     private static final long serialVersionUID = -6007054113405112202L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Month month;
     private int index;
     private LocalDateTime day;
@@ -41,9 +40,9 @@ public class ThisDay implements TheDay, Serializable {
     ThisDay(Month month, int dayOfMonth) {
         FieldAssertions.checkDayOfMonth(month, dayOfMonth);
         this.month = month;
-        LocalDateTime ldt = month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(dayOfMonth, ldt);
-        this.day = ldt;
+        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
+        this.siblings.put(dayOfMonth, supplier);
+        this.day = supplier.get();
         this.lastDay = dayOfMonth;
         this.cron = new StringBuilder().append(dayOfMonth);
     }
@@ -55,8 +54,8 @@ public class ThisDay implements TheDay, Serializable {
 
     private TheDay andDay(int dayOfMonth, boolean writeCron) {
         FieldAssertions.checkDayOfMonth(month, dayOfMonth);
-        LocalDateTime ldt = month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(dayOfMonth, ldt);
+        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
+        this.siblings.put(dayOfMonth, supplier);
         this.lastDay = dayOfMonth;
         if (writeCron) {
             this.cron.append(",").append(dayOfMonth);
@@ -118,7 +117,7 @@ public class ThisDay implements TheDay, Serializable {
     }
 
     @Override
-    public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
+    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
         final Day copy = (Day) this.copy();
         return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -138,9 +137,9 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public Day next() {
-        Map.Entry<Integer, LocalDateTime> entry =
+        Map.Entry<Integer, DateTimeSupplier> entry =
                 IteratorUtils.get(siblings.entrySet().iterator(), index++);
-        day = entry.getValue();
+        day = entry.getValue().get();
         day = day.withYear(month.getYear()).withMonth(month.getMonth())
                 .withDayOfMonth(Math.min(entry.getKey(), month.getLastDay()));
         return this;

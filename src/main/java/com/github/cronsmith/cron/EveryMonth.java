@@ -18,7 +18,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 import com.github.cronsmith.parser.Utils;
@@ -35,13 +34,13 @@ public class EveryMonth implements Month, Serializable {
     private static final long serialVersionUID = -7085376125910878673L;
     private Year year;
     private LocalDateTime month;
-    private final Function<Year, Integer> from;
-    private final Function<Year, Integer> to;
+    private final IntFunction<Year> from;
+    private final IntFunction<Year> to;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EveryMonth(Year year, Function<Year, Integer> from, Function<Year, Integer> to, int interval) {
+    EveryMonth(Year year, IntFunction<Year> from, IntFunction<Year> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
@@ -169,7 +168,7 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Month, Integer> from, Function<Month, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval) {
         final Month copy = (Month) this.copy();
         return new EveryDay(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -193,8 +192,7 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public Week everyWeek(Function<Month, Integer> from, Function<Month, Integer> to,
-            int interval) {
+    public Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval) {
         final Month copy = (Month) this.copy();
         return new EveryWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }

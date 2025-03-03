@@ -13,10 +13,7 @@
  */
 package com.github.cronsmith.cron;
 
-import java.time.LocalDate;
-import java.time.temporal.WeekFields;
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * 
@@ -59,7 +56,7 @@ public interface Month extends Iterator<Month>, CronExpression {
         return everyDay(m -> from, m -> to, interval);
     }
 
-    Day everyDay(Function<Month, Integer> from, Function<Month, Integer> to, int interval);
+    Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval);
 
     TheDay day(int dayOfMonth);
 
@@ -74,8 +71,6 @@ public interface Month extends Iterator<Month>, CronExpression {
     }
 
     Day latestWeekday(int dayOfMonth);
-
-
 
     TheWeek week(int weekOfMonth);
 
@@ -92,7 +87,7 @@ public interface Month extends Iterator<Month>, CronExpression {
     }
 
     default Week everyWeek(int interval) {
-        return everyWeek(m -> LocalDate.now().get(WeekFields.ISO.weekOfMonth()), m -> {
+        return everyWeek(m -> 1, m -> {
             return m.getWeekCountOfMonth();
         }, interval);
     }
@@ -101,6 +96,6 @@ public interface Month extends Iterator<Month>, CronExpression {
         return everyWeek(m -> from, m -> to, interval);
     }
 
-    Week everyWeek(Function<Month, Integer> from, Function<Month, Integer> to, int interval);
+    Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval);
 
 }

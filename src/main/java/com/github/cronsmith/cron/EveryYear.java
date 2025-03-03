@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -33,8 +32,7 @@ public class EveryYear implements Year, Serializable {
 
     private static final long serialVersionUID = 1487831872493410360L;
 
-    public EveryYear(Epoch epoch, Function<Epoch, Integer> from, Function<Epoch, Integer> to,
-            int interval) {
+    public EveryYear(Epoch epoch, IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
@@ -50,8 +48,8 @@ public class EveryYear implements Year, Serializable {
 
     private final Epoch epoch;
     private LocalDateTime year;
-    private final Function<Epoch, Integer> from;
-    private final Function<Epoch, Integer> to;
+    private final IntFunction<Epoch> from;
+    private final IntFunction<Epoch> to;
     private final int interval;
     private boolean self;
 
@@ -107,8 +105,7 @@ public class EveryYear implements Year, Serializable {
     }
 
     @Override
-    public Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to,
-            int interval) {
+    public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
         final Year copy = (Year) this.copy();
         return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
     }

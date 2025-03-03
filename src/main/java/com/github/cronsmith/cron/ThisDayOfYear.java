@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,10 +15,9 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
+import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
 /**
@@ -31,19 +30,19 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisDayOfYear implements TheDay, Serializable {
 
     private static final long serialVersionUID = -8235489088108418524L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Year year;
     private int index;
     private LocalDateTime day;
     private int lastDay;
 
-    ThisDayOfYear(Year year, int day) {
-        FieldAssertions.checkDayOfYear(year, day);
+    ThisDayOfYear(Year year, int dayOfYear) {
+        FieldAssertions.checkDayOfYear(year, dayOfYear);
         this.year = year;
-        LocalDateTime ldt =
-                year.getTime().withDayOfYear(day).withHour(0).withMinute(0).withSecond(0);
-        this.siblings.put(day, ldt);
-        this.lastDay = day;
+        DateTimeSupplier supplier = () -> year.getTime().withDayOfYear(dayOfYear).withHour(0)
+                .withMinute(0).withSecond(0);
+        this.siblings.put(dayOfYear, supplier);
+        this.day = supplier.get();
     }
 
     @Override
@@ -78,7 +77,7 @@ public class ThisDayOfYear implements TheDay, Serializable {
     }
 
     @Override
-    public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
+    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
         final Day copy = (Day) this.copy();
         return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -91,12 +90,13 @@ public class ThisDayOfYear implements TheDay, Serializable {
     @Override
     public TheDay andDay(int dayOfYear) {
         FieldAssertions.checkDayOfYear(year, dayOfYear);
-        LocalDateTime ldt =
-                year.getTime().withDayOfYear(dayOfYear).withHour(0).withMinute(0).withSecond(0);
-        this.siblings.put(dayOfYear, ldt);
+        DateTimeSupplier supplier = () -> year.getTime().withDayOfYear(dayOfYear).withHour(0)
+                .withMinute(0).withSecond(0);
+        this.siblings.put(dayOfYear, supplier);
         this.lastDay = dayOfYear;
         return this;
     }
+
 
     @Override
     public TheDay toDay(int day, int interval) {
@@ -122,8 +122,9 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     @Override
     public Day next() {
-        Map.Entry<Integer, LocalDateTime> entry = new ArrayList<>(siblings.entrySet()).get(index++);
-        day = entry.getValue();
+        Map.Entry<Integer, DateTimeSupplier> entry =
+                IteratorUtils.get(siblings.entrySet().iterator(), index++);
+        day = entry.getValue().get();
         day = day.withYear(year.getYear());
         day = day.withDayOfYear(Math.min(entry.getKey(), year.getLastDayOfYear()));
         return this;
@@ -131,7 +132,17 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return null;
+        return year.month(getMonth());
+    }
+
+    @Override
+    public String toCronString() {
+        return String.valueOf(getDay());
+    }
+
+    @Override
+    public String toString() {
+        return CRON.toCronString(this);
     }
 
 }

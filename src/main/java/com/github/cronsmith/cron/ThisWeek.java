@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -34,21 +33,22 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisWeek implements TheWeek, Serializable {
 
     private static final long serialVersionUID = -4563991137870265612L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Month month;
     private int index;
     private LocalDateTime week;
     private int lastWeek;
     private final StringBuilder cron;
 
-    ThisWeek(Month month, int week) {
-        FieldAssertions.checkWeekOfMonth(month, week);
+    ThisWeek(Month month, int weekOfMonth) {
+        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
         this.month = month;
-        LocalDateTime ldt = month.getTime().with(WeekFields.ISO.weekOfMonth(), week);
-        this.siblings.put(week, ldt);
-        this.week = ldt;
-        this.lastWeek = week;
-        this.cron = new StringBuilder().append("%s#").append(week);
+        DateTimeSupplier supplier =
+                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
+        this.siblings.put(weekOfMonth, supplier);
+        this.week = supplier.get();
+        this.lastWeek = weekOfMonth;
+        this.cron = new StringBuilder().append("%s#").append(weekOfMonth);
     }
 
     @Override
@@ -56,22 +56,23 @@ public class ThisWeek implements TheWeek, Serializable {
         return andWeek(week, true);
     }
 
-    private ThisWeek andWeek(int week, boolean writeCron) {
-        FieldAssertions.checkWeekOfMonth(month, week);
-        LocalDateTime ldt = month.getTime().with(WeekFields.ISO.weekOfMonth(), week);
-        this.siblings.put(week, ldt);
-        this.lastWeek = week;
+    private ThisWeek andWeek(int weekOfMonth, boolean writeCron) {
+        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
+        DateTimeSupplier supplier =
+                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
+        this.siblings.put(weekOfMonth, supplier);
+        this.lastWeek = weekOfMonth;
         if (writeCron) {
-            this.cron.append(",%s#").append(week);
+            this.cron.append(",%s#").append(weekOfMonth);
         }
         return this;
     }
 
     @Override
-    public ThisWeek toWeek(int week, int interval) {
-        FieldAssertions.checkWeekOfMonth(month, week);
+    public ThisWeek toWeek(int weekOfMonth, int interval) {
+        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
         List<Integer> weeks = new ArrayList<Integer>();
-        for (int i = lastWeek + interval; i < week; i += interval) {
+        for (int i = lastWeek + interval; i < weekOfMonth; i += interval) {
             andWeek(i, false);
             weeks.add(i);
         }
@@ -113,7 +114,7 @@ public class ThisWeek implements TheWeek, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
         final Week copy = (Week) this.copy();
         return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -133,8 +134,9 @@ public class ThisWeek implements TheWeek, Serializable {
 
     @Override
     public Week next() {
-        Map.Entry<Integer, LocalDateTime> entry = new ArrayList<>(siblings.entrySet()).get(index++);
-        week = entry.getValue();
+        Map.Entry<Integer, DateTimeSupplier> entry =
+                IteratorUtils.get(siblings.entrySet().iterator(), index++);
+        week = entry.getValue().get();
         week = week.withYear(month.getYear()).withMonth(month.getMonth()).with(
                 WeekFields.ISO.weekOfMonth(),
                 Math.min(entry.getKey(), month.getWeekCountOfMonth()));

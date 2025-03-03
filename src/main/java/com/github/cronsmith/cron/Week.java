@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.time.DayOfWeek;
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * 
@@ -46,7 +45,7 @@ public interface Week extends Iterator<Week>, CronExpression {
         return everyDay(w -> from, w -> to, interval);
     }
 
-    Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval);
+    Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval);
 
     TheDayOfWeek day(int dayOfWeek);
 

@@ -14,7 +14,6 @@
 package com.github.cronsmith.cron;
 
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * 
@@ -47,7 +46,7 @@ public interface Day extends Iterator<Day>, CronExpression {
         return everyHour(d -> from, d -> to, interval);
     }
 
-    Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval);
+    Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval);
 
     TheHour hour(int hourOfDay);
 
@@ -58,7 +57,5 @@ public interface Day extends Iterator<Day>, CronExpression {
     default TheSecond at(int hourOfDay, int minute, int second) {
         return hour(hourOfDay).minute(minute).second(second);
     }
-
-
 
 }

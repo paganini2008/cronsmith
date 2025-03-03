@@ -14,10 +14,8 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 import com.github.cronsmith.parser.Utils;
@@ -29,19 +27,18 @@ import com.github.cronsmith.parser.Utils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryDayOfWeek implements Day, Serializable {
+public class EveryDayOfWeek implements DayOfWeek, Serializable {
 
     private static final long serialVersionUID = 7871249122497937952L;
     private Week week;
     private LocalDateTime day;
-    private final Function<Week, Integer> from;
-    private final Function<Week, Integer> to;
+    private final IntFunction<Week> from;
+    private final IntFunction<Week> to;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EveryDayOfWeek(Week week, Function<Week, Integer> from, Function<Week, Integer> to,
-            int interval) {
+    EveryDayOfWeek(Week week, IntFunction<Week> from, IntFunction<Week> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
@@ -135,7 +132,7 @@ public class EveryDayOfWeek implements Day, Serializable {
     }
 
     @Override
-    public Hour everyHour(Function<Day, Integer> from, Function<Day, Integer> to, int interval) {
+    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
         final Day copy = (Day) this.copy();
         return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -147,21 +144,11 @@ public class EveryDayOfWeek implements Day, Serializable {
 
     @Override
     public String toCronString() {
-        String str;
         int fromDayOfWeek = getFromDayOfWeek();
         int toDayOfWeek = getToDayOfWeek();
-        if (fromDayOfWeek == DayOfWeek.MONDAY.getValue()
-                && toDayOfWeek == DayOfWeek.SUNDAY.getValue()) {
-            str = "*";
-        } else {
-            str = fromDayOfWeek + "-" + toDayOfWeek;
-        }
         if (interval > 1) {
-            return str + "/" + interval;
+            return fromDayOfWeek + "-" + toDayOfWeek + "/" + interval;
         } else {
-            if ("*".equals(str)) {
-                return "?";
-            }
             return String.format("%s-%s", Utils.getDayOfWeekName(fromDayOfWeek),
                     Utils.getDayOfWeekName(toDayOfWeek));
         }

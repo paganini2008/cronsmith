@@ -16,7 +16,6 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.TreeMap;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -30,7 +29,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisMinute implements TheMinute, Serializable {
 
     private static final long serialVersionUID = 7090607807516357598L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Hour hour;
     private int index;
     private LocalDateTime minute;
@@ -40,9 +39,9 @@ public class ThisMinute implements TheMinute, Serializable {
     ThisMinute(Hour hour, int minute) {
         FieldAssertions.checkMinute(minute);
         this.hour = hour;
-        LocalDateTime ldt = hour.getTime().withMinute(minute);
-        this.siblings.put(minute, ldt);
-        this.minute = ldt;
+        DateTimeSupplier supplier = () -> hour.getTime().withMinute(minute);
+        this.siblings.put(minute, supplier);
+        this.minute = supplier.get();
         this.lastMinute = minute;
         this.cron = new StringBuilder().append(minute);
     }
@@ -54,8 +53,8 @@ public class ThisMinute implements TheMinute, Serializable {
 
     private ThisMinute andMinute(int minute, boolean writeCron) {
         FieldAssertions.checkMinute(minute);
-        LocalDateTime ldt = hour.getTime().withMinute(minute);
-        this.siblings.put(minute, ldt);
+        DateTimeSupplier supplier = () -> hour.getTime().withMinute(minute);
+        this.siblings.put(minute, supplier);
         this.lastMinute = minute;
         if (writeCron) {
             this.cron.append(",").append(minute);
@@ -117,8 +116,7 @@ public class ThisMinute implements TheMinute, Serializable {
     }
 
     @Override
-    public Second everySecond(Function<Minute, Integer> from, Function<Minute, Integer> to,
-            int interval) {
+    public Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
         final Minute copy = (Minute) this.copy();
         return new EverySecond(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -138,7 +136,8 @@ public class ThisMinute implements TheMinute, Serializable {
 
     @Override
     public Minute next() {
-        minute = IteratorUtils.get(siblings.values().iterator(), index++);
+        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
+        minute = supplier.get();
         minute = minute.withYear(hour.getYear()).withMonth(hour.getMonth())
                 .withDayOfMonth(hour.getDay()).withHour(hour.getHour());
         return this;

@@ -29,6 +29,8 @@ import com.github.cronsmith.SerializationUtils;
 @SuppressWarnings("unchecked")
 public interface CronExpression extends CronStringBuilder {
 
+    CronExpression getParent();
+
     LocalDateTime getTime();
 
     default CronExpression copy() {
@@ -50,7 +52,7 @@ public interface CronExpression extends CronStringBuilder {
                 .forEach((Iterator<CronExpression>) copy())) {
             dateTime = cronExpression.getTime();
             if (dateTime.compareTo(baseline) < 0) {
-                // continue;
+                continue;
             }
             if (n < 0 || i++ < n) {
                 consumer.accept(dateTime);

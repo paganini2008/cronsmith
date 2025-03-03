@@ -29,7 +29,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisSecond implements TheSecond, Serializable {
 
     private static final long serialVersionUID = 6264419114715870528L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<Integer, LocalDateTime>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Minute minute;
     private int index;
     private LocalDateTime second;
@@ -39,9 +39,9 @@ public class ThisSecond implements TheSecond, Serializable {
     ThisSecond(Minute minute, int second) {
         FieldAssertions.checkSecond(second);
         this.minute = minute;
-        LocalDateTime ldt = minute.getTime().withSecond(second);
-        this.siblings.put(second, ldt);
-        this.second = ldt;
+        DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
+        this.siblings.put(second, supplier);
+        this.second = supplier.get();
         this.lastSecond = second;
         this.cron = new StringBuilder().append(second);
     }
@@ -53,8 +53,8 @@ public class ThisSecond implements TheSecond, Serializable {
 
     private ThisSecond andSecond(int second, boolean writeCron) {
         FieldAssertions.checkSecond(second);
-        LocalDateTime ldt = minute.getTime().withSecond(second);
-        this.siblings.put(second, ldt);
+        DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
+        this.siblings.put(second, supplier);
         this.lastSecond = second;
         if (writeCron) {
             this.cron.append(",").append(second);
@@ -129,7 +129,8 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public Second next() {
-        second = IteratorUtils.get(siblings.values().iterator(), index++);
+        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
+        second = supplier.get();
         second = second.withYear(minute.getYear()).withMonth(minute.getMonth())
                 .withDayOfMonth(minute.getDay()).withHour(minute.getHour())
                 .withMinute(minute.getMinute());

@@ -17,7 +17,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -28,7 +27,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class LastWeekOfYear implements Week, Serializable {
+public class LastWeekOfYear implements LastWeek, Serializable {
 
     private static final long serialVersionUID = -2099892494149322184L;
     private Year year;
@@ -79,7 +78,7 @@ public class LastWeekOfYear implements Week, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
         final Week copy = (Week) this.copy();
         return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -113,7 +112,7 @@ public class LastWeekOfYear implements Week, Serializable {
 
     @Override
     public String toCronString() {
-        return "";
+        return "%sL";
     }
 
     @Override

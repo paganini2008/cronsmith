@@ -13,32 +13,25 @@
  */
 package com.github.cronsmith;
 
-import java.time.DayOfWeek;
+
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import com.github.cronsmith.antlr.CronExpressionLexer;
+import com.github.cronsmith.antlr.CronExpressionParser;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
-import com.github.cronsmith.cron.Epoch;
+import com.github.cronsmith.cron.DayOfWeek;
 import com.github.cronsmith.cron.EveryYear;
 import com.github.cronsmith.cron.Hour;
 import com.github.cronsmith.cron.Minute;
 import com.github.cronsmith.cron.Month;
-import com.github.cronsmith.cron.TheDayOfWeek;
-import com.github.cronsmith.cron.TheDayOfWeekInMonth;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
-import com.github.cronsmith.parser.CronOption;
-import com.github.cronsmith.parser.DayOfWeekOption;
-import com.github.cronsmith.parser.DayOption;
-import com.github.cronsmith.parser.HourOption;
-import com.github.cronsmith.parser.MalformedCronException;
-import com.github.cronsmith.parser.MinuteOption;
-import com.github.cronsmith.parser.MonthOption;
-import com.github.cronsmith.parser.SecondOption;
-import com.github.cronsmith.parser.YearOption;
+import com.github.cronsmith.parser.CronExpressionContext;
 
 /**
  * 
@@ -50,7 +43,7 @@ import com.github.cronsmith.parser.YearOption;
 public abstract class CRON {
 
     public static TemporalField NON_ISO_WEEKS_FIELD =
-            WeekFields.of(DayOfWeek.MONDAY, 7).dayOfWeek();
+            WeekFields.of(java.time.DayOfWeek.MONDAY, 7).dayOfWeek();
 
     public static String toCronString(CronExpression cronExpression) {
         CronExpression copy = cronExpression.copy();
@@ -77,7 +70,7 @@ public abstract class CRON {
 
         CronExpression day = hour.getParent();
         boolean hasDayOfWeek = false;
-        if (day instanceof TheDayOfWeek || day instanceof TheDayOfWeekInMonth) {
+        if (day instanceof DayOfWeek) {
             hasDayOfWeek = true;
         }
         if (hasDayOfWeek) {
@@ -109,58 +102,13 @@ public abstract class CRON {
     }
 
     public static CronExpression parse(String cronString) {
-        List<String> clauses = new ArrayList<String>();
-        if (clauses.size() == 6) {
-            clauses.add("*");
-        }
-        if (clauses.size() != 7) {
-            throw new MalformedCronException(cronString);
-        }
-        Collections.reverse(clauses);
-        Collections.swap(clauses, 1, 2);
-        List<CronOption> parsers = new ArrayList<CronOption>(7);
-        String value = clauses.get(0);
-        parsers.add(new YearOption(value));
-
-        value = clauses.get(1);
-        parsers.add(new MonthOption(value));
-
-        boolean hasDay = false;
-        value = clauses.get(2);
-        if (!value.equals("?")) {
-            parsers.add(new DayOfWeekOption(value));
-            hasDay = true;
-        }
-
-        value = clauses.get(3);
-        if (!value.equals("?")) {
-            if (hasDay) {
-                throw new MalformedCronException(cronString);
-            }
-            parsers.add(new DayOption(value));
-        }
-
-        value = clauses.get(4);
-        parsers.add(new HourOption(value));
-
-        value = clauses.get(5);
-        parsers.add(new MinuteOption(value));
-
-        value = clauses.get(6);
-        parsers.add(new SecondOption(value));
-
-        CronExpression cronExpression = Epoch.getInstance();
-        try {
-            for (CronOption clause : parsers) {
-                cronExpression = clause.join(cronExpression);
-            }
-            return cronExpression;
-        } catch (RuntimeException e) {
-            if (e instanceof MalformedCronException) {
-                throw e;
-            }
-            throw new MalformedCronException(cronString, e);
-        }
+        CharStream input = CharStreams.fromString(cronString);
+        CronExpressionLexer lexer = new CronExpressionLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        CronExpressionParser parser = new CronExpressionParser(tokens);
+        ParseTree tree = parser.cron();
+        CronExpressionContext context = new CronExpressionContext();
+        return context.visit(tree);
     }
 
 }

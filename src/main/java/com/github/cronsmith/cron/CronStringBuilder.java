@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -25,8 +25,6 @@ public interface CronStringBuilder {
     default boolean supportCronString() {
         return true;
     }
-
-    CronExpression getParent();
 
     default String toCronString() {
         throw new UnsupportedOperationException();

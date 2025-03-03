@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.TreeMap;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -32,7 +31,7 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisYear implements TheYear, Serializable {
 
     private static final long serialVersionUID = -5316436238766770045L;
-    private final TreeMap<Integer, LocalDateTime> siblings = new TreeMap<>();
+    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
     private Epoch epoch;
     private LocalDateTime year;
     private int index;
@@ -42,9 +41,9 @@ public class ThisYear implements TheYear, Serializable {
     public ThisYear(Epoch epoch, int year) {
         FieldAssertions.checkYear(year);
         this.epoch = epoch;
-        LocalDateTime ldt = epoch.getTime().withYear(year);
-        this.siblings.put(year, ldt);
-        this.year = ldt;
+        DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
+        this.siblings.put(year, supplier);
+        this.year = supplier.get();
         this.lastYear = year;
         this.cron = new StringBuilder().append(year);
     }
@@ -56,8 +55,8 @@ public class ThisYear implements TheYear, Serializable {
 
     private TheYear andYear(int year, boolean writeCron) {
         FieldAssertions.checkYear(year);
-        LocalDateTime ldt = epoch.getTime().withYear(year);
-        siblings.put(year, ldt);
+        DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
+        siblings.put(year, supplier);
         this.lastYear = year;
         if (writeCron) {
             this.cron.append(",").append(year);
@@ -107,8 +106,7 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     @Override
-    public Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to,
-            int interval) {
+    public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
         final Year copy = (Year) this.copy();
         return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -144,7 +142,8 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public Year next() {
-        year = IteratorUtils.get(siblings.values().iterator(), index++);
+        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
+        year = supplier.get();
         return this;
     }
 
@@ -165,9 +164,19 @@ public class ThisYear implements TheYear, Serializable {
 
     public static void main(String[] args) {
         TheYear singleYear = Epoch.getInstance().year(2025);
-        singleYear = singleYear.andYear(2028).andYear(2030);
-        Day day = singleYear.lastWeek().Mon().toFri();
-        System.out.println(day);
+        singleYear = singleYear.andYear(2028).andYear(2030).toYear(2040, 2);
+        // CronExpression cronExpression = singleYear.Apr().andJuly().andSept().toDec().week(1)
+        // .andWeek(2).Sat().andSun().at(9, 15);
+        // cronExpression = singleYear.week(40).Mon().andTues().toDay(7, 2).at(9, 20);
+        CronExpression cronExpression = singleYear.day(205).everyHour(2);
+        // Day day = singleYear.everyMonth().everyWeek().Mon().toFri();
+        // System.out.println(day);
+        // Hour hour = day.everyHour(3);
+
+        System.out.println(cronExpression);
+        // day.forEach(l -> {
+        // System.out.println(l);
+        // }, 100);
     }
 
 }

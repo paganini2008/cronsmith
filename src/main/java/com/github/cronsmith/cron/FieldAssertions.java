@@ -14,7 +14,7 @@
 package com.github.cronsmith.cron;
 
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * 
@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 public abstract class FieldAssertions {
 
     public static void checkYear(int year) {
-        int thisYear = LocalDateTime.now().getYear();
+        int thisYear = LocalDate.now().getYear();
         if (year < thisYear) {
             throw new IllegalArgumentException("Year '" + year + "' is past.");
         }
@@ -37,10 +37,8 @@ public abstract class FieldAssertions {
     }
 
     public static void checkMonth(int month) {
-        int start = java.time.Month.JANUARY.getValue();
-        int end = java.time.Month.DECEMBER.getValue();
-        if (month < start || month > end) {
-            throw new IllegalArgumentException("Month's range is " + start + " to " + end);
+        if (month < 1 || month > 12) {
+            throw new IllegalArgumentException("Month's range is from 1 to 12");
         }
     }
 
@@ -56,15 +54,15 @@ public abstract class FieldAssertions {
         }
     }
 
-    public static void checkWeekOfMonth(Month month, int week) {
-        if (week < 1 || week > month.getWeekCountOfMonth()) {
+    public static void checkWeekOfMonth(Month month, int weekOfMonth) {
+        if (weekOfMonth < 1 || weekOfMonth > month.getWeekCountOfMonth()) {
             throw new IllegalArgumentException(
                     "Week's range is 1 to " + month.getWeekCountOfMonth());
         }
     }
 
-    public static void checkDayOfMonth(Month month, int day) {
-        if (day < 1 || day > month.getLastDay()) {
+    public static void checkDayOfMonth(Month month, int dayOfMonth) {
+        if (dayOfMonth < 1 || dayOfMonth > month.getLastDay()) {
             throw new IllegalArgumentException(
                     "Day's range of this month is 1 to " + month.getLastDay());
         }
@@ -72,26 +70,26 @@ public abstract class FieldAssertions {
 
     public static void checkDayOfWeek(int dayOfWeek) {
         if (dayOfWeek < DayOfWeek.MONDAY.getValue() || dayOfWeek > DayOfWeek.SUNDAY.getValue()) {
-            throw new IllegalArgumentException("WeekDay's range is " + DayOfWeek.MONDAY.getValue()
-                    + " to " + DayOfWeek.SUNDAY.getValue());
+            throw new IllegalArgumentException("WeekDay's range is from "
+                    + DayOfWeek.MONDAY.getValue() + " to " + DayOfWeek.SUNDAY.getValue());
         }
     }
 
     public static void checkHourOfDay(int hour) {
         if (hour < 0 || hour > 23) {
-            throw new IllegalArgumentException("Hour's range is 0 to 23.");
+            throw new IllegalArgumentException("Hour's range is from 0 to 23.");
         }
     }
 
     public static void checkMinute(int minute) {
         if (minute < 0 || minute > 59) {
-            throw new IllegalArgumentException("Minute's range is 0 to 59.");
+            throw new IllegalArgumentException("Minute's range is from 0 to 59.");
         }
     }
 
     public static void checkSecond(int second) {
         if (second < 0 || second > 59) {
-            throw new IllegalArgumentException("Second's range is 0 to 59.");
+            throw new IllegalArgumentException("Second's range is from 0 to 59.");
         }
     }
 

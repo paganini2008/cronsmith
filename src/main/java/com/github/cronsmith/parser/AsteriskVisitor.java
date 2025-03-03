@@ -105,7 +105,7 @@ public class AsteriskVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
-        if ("*".equals(text) && (filter == null || filter.contains(text))) {
+        if ("*".equals(text) && (filter == null || filter.contains("*"))) {
             if (context.getCronExpression() != null) {
                 return ((Week) context.getCronExpression()).everyDay();
             } else {
@@ -119,7 +119,7 @@ public class AsteriskVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
-        if ("*".equals(text) && (filter == null || filter.contains(text))) {
+        if ("*".equals(text) && (filter == null || filter.contains("*"))) {
             return CronExpressionUtils.everyYear();
         } else if (nextVisitor != null) {
             return nextVisitor.visitYear(text, filter, context);

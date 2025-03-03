@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -31,13 +30,13 @@ public class EveryMinute implements Minute, Serializable {
     private static final long serialVersionUID = -7939881133025374416L;
     private Hour hour;
     private LocalDateTime minute;
-    private final Function<Hour, Integer> from;
-    private final Function<Hour, Integer> to;
+    private final IntFunction<Hour> from;
+    private final IntFunction<Hour> to;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EveryMinute(Hour hour, Function<Hour, Integer> from, Function<Hour, Integer> to, int interval) {
+    EveryMinute(Hour hour, IntFunction<Hour> from, IntFunction<Hour> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
@@ -130,8 +129,7 @@ public class EveryMinute implements Minute, Serializable {
     }
 
     @Override
-    public Second everySecond(Function<Minute, Integer> from, Function<Minute, Integer> to,
-            int interval) {
+    public Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
         final Minute copy = (Minute) this.copy();
         return new EverySecond(IteratorUtils.getFirst(copy), from, to, interval);
     }

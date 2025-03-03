@@ -14,7 +14,6 @@
 package com.github.cronsmith.cron;
 
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * 
@@ -49,6 +48,6 @@ public interface Minute extends Iterator<Minute>, CronExpression {
 
     TheSecond second(int second);
 
-    Second everySecond(Function<Minute, Integer> from, Function<Minute, Integer> to, int interval);
+    Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval);
 
 }

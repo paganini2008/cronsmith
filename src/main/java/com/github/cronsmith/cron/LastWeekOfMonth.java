@@ -15,9 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -28,7 +26,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class LastWeekOfMonth implements Week, Serializable {
+public class LastWeekOfMonth implements LastWeek, Serializable {
 
     private static final long serialVersionUID = 2658610900522209361L;
     private Month month;
@@ -37,7 +35,7 @@ public class LastWeekOfMonth implements Week, Serializable {
 
     LastWeekOfMonth(Month month) {
         this.month = month;
-        this.week = month.getTime().with(TemporalAdjusters.lastDayOfMonth())
+        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth())
                 .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
         this.self = true;
     }
@@ -74,7 +72,7 @@ public class LastWeekOfMonth implements Week, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
         final Week copy = (Week) this.copy();
         return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }
@@ -86,7 +84,8 @@ public class LastWeekOfMonth implements Week, Serializable {
             if (month.hasNext()) {
                 month = month.next();
                 week = week.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth());
+                        .with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth())
+                        .with(WeekFields.ISO.dayOfWeek(), 1);
                 next = true;
             }
         }
@@ -108,7 +107,7 @@ public class LastWeekOfMonth implements Week, Serializable {
 
     @Override
     public String toCronString() {
-        return "";
+        return "%sL";
     }
 
     @Override

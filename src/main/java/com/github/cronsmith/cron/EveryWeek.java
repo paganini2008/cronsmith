@@ -16,8 +16,6 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.Locale;
-import java.util.function.Function;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -33,28 +31,38 @@ public class EveryWeek implements Week, Serializable {
     private static final long serialVersionUID = -6457126115562721511L;
     private Month month;
     private LocalDateTime week;
-    private final int fromWeek;
-    private final int toWeek;
+    private final IntFunction<Month> from;
+    private final IntFunction<Month> to;
     private final int interval;
     private boolean self;
     private boolean forward = true;
     private LocalDateTime previous;
 
-    EveryWeek(Month month, Function<Month, Integer> from, Function<Month, Integer> to,
-            int interval) {
+    EveryWeek(Month month, IntFunction<Month> from, IntFunction<Month> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.month = month;
-        this.fromWeek = from.apply(month);
-        FieldAssertions.checkWeekOfMonth(month, fromWeek);
-        this.week = month.getTime().with(WeekFields.of(Locale.getDefault()).weekOfMonth(), fromWeek)
-                .with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1).withHour(0).withMinute(0)
-                .withSecond(0);
+        this.from = from;
+        this.to = to;
+
+        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), getFromWeek())
+                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
         this.interval = interval;
         this.self = true;
-        this.toWeek = to.apply(month);
+
+    }
+
+    private int getFromWeek() {
+        int fromWeek = from.apply(month);
+        FieldAssertions.checkWeekOfMonth(month, fromWeek);
+        return fromWeek;
+    }
+
+    private int getToWeek() {
+        int toWeek = to.apply(month);
         FieldAssertions.checkWeekOfMonth(month, toWeek);
+        return toWeek;
     }
 
     @Override
@@ -64,7 +72,7 @@ public class EveryWeek implements Week, Serializable {
             if (month.hasNext()) {
                 month = month.next();
                 week = week.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(WeekFields.of(Locale.getDefault()).weekOfMonth(), fromWeek);
+                        .with(WeekFields.ISO.weekOfMonth(), getFromWeek());
                 forward = previous != null && previous.compareTo(week) >= 0;
                 next = true;
             }
@@ -75,7 +83,7 @@ public class EveryWeek implements Week, Serializable {
     private boolean shoudNext() {
         if (month.getMonth() == week.getMonthValue()) {
             boolean next = (week.getDayOfMonth() + 7 <= month.getLastDay());
-            next &= (week.get(WeekFields.ISO.weekOfMonth()) + interval <= toWeek);
+            next &= (week.get(WeekFields.ISO.weekOfMonth()) + interval <= getToWeek());
             return next;
         }
         return false;
@@ -128,7 +136,7 @@ public class EveryWeek implements Week, Serializable {
     }
 
     @Override
-    public Day everyDay(Function<Week, Integer> from, Function<Week, Integer> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
         final Week copy = (Week) this.copy();
         return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
     }

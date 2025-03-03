@@ -14,7 +14,6 @@
 package com.github.cronsmith.cron;
 
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * 
@@ -37,7 +36,7 @@ public interface Year extends Iterator<Year>, CronExpression {
 
     int getLastDayOfYear(int n);
 
-    TheDay day(int day);
+    TheDay day(int dayOfYear);
 
     default Day lastDay() {
         return day(getLastDayOfYear());
@@ -63,7 +62,7 @@ public interface Year extends Iterator<Year>, CronExpression {
         return everyMonth(y -> from, y -> to, interval);
     }
 
-    Month everyMonth(Function<Year, Integer> from, Function<Year, Integer> to, int interval);
+    Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval);
 
     TheMonth month(int month);
 

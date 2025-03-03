@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -40,12 +40,24 @@ public final class Epoch implements CronExpression, Serializable {
         return LocalDate.now(timeZone.toZoneId()).atStartOfDay();
     }
 
+    public Year everyYear() {
+        return everyYear(1);
+    }
+
     public Year everyYear(int interval) {
         return everyYear(getTime().getYear(), Year.MAX_YEAR, interval);
     }
 
     public Year everyYear(int fromYear, int toYear, int interval) {
-        return new EveryYear(this, e -> fromYear, e -> toYear, interval);
+        return everyYear(e -> fromYear, e -> toYear, interval);
+    }
+
+    public Year everyYear(IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
+        return new EveryYear(this, from, to, interval);
+    }
+
+    public TheYear year() {
+        return year(getTime().getYear());
     }
 
     public TheYear year(int year) {

@@ -144,7 +144,7 @@ public class EveryMinute implements Minute, Serializable {
         int fromMinute = getFromMinute();
         int toMinute = getToMinute();
         String str;
-        if (fromMinute == 1 && toMinute == 59) {
+        if (fromMinute == 0 && toMinute == 59) {
             str = "*";
         } else {
             str = fromMinute + "-" + toMinute;

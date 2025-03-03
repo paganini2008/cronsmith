@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -33,6 +33,25 @@ public interface CronExpression extends CronStringBuilder {
 
     LocalDateTime getTime();
 
+    default LocalDateTime getNextFiredDateTime() {
+        return getNextFiredDateTimeAfter(LocalDateTime.now());
+    }
+
+    default LocalDateTime getNextFiredDateTimeAfter(LocalDateTime ldt) {
+        if (!(this instanceof Iterator)) {
+            throw new UnsupportedOperationException();
+        }
+        Iterator<CronExpression> iter = (Iterator<CronExpression>) copy();
+        CronExpression ce;
+        while (iter.hasNext()) {
+            ce = iter.next();
+            if (ce.getTime().isAfter(ldt)) {
+                return ce.getTime();
+            }
+        }
+        return null;
+    }
+
     default CronExpression copy() {
         return SerializationUtils.copy(this);
     }
@@ -51,7 +70,7 @@ public interface CronExpression extends CronStringBuilder {
         for (CronExpression cronExpression : IteratorUtils
                 .forEach((Iterator<CronExpression>) copy())) {
             dateTime = cronExpression.getTime();
-            if (dateTime.compareTo(baseline) < 0) {
+            if (dateTime.isBefore(baseline)) {
                 continue;
             }
             if (n < 0 || i++ < n) {

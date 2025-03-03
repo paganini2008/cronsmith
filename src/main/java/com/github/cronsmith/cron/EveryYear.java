@@ -32,7 +32,7 @@ public class EveryYear implements Year, Serializable {
 
     private static final long serialVersionUID = 1487831872493410360L;
 
-    public EveryYear(Epoch epoch, IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
+    EveryYear(Epoch epoch, IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }

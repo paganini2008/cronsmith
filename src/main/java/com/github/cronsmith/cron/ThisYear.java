@@ -168,7 +168,7 @@ public class ThisYear implements TheYear, Serializable {
         // CronExpression cronExpression = singleYear.Apr().andJuly().andSept().toDec().week(1)
         // .andWeek(2).Sat().andSun().at(9, 15);
         // cronExpression = singleYear.week(40).Mon().andTues().toDay(7, 2).at(9, 20);
-        CronExpression cronExpression = singleYear.day(205).everyHour(2);
+        CronExpression cronExpression = singleYear.day(205);
         // Day day = singleYear.everyMonth().everyWeek().Mon().toFri();
         // System.out.println(day);
         // Hour hour = day.everyHour(3);

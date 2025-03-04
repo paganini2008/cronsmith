@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
-import com.github.cronsmith.parser.Utils;
+import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -149,8 +149,8 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
         if (interval > 1) {
             return fromDayOfWeek + "-" + toDayOfWeek + "/" + interval;
         } else {
-            return String.format("%s-%s", Utils.getDayOfWeekName(fromDayOfWeek),
-                    Utils.getDayOfWeekName(toDayOfWeek));
+            return String.format("%s-%s", AbbreviationUtils.getDayOfWeekName(fromDayOfWeek),
+                    AbbreviationUtils.getDayOfWeekName(toDayOfWeek));
         }
     }
 

@@ -109,11 +109,35 @@ public interface CronExpressionVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRangeWithStep(CronExpressionParser.RangeWithStepContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#yearRangeWithStep}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitYearRangeWithStep(CronExpressionParser.YearRangeWithStepContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#range}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitRange(CronExpressionParser.RangeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#yearRange}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitYearRange(CronExpressionParser.YearRangeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#weekdayRangeWithStep}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWeekdayRangeWithStep(CronExpressionParser.WeekdayRangeWithStepContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthRangeWithStep}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#weekdayRange}.
 	 * @param ctx the parse tree
@@ -121,11 +145,11 @@ public interface CronExpressionVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitWeekdayRange(CronExpressionParser.WeekdayRangeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CronExpressionParser#monthNameRange}.
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthRange}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx);
+	T visitMonthRange(CronExpressionParser.MonthRangeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfWeekName}.
 	 * @param ctx the parse tree

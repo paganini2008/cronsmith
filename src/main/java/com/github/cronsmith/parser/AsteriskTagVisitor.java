@@ -11,17 +11,17 @@ import com.github.cronsmith.cron.Year;
 
 /**
  * 
- * @Description: AsteriskVisitor
+ * @Description: AsteriskTagVisitor
  * @Author: Fred Feng
  * @Date: 28/02/2025
  * @Version 1.0.0
  */
-public class AsteriskVisitor implements SymbolVisitor {
+public class AsteriskTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
@@ -67,7 +67,7 @@ public class AsteriskVisitor implements SymbolVisitor {
                 return CronExpressionUtils.everyHour();
             }
         } else if (nextVisitor != null) {
-            return nextVisitor.visitDayOfMonth(text, filter, context);
+            return nextVisitor.visitHour(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
     }
@@ -127,4 +127,8 @@ public class AsteriskVisitor implements SymbolVisitor {
         throw new UnsupportedSymbolException(text);
     }
 
+    @Override
+    public int getOrder() {
+        return 0;
+    }
 }

@@ -4,12 +4,12 @@ import com.github.cronsmith.cron.CronExpression;
 
 /**
  * 
- * @Description: SymbolVisitor
+ * @Description: TagVisitor
  * @Author: Fred Feng
  * @Date: 28/02/2025
  * @Version 1.0.0
  */
-public interface SymbolVisitor {
+public interface TagVisitor {
 
     String getSymbol();
 
@@ -27,6 +27,8 @@ public interface SymbolVisitor {
 
     CronExpression visitYear(String text, String filter, CronExpressionContext context);
 
-    void setNextVisitor(SymbolVisitor nextVisitor);
+    void setNextVisitor(TagVisitor nextVisitor);
+
+    int getOrder();
 
 }

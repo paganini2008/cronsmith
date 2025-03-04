@@ -12,9 +12,9 @@ import com.github.cronsmith.cron.TheDay;
  * @Date: 01/03/2025
  * @Version 1.0.0
  */
-public class WeekdayVisitor implements SymbolVisitor {
+public class WeekdayVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -22,7 +22,7 @@ public class WeekdayVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
@@ -45,7 +45,7 @@ public class WeekdayVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
         if (nextVisitor != null) {
-            return nextVisitor.visitMonth(text, filter, context);
+            return nextVisitor.visitHour(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
     }
@@ -95,6 +95,11 @@ public class WeekdayVisitor implements SymbolVisitor {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public int getOrder() {
+        return 7;
     }
 
 }

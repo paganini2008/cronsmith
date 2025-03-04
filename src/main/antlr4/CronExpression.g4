@@ -59,8 +59,9 @@ monthField
     | range
     | '*'            
     | INT      
+    | monthRangeWithStep
+    | monthRange
     | monthName
-    | monthNameRange
     ;
     
 dayOfWeekField
@@ -70,28 +71,38 @@ dayOfWeekField
     | INT '#' INT 
     | INT 'L'              
     | INT      
+    | weekdayRangeWithStep
     | weekdayRange
     | dayOfWeekName '#' INT
+    | dayOfWeekName
     | '?'
     ;
     
 yearField
-    : rangeWithStep  
-    | range          
-    | INT '/' INT   
+    : yearRangeWithStep
+    | yearRange     
+    | INT_YEAR '/' INT
     | '*'            
-    | INT      
+    | INT_YEAR      
     ;
 
 rangeWithStep : INT '-' INT '/' INT ; 
+yearRangeWithStep : INT_YEAR '-' INT_YEAR '/' INT  ;   
+
 range         : INT '-' INT ;
+yearRange     : INT_YEAR '-' INT_YEAR ;   
+
+weekdayRangeWithStep : dayOfWeekName '-' dayOfWeekName '/' INT ;
+monthRangeWithStep : monthName '-' monthName '/' INT ;
+
 
 weekdayRange  : dayOfWeekName ('-' dayOfWeekName)? (',' dayOfWeekName ('-' dayOfWeekName)? )* ;
-monthNameRange  : monthName ('-' monthName)? (',' monthName ('-' monthName)? )* ;
+monthRange  : monthName ('-' monthName)? (',' monthName ('-' monthName)? )* ;
 
 dayOfWeekName    : 'SUN' | 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' ;
 monthName        : 'JAN' | 'FEB' | 'MAR' | 'APR' | 'MAY' | 'JUN' | 'JUL' | 'AUG' | 'SEP' | 'OCT' | 'NOV' | 'DEC'  ;
 
+INT_YEAR : [2][0-9][0-9][0-9] ;
 INT : [0-9]+ ;
 INT_L : [0-9]+ 'L' ;
 SPACE : [ \t]+ -> skip ;

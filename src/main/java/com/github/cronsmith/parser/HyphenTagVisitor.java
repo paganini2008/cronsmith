@@ -18,14 +18,14 @@ import com.github.cronsmith.cron.Year;
 
 /**
  * 
- * @Description: IntegerHyphenVisitor
+ * @Description: HyphenVisitor
  * @Author: Fred Feng
  * @Date: 02/03/2025
  * @Version 1.0.0
  */
-public class IntegerHyphenVisitor implements SymbolVisitor {
+public class HyphenTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -33,13 +33,13 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
     @Override
     public CronExpression visitSecond(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\-\\d{1,2}") && (filter == null || filter.contains("-"))) {
+        if (text.matches("(\\d+\\-\\d+)(\\/\\d+)?") && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
             int from = Integer.parseInt(hyphenArgs[0]);
@@ -69,7 +69,7 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMinute(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\-\\d{1,2}") && (filter == null || filter.contains("-"))) {
+        if (text.matches("(\\d+\\-\\d+)(\\/\\d+)?") && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
             int from = Integer.parseInt(hyphenArgs[0]);
@@ -99,7 +99,7 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\-\\d{1,2}") && (filter == null || filter.contains("-"))) {
+        if (text.matches("(\\d+\\-\\d+)(\\/\\d+)?") && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
             int from = Integer.parseInt(hyphenArgs[0]);
@@ -130,7 +130,7 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfMonth(String text, String filter,
             CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\-\\d{1,2}") && (filter == null || filter.contains("-"))) {
+        if (text.matches("(\\d+\\-\\d+)(\\/\\d+)?") && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
             int from = Integer.parseInt(hyphenArgs[0]);
@@ -160,17 +160,34 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMonth(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\-\\d{1,2}") && (filter == null || filter.contains("-"))) {
+        String monthRegex =
+                "((JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\\-(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC))(\\/\\d+)?";
+        String numberRegex = "(\\d+\\-\\d+)(\\/\\d+)?";
+        if ((text.matches(monthRegex) || text.matches(numberRegex))
+                && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
-            int from = Integer.parseInt(hyphenArgs[0]);
+            int from;
+            try {
+                from = Integer.parseInt(hyphenArgs[0]);
+            } catch (RuntimeException e) {
+                from = AbbreviationUtils.getMonthValue(hyphenArgs[0]);
+            }
             int to;
             if (hyphenArgs[1].contains("/")) {
                 String[] slashArgs = hyphenArgs[1].split("\\/");
-                to = Integer.parseInt(slashArgs[0]);
                 interval = Integer.parseInt(slashArgs[1]);
+                try {
+                    to = Integer.parseInt(slashArgs[0]);
+                } catch (RuntimeException e) {
+                    to = AbbreviationUtils.getMonthValue(slashArgs[0]);
+                }
             } else {
-                to = Integer.parseInt(hyphenArgs[1]);
+                try {
+                    to = Integer.parseInt(hyphenArgs[1]);
+                } catch (RuntimeException e) {
+                    to = AbbreviationUtils.getMonthValue(hyphenArgs[1]);
+                }
             }
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
@@ -191,17 +208,32 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
-        if (text.matches("[1-7]\\-[1-7]") && (filter == null || filter.contains("-"))) {
+        if (text.matches(
+                "(((SUN|MON|TUE|WED|THU|FRI|SAT)\\-(SUN|MON|TUE|WED|THU|FRI|SAT))|([1-7]\\-[1-7]))(\\/\\d+)?")
+                && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
-            int from = Integer.parseInt(hyphenArgs[0]);
+            int from;
+            try {
+                from = Integer.parseInt(hyphenArgs[0]);
+            } catch (RuntimeException e) {
+                from = AbbreviationUtils.getDayOfWeekValue(hyphenArgs[0]);
+            }
             int to;
             if (hyphenArgs[1].contains("/")) {
                 String[] slashArgs = hyphenArgs[1].split("\\/");
-                to = Integer.parseInt(slashArgs[0]);
+                try {
+                    to = Integer.parseInt(slashArgs[0]);
+                } catch (RuntimeException e) {
+                    to = AbbreviationUtils.getDayOfWeekValue(slashArgs[0]);
+                }
                 interval = Integer.parseInt(slashArgs[1]);
             } else {
-                to = Integer.parseInt(hyphenArgs[1]);
+                try {
+                    to = Integer.parseInt(hyphenArgs[1]);
+                } catch (RuntimeException e) {
+                    to = AbbreviationUtils.getDayOfWeekValue(hyphenArgs[1]);
+                }
             }
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
@@ -223,7 +255,8 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{4}\\-\\d{4}") && (filter == null || filter.contains("-"))) {
+        if (text.matches("(\\d{4}\\-\\d{4})(\\/\\d+)?")
+                && (filter == null || filter.contains("-"))) {
             String[] hyphenArgs = text.split("\\-", 2);
             int interval = 1;
             int from = Integer.parseInt(hyphenArgs[0]);
@@ -247,6 +280,11 @@ public class IntegerHyphenVisitor implements SymbolVisitor {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public int getOrder() {
+        return 4;
     }
 
 }

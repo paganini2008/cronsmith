@@ -4,14 +4,14 @@ import com.github.cronsmith.cron.CronExpression;
 
 /**
  * 
- * @Description: CommaVisitor
+ * @Description: CommaTagVisitor
  * @Author: Fred Feng
  * @Date: 28/02/2025
  * @Version 1.0.0
  */
-public class CommaVisitor implements SymbolVisitor {
+public class CommaTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -19,7 +19,7 @@ public class CommaVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
@@ -29,7 +29,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitSecond(segment, "-/", context));
+                        context.getTagVisitor().visitSecond(segment, "-/", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -44,7 +44,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitMinute(segment, "-/", context));
+                        context.getTagVisitor().visitMinute(segment, "-/", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -59,7 +59,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitHour(segment, "-/", context));
+                        context.getTagVisitor().visitHour(segment, "-/", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -75,7 +75,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitDayOfMonth(segment, "-/LW", context));
+                        context.getTagVisitor().visitDayOfMonth(segment, "-/LW", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -90,7 +90,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitMonth(segment, "-/", context));
+                        context.getTagVisitor().visitMonth(segment, "-/", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -106,7 +106,7 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitDayOfWeek(segment, "-/L#", context));
+                        context.getTagVisitor().visitDayOfWeek(segment, "-/L#", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
@@ -121,12 +121,17 @@ public class CommaVisitor implements SymbolVisitor {
             String[] segments = text.split(",");
             for (String segment : segments) {
                 context.setCronExpression(
-                        context.getSymbolVisitor().visitYear(segment, "-/", context));
+                        context.getTagVisitor().visitYear(segment, "-/", context));
             }
             return context.getCronExpression();
         } else if (nextVisitor != null) {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public int getOrder() {
+        return Integer.MAX_VALUE;
     }
 }

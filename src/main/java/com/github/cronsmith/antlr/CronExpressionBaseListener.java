@@ -211,6 +211,18 @@ public class CronExpressionBaseListener implements CronExpressionListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterYearRangeWithStep(CronExpressionParser.YearRangeWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitYearRangeWithStep(CronExpressionParser.YearRangeWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterRange(CronExpressionParser.RangeContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -218,6 +230,42 @@ public class CronExpressionBaseListener implements CronExpressionListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRange(CronExpressionParser.RangeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterYearRange(CronExpressionParser.YearRangeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitYearRange(CronExpressionParser.YearRangeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterWeekdayRangeWithStep(CronExpressionParser.WeekdayRangeWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitWeekdayRangeWithStep(CronExpressionParser.WeekdayRangeWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -235,13 +283,13 @@ public class CronExpressionBaseListener implements CronExpressionListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx) { }
+	@Override public void enterMonthRange(CronExpressionParser.MonthRangeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx) { }
+	@Override public void exitMonthRange(CronExpressionParser.MonthRangeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

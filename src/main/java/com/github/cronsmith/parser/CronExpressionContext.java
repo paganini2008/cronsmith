@@ -1,5 +1,8 @@
 package com.github.cronsmith.parser;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimeZone;
 import com.github.cronsmith.antlr.CronExpressionBaseVisitor;
 import com.github.cronsmith.antlr.CronExpressionParser.CronContext;
@@ -22,31 +25,29 @@ import com.github.cronsmith.cron.CronExpression;
 public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpression> {
 
     public CronExpressionContext() {
-        AsteriskVisitor asteriskVisitor = new AsteriskVisitor();
-        IntegerVisitor integerVisitor = new IntegerVisitor();
-        AbbreviationVisitor abbreviationVisitor = new AbbreviationVisitor();
-        IntegerHyphenVisitor integerHyphenVisitor = new IntegerHyphenVisitor();
-        AbbreviationHyphenVisitor abbreviationHyphenVisitor = new AbbreviationHyphenVisitor();
-        SlashVisitor slashVisitor = new SlashVisitor();
-        IgnoredVistor ignoredVistor = new IgnoredVistor();
-        LastToVisitor lastToVisitor = new LastToVisitor();
-        WeekdayVisitor weekdayVisitor = new WeekdayVisitor();
-        CommaVisitor commaVisitor = new CommaVisitor();
-
-        asteriskVisitor.setNextVisitor(integerVisitor);
-        integerVisitor.setNextVisitor(abbreviationVisitor);
-        abbreviationVisitor.setNextVisitor(integerHyphenVisitor);
-        integerHyphenVisitor.setNextVisitor(abbreviationHyphenVisitor);
-        abbreviationHyphenVisitor.setNextVisitor(slashVisitor);
-        slashVisitor.setNextVisitor(ignoredVistor);
-        ignoredVistor.setNextVisitor(lastToVisitor);
-        lastToVisitor.setNextVisitor(weekdayVisitor);
-        weekdayVisitor.setNextVisitor(commaVisitor);
-        this.symbolVisitor = asteriskVisitor;
+        tagVisitors.add(new AsteriskTagVisitor());
+        tagVisitors.add(new IgnoredTagVistor());
+        tagVisitors.add(new NumberTagVisitor());
+        tagVisitors.add(new TextTagVisitor());
+        tagVisitors.add(new HyphenTagVisitor());
+        tagVisitors.add(new SlashTagVisitor());
+        tagVisitors.add(new LastTagVisitor());
+        tagVisitors.add(new WeekdayVisitor());
+        tagVisitors.add(new HashTagVisitor());
+        tagVisitors.add(new CommaTagVisitor());
+        Collections.sort(tagVisitors, (a, b) -> a.getOrder() - b.getOrder());
+        TagVisitor tagVisitor = tagVisitors.get(0);
+        for (int i = 1; i < tagVisitors.size(); i++) {
+            tagVisitor.setNextVisitor(tagVisitors.get(i));
+            tagVisitor = tagVisitors.get(i);
+        }
+        this.tagVisitor = tagVisitors.get(0);
     }
 
+    private final List<TagVisitor> tagVisitors = new ArrayList<TagVisitor>();
+    private final TagVisitor tagVisitor;
     private CronExpression cronExpression;
-    private final SymbolVisitor symbolVisitor;
+
 
     private TimeZone timeZone = TimeZone.getDefault();
 
@@ -73,43 +74,50 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
     @Override
     public CronExpression visitYear(YearContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitYear(text, null, this);
+        System.out.println("Year: " + text);
+        return tagVisitor.visitYear(text, null, this);
     }
 
     @Override
     public CronExpression visitDayOfWeek(DayOfWeekContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitDayOfWeek(text, null, this);
+        System.out.println("DayOfWeek: " + text);
+        return tagVisitor.visitDayOfWeek(text, null, this);
     }
 
     @Override
     public CronExpression visitMonth(MonthContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitMonth(text, null, this);
+        System.out.println("Month: " + text);
+        return tagVisitor.visitMonth(text, null, this);
     }
 
     @Override
     public CronExpression visitDayOfMonth(DayOfMonthContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitDayOfMonth(text, null, this);
+        System.out.println("DayOfMonth: " + text);
+        return tagVisitor.visitDayOfMonth(text, null, this);
     }
 
     @Override
     public CronExpression visitHour(HourContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitHour(text, null, this);
+        System.out.println("Hour: " + text);
+        return tagVisitor.visitHour(text, null, this);
     }
 
     @Override
     public CronExpression visitMinute(MinuteContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitMinute(text, null, this);
+        System.out.println("Minute: " + text);
+        return tagVisitor.visitMinute(text, null, this);
     }
 
     @Override
     public CronExpression visitSecond(SecondContext ctx) {
         String text = ctx.getText();
-        return symbolVisitor.visitSecond(text, null, this);
+        System.out.println("Second: " + text);
+        return tagVisitor.visitSecond(text, null, this);
     }
 
     public void setCronExpression(CronExpression cronExpression) {
@@ -120,8 +128,8 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
         return cronExpression;
     }
 
-    public SymbolVisitor getSymbolVisitor() {
-        return symbolVisitor;
+    public TagVisitor getTagVisitor() {
+        return tagVisitor;
     }
 
 }

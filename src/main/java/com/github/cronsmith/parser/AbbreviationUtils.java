@@ -8,12 +8,12 @@ import com.github.cronsmith.MapUtils;
 
 /**
  * 
- * @Description: Utils
+ * @Description: AbbreviationUtils
  * @Author: Fred Feng
  * @Date: 02/03/2025
  * @Version 1.0.0
  */
-public abstract class Utils {
+public abstract class AbbreviationUtils {
 
     private static final Map<String, Integer> dayOfWeekNameValues = new LinkedHashMap<>();
     private static final Map<Integer, String> dayOfWeekNames;
@@ -22,9 +22,9 @@ public abstract class Utils {
 
     static {
         dayOfWeekNameValues.put("MON", DayOfWeek.MONDAY.getValue());
-        dayOfWeekNameValues.put("TUES", DayOfWeek.TUESDAY.getValue());
+        dayOfWeekNameValues.put("TUE", DayOfWeek.TUESDAY.getValue());
         dayOfWeekNameValues.put("WED", DayOfWeek.WEDNESDAY.getValue());
-        dayOfWeekNameValues.put("THUR", DayOfWeek.THURSDAY.getValue());
+        dayOfWeekNameValues.put("THU", DayOfWeek.THURSDAY.getValue());
         dayOfWeekNameValues.put("FRI", DayOfWeek.FRIDAY.getValue());
         dayOfWeekNameValues.put("SAT", DayOfWeek.SATURDAY.getValue());
         dayOfWeekNameValues.put("SUN", DayOfWeek.SUNDAY.getValue());

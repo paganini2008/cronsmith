@@ -170,6 +170,16 @@ public interface CronExpressionListener extends ParseTreeListener {
 	 */
 	void exitRangeWithStep(CronExpressionParser.RangeWithStepContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link CronExpressionParser#yearRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void enterYearRangeWithStep(CronExpressionParser.YearRangeWithStepContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CronExpressionParser#yearRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void exitYearRangeWithStep(CronExpressionParser.YearRangeWithStepContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link CronExpressionParser#range}.
 	 * @param ctx the parse tree
 	 */
@@ -179,6 +189,36 @@ public interface CronExpressionListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRange(CronExpressionParser.RangeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CronExpressionParser#yearRange}.
+	 * @param ctx the parse tree
+	 */
+	void enterYearRange(CronExpressionParser.YearRangeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CronExpressionParser#yearRange}.
+	 * @param ctx the parse tree
+	 */
+	void exitYearRange(CronExpressionParser.YearRangeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CronExpressionParser#weekdayRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void enterWeekdayRangeWithStep(CronExpressionParser.WeekdayRangeWithStepContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CronExpressionParser#weekdayRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void exitWeekdayRangeWithStep(CronExpressionParser.WeekdayRangeWithStepContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CronExpressionParser#monthRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void enterMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CronExpressionParser#monthRangeWithStep}.
+	 * @param ctx the parse tree
+	 */
+	void exitMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CronExpressionParser#weekdayRange}.
 	 * @param ctx the parse tree
@@ -190,15 +230,15 @@ public interface CronExpressionListener extends ParseTreeListener {
 	 */
 	void exitWeekdayRange(CronExpressionParser.WeekdayRangeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link CronExpressionParser#monthNameRange}.
+	 * Enter a parse tree produced by {@link CronExpressionParser#monthRange}.
 	 * @param ctx the parse tree
 	 */
-	void enterMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx);
+	void enterMonthRange(CronExpressionParser.MonthRangeContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link CronExpressionParser#monthNameRange}.
+	 * Exit a parse tree produced by {@link CronExpressionParser#monthRange}.
 	 * @param ctx the parse tree
 	 */
-	void exitMonthNameRange(CronExpressionParser.MonthNameRangeContext ctx);
+	void exitMonthRange(CronExpressionParser.MonthRangeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CronExpressionParser#dayOfWeekName}.
 	 * @param ctx the parse tree

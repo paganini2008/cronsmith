@@ -8,14 +8,14 @@ import com.github.cronsmith.cron.TheDayOfWeekInMonth;
 
 /**
  * 
- * @Description: LastToVisitor
+ * @Description: LastTagVisitor
  * @Author: Fred Feng
  * @Date: 01/03/2025
  * @Version 1.0.0
  */
-public class LastToVisitor implements SymbolVisitor {
+public class LastTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -23,7 +23,7 @@ public class LastToVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
@@ -54,7 +54,7 @@ public class LastToVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfMonth(String text, String filter,
             CronExpressionContext context) {
-        if (text.contains("L") && (filter == null || filter.contains("L"))) {
+        if (text.matches("L|LW|L\\-\\d{1,}") && (filter == null || filter.contains("L"))) {
             CronExpression cronExpression =
                     context.getCronExpression() != null ? context.getCronExpression()
                             : CronExpressionUtils.everyMonth();
@@ -72,7 +72,7 @@ public class LastToVisitor implements SymbolVisitor {
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).lastWeekday();
                 }
-            } else if (text.matches("L\\-[1-9]")) {
+            } else if (text.matches("L\\-\\d{1,}")) {
                 int n = Integer.parseInt(text.substring(text.indexOf("-") + 1));
                 if (cronExpression instanceof TheDay) {
                     Month month = (Month) cronExpression.getParent();
@@ -120,6 +120,11 @@ public class LastToVisitor implements SymbolVisitor {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public int getOrder() {
+        return 6;
     }
 
 }

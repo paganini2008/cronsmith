@@ -107,6 +107,7 @@ public abstract class CRON {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CronExpressionParser parser = new CronExpressionParser(tokens);
         ParseTree tree = parser.cron();
+        System.out.println(tree);
         CronExpressionContext context = new CronExpressionContext();
         return context.visit(tree);
     }

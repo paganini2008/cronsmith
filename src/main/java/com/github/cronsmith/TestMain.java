@@ -23,6 +23,16 @@ public class TestMain {
         System.out.println(weekCount);
         tmp = tmp.with(WeekFields.ISO.weekOfYear(), weekCount);
         System.out.println(copy);
+
+        // System.out.println("L-12".matches("L|LW|L\\-\\d{1,2}"));
+
+        String repr = "((SUN|MON|TUE|WED|THU|FRI|SAT)|[1-7])(#[1-5])";
+        repr = "((JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)|(\\d{1,2}))\\/(\\d{1,})";
+        repr = "((SUN|MON|TUE|WED|THU|FRI|SAT)|[1-7])(\\/\\d{1,})";
+        repr = "(\\d+\\-\\d+)\\/(\\d+)";
+        repr = "(((SUN|MON|TUE|WED|THU|FRI|SAT)\\-(SUN|MON|TUE|WED|THU|FRI|SAT))|([1-7]\\-[1-7]))(\\/\\d+)?";
+        repr = "(\\d+\\-\\d+)(\\/\\d+)?";
+        System.out.println("0-12/3".matches(repr));
     }
 
 }

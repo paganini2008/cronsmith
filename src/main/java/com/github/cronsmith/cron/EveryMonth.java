@@ -20,7 +20,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
-import com.github.cronsmith.parser.Utils;
+import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -210,8 +210,8 @@ public class EveryMonth implements Month, Serializable {
         if (fromMonth == 1 && toMonth == 12) {
             str = "*";
         } else {
-            str = String.format("%s-%s", Utils.getMonthName(fromMonth),
-                    Utils.getMonthName(toMonth));
+            str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
+                    AbbreviationUtils.getMonthName(toMonth));
         }
         return interval > 1 ? str + "/" + interval : str;
     }

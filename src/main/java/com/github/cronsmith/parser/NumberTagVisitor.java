@@ -18,14 +18,14 @@ import com.github.cronsmith.cron.Year;
 
 /**
  * 
- * @Description: IntegerVisitor
+ * @Description: NumberTagVisitor
  * @Author: Fred Feng
  * @Date: 28/02/2025
  * @Version 1.0.0
  */
-public class IntegerVisitor implements SymbolVisitor {
+public class NumberTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -33,7 +33,7 @@ public class IntegerVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
@@ -187,4 +187,8 @@ public class IntegerVisitor implements SymbolVisitor {
         }
     }
 
+    @Override
+    public int getOrder() {
+        return 2;
+    }
 }

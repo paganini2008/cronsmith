@@ -15,9 +15,9 @@ import com.github.cronsmith.cron.Year;
  * @Date: 01/03/2025
  * @Version 1.0.0
  */
-public class SlashVisitor implements SymbolVisitor {
+public class SlashTagVisitor implements TagVisitor {
 
-    private SymbolVisitor nextVisitor;
+    private TagVisitor nextVisitor;
 
     @Override
     public String getSymbol() {
@@ -25,13 +25,13 @@ public class SlashVisitor implements SymbolVisitor {
     }
 
     @Override
-    public void setNextVisitor(SymbolVisitor nextVisitor) {
+    public void setNextVisitor(TagVisitor nextVisitor) {
         this.nextVisitor = nextVisitor;
     }
 
     @Override
     public CronExpression visitSecond(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\/\\d{1,2}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("\\d+\\/\\d+") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from = Integer.parseInt(args[0]);
             int interval = Integer.parseInt(args[1]);
@@ -51,7 +51,7 @@ public class SlashVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMinute(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\/\\d{1,2}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("\\d+\\/\\d+") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from = Integer.parseInt(args[0]);
             int interval = Integer.parseInt(args[1]);
@@ -71,7 +71,7 @@ public class SlashVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitHour(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\/\\d{1,2}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("\\d+\\/\\d+") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from = Integer.parseInt(args[0]);
             int interval = Integer.parseInt(args[1]);
@@ -92,7 +92,7 @@ public class SlashVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfMonth(String text, String filter,
             CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\/\\d{1,2}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("\\d+\\/\\d+") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from = Integer.parseInt(args[0]);
             int interval = Integer.parseInt(args[1]);
@@ -112,9 +112,15 @@ public class SlashVisitor implements SymbolVisitor {
 
     @Override
     public CronExpression visitMonth(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{1,2}\\/\\d{1,2}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("((JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)|(\\d+))\\/(\\d+)")
+                && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
-            int from = Integer.parseInt(args[0]);
+            int from;
+            try {
+                from = Integer.parseInt(args[0]);
+            } catch (RuntimeException e) {
+                from = java.time.Month.valueOf(args[0]).getValue();
+            }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
@@ -133,9 +139,15 @@ public class SlashVisitor implements SymbolVisitor {
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
-        if (text.matches("[1-7]\\/[1-7]") && (filter == null || filter.contains("/"))) {
+        if (text.matches("((SUN|MON|TUE|WED|THU|FRI|SAT)|[1-7])(\\/\\d+)")
+                && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
-            int from = Integer.parseInt(args[0]);
+            int from;
+            try {
+                from = Integer.parseInt(args[0]);
+            } catch (RuntimeException e) {
+                from = java.time.Month.valueOf(args[0]).getValue();
+            }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
@@ -146,14 +158,14 @@ public class SlashVisitor implements SymbolVisitor {
                 return CronExpressionUtils.everyWeek().everyDay(from, 7, interval);
             }
         } else if (nextVisitor != null) {
-            return nextVisitor.visitYear(text, filter, context);
+            return nextVisitor.visitDayOfWeek(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
     }
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
-        if (text.matches("\\d{4}\\/\\d{1,4}") && (filter == null || filter.contains("/"))) {
+        if (text.matches("\\d{4}\\/\\d+") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from = Integer.parseInt(args[0]);
             int interval = Integer.parseInt(args[1]);
@@ -162,6 +174,11 @@ public class SlashVisitor implements SymbolVisitor {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
+    }
+
+    @Override
+    public int getOrder() {
+        return 5;
     }
 
 }

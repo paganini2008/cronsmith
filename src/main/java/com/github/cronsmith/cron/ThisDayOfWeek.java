@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.TreeMap;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
-import com.github.cronsmith.parser.Utils;
+import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -74,7 +74,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
         } else if (week instanceof TheWeek) {
             return week.toCronString().replaceAll("%s", String.valueOf(dayOfWeek));
         }
-        return Utils.getDayOfWeekName(dayOfWeek);
+        return AbbreviationUtils.getDayOfWeekName(dayOfWeek);
     }
 
     @Override

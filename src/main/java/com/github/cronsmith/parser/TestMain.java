@@ -65,7 +65,7 @@ public class TestMain {
     }
 
     public static void main(String[] args) {
-        String cronExpr = "5-30/7 0-12/3,15-45/2 2,3,4-17/2 1,15,LW JAN-JUL ? 2025-2030";
+        String cronExpr = "5-30/7 0-12/3,15-45/2 2,3,4-17/2 ? JAN-JULYYY MON-THU/2 2025-2030";
         // cronExpr = "0,3,6,9 12 0/4 * * SUN-MON 2025-2030,2032-2038/2";
         // cronExpr = "0/1 0 12 5 * ?";
         // cronExpr = "0 0 12 ? * 5L";

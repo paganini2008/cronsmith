@@ -170,7 +170,7 @@ public class EveryYear implements Year, Serializable {
         String str;
         if (fromYear == LocalDate.now().getYear() && toYear == MAX_YEAR) {
             str = "*";
-        } else if (fromYear != LocalDate.now().getYear() && toYear == MAX_YEAR) {
+        } else if (fromYear > LocalDate.now().getYear() && toYear == MAX_YEAR) {
             str = String.valueOf(fromYear);
             slashed = true;
         } else {

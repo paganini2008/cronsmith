@@ -37,7 +37,7 @@ public class ThisDay implements TheDay, Serializable {
 
     private static final long serialVersionUID = -6007054113405112202L;
     private final TreeMap<String, DateTimeSupplier> siblings = new TreeMap<>();
-    private final List<Range> ranges = new ArrayList<>();
+    private final List<Range<String>> ranges = new ArrayList<>();
     private Month month;
     private int index;
     private LocalDateTime day;
@@ -51,12 +51,12 @@ public class ThisDay implements TheDay, Serializable {
         this.siblings.put(String.valueOf(dayOfMonth), supplier);
         this.day = supplier.get();
         this.lastDayFlag = dayOfMonth;
-        this.ranges.add(new Range(dayOfMonth));
+        this.ranges.add(new Range<>(String.valueOf(dayOfMonth)));
     }
 
     @Override
     public TheDay andDay(int dayOfMonth) {
-        this.ranges.add(new Range(dayOfMonth));
+        this.ranges.add(new Range<>(String.valueOf(dayOfMonth)));
         return doAndDay(dayOfMonth);
     }
 
@@ -73,7 +73,7 @@ public class ThisDay implements TheDay, Serializable {
         if (n < 0) {
             throw new IllegalArgumentException("Invalid last day offset: " + n);
         }
-        this.ranges.add(new Range(n > 0 ? "L-" + n : "L"));
+        this.ranges.add(new Range<>(n > 0 ? "L-" + n : "L"));
         return doAndLastDay(n);
     }
 
@@ -86,7 +86,7 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public TheDay andLastWeekday() {
-        this.ranges.add(new Range("LW"));
+        this.ranges.add(new Range<>("LW"));
         return doAndLastWeekday();
     }
 
@@ -110,7 +110,8 @@ public class ThisDay implements TheDay, Serializable {
             for (int i = lastDayFlag + interval; i <= dayOfMonth; i += interval) {
                 doAndDay(i);
             }
-            this.ranges.get(ranges.size() - 1).setTo(dayOfMonth).setInterval(interval);
+            this.ranges.get(ranges.size() - 1).setTo(String.valueOf(dayOfMonth))
+                    .setInterval(interval);
         }
         return this;
     }

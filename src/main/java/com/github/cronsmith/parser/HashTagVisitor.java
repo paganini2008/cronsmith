@@ -1,6 +1,5 @@
 package com.github.cronsmith.parser;
 
-import java.time.DayOfWeek;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.CronExpressionUtils;
 import com.github.cronsmith.cron.Month;
@@ -78,7 +77,7 @@ public class HashTagVisitor implements TagVisitor {
             try {
                 dayOfWeek = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
-                dayOfWeek = DayOfWeek.valueOf(args[0]).getValue();
+                dayOfWeek = AbbreviationUtils.getDayOfWeekValue(args[0]);
             }
             int weekOfMonth = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();

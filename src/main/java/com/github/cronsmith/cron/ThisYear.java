@@ -19,7 +19,10 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -38,7 +41,7 @@ public class ThisYear implements TheYear, Serializable {
     private LocalDateTime year;
     private int index;
     private int lastYear;
-    private final StringBuilder cron;
+    private final List<Range<Integer>> ranges = new ArrayList<>();
 
     public ThisYear(Epoch epoch, int year) {
         ChronoField.YEAR.checkValidValue(year);
@@ -47,22 +50,20 @@ public class ThisYear implements TheYear, Serializable {
         this.siblings.put(year, supplier);
         this.year = supplier.get();
         this.lastYear = year;
-        this.cron = new StringBuilder().append(year);
+        this.ranges.add(new YearRange(year));
     }
 
     @Override
     public TheYear andYear(int year) {
-        return andYear(year, true);
+        this.ranges.add(new YearRange(year));
+        return doAndYear(year);
     }
 
-    private TheYear andYear(int year, boolean writeCron) {
+    private TheYear doAndYear(int year) {
         ChronoField.YEAR.checkValidValue(year);
         DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
         siblings.put(year, supplier);
         this.lastYear = year;
-        if (writeCron) {
-            this.cron.append(",").append(year);
-        }
         return this;
     }
 
@@ -73,13 +74,9 @@ public class ThisYear implements TheYear, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         for (int i = lastYear + interval; i <= year; i += interval) {
-            andYear(i, false);
+            doAndYear(i);
         }
-        if (interval > 1) {
-            this.cron.append("-").append(year).append("/").append(interval);
-        } else {
-            this.cron.append("-").append(year);
-        }
+        this.ranges.get(ranges.size() - 1).setTo(year).setInterval(interval);
         return this;
     }
 
@@ -175,12 +172,29 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
     }
 
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    static class YearRange extends Range<Integer> {
+
+        public YearRange(Integer from) {
+            super(from);
+        }
+
+        public Integer getTo() {
+            if (Integer.valueOf(Year.MAX_YEAR).equals(super.getTo())) {
+                return null;
+            }
+            return super.getTo();
+        }
+
+        private static final long serialVersionUID = -7908364182076275624L;
+
     }
 
     public static void main(String[] args) {

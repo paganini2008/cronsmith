@@ -9,37 +9,37 @@ import java.io.Serializable;
  * @Date: 05/03/2025
  * @Version 1.0.0
  */
-class Range implements Serializable {
+class Range<T> implements Serializable {
 
     private static final long serialVersionUID = 1530351762307315226L;
-    private Object from;
-    private Object to;
+    private T from;
+    private T to;
     private Integer interval;
 
-    public Range(Object from) {
+    public Range(T from) {
         this.from = from;
     }
 
-    public Range(Object from, Object to, Integer interval) {
+    public Range(T from, T to, Integer interval) {
         this.from = from;
         this.to = to;
         this.interval = interval;
     }
 
-    public Object getFrom() {
+    public T getFrom() {
         return from;
     }
 
-    public Range setFrom(Object from) {
+    public Range<T> setFrom(T from) {
         this.from = from;
         return this;
     }
 
-    public Object getTo() {
+    public T getTo() {
         return to;
     }
 
-    public Range setTo(Object to) {
+    public Range<T> setTo(T to) {
         this.to = to;
         return this;
     }
@@ -48,7 +48,7 @@ class Range implements Serializable {
         return interval;
     }
 
-    public Range setInterval(Integer interval) {
+    public Range<T> setInterval(Integer interval) {
         this.interval = interval;
         return this;
     }
@@ -57,12 +57,15 @@ class Range implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder();
         str.append(getFrom());
+        int interval = getInterval() != null ? getInterval().intValue() : 0;
         if (getTo() != null) {
-            if (getInterval() != null && getInterval() > 1) {
-                str.append("-").append(getTo()).append("/").append(getInterval());
+            if (interval > 1) {
+                str.append("-").append(getTo()).append("/").append(interval);
             } else {
                 str.append("-").append(getTo());
             }
+        } else if (interval > 1) {
+            str.append("/").append(interval);
         }
         return str.toString();
     }

@@ -16,7 +16,10 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -35,7 +38,7 @@ public class ThisSecond implements TheSecond, Serializable {
     private int index;
     private LocalDateTime second;
     private int lastSecond;
-    private final StringBuilder cron;
+    private final List<Range<Integer>> ranges = new ArrayList<>();
 
     ThisSecond(Minute minute, int second) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
@@ -44,22 +47,20 @@ public class ThisSecond implements TheSecond, Serializable {
         this.siblings.put(second, supplier);
         this.second = supplier.get();
         this.lastSecond = second;
-        this.cron = new StringBuilder().append(second);
+        this.ranges.add(new Range<Integer>(second));
     }
 
     @Override
     public ThisSecond andSecond(int second) {
-        return andSecond(second, true);
+        this.ranges.add(new Range<Integer>(second));
+        return doAndSecond(second);
     }
 
-    private ThisSecond andSecond(int second, boolean writeCron) {
+    private ThisSecond doAndSecond(int second) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
         DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
         this.siblings.put(second, supplier);
         this.lastSecond = second;
-        if (writeCron) {
-            this.cron.append(",").append(second);
-        }
         return this;
     }
 
@@ -70,13 +71,9 @@ public class ThisSecond implements TheSecond, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         for (int i = lastSecond + interval; i < second; i += interval) {
-            andSecond(i, false);
+            doAndSecond(i);
         }
-        if (interval > 1) {
-            this.cron.append("-").append(second).append("/").append(interval);
-        } else {
-            this.cron.append("-").append(second);
-        }
+        this.ranges.get(this.ranges.size() - 1).setTo(second).setInterval(interval);
         return this;
     }
 
@@ -145,7 +142,7 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
     }
 
     @Override

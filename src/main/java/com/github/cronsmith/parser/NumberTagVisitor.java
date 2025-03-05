@@ -149,6 +149,8 @@ public class NumberTagVisitor implements TagVisitor {
                     return ((TheDayOfWeek) cronExpression).andDay(dayOfWeek);
                 } else if (cronExpression instanceof Week) {
                     return ((Week) cronExpression).day(dayOfWeek);
+                } else if (cronExpression instanceof Month) {
+                    return ((Month) cronExpression).everyWeek().day(dayOfWeek);
                 }
             } else {
                 return CronExpressionUtils.everyWeek().day(dayOfWeek);

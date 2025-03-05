@@ -52,7 +52,7 @@ public class SlashTagVisitor implements TagVisitor {
             }
             return CronExpressionUtils.everySecond(from, 59, interval);
         } else if (nextVisitor != null) {
-            return nextVisitor.visitMinute(text, filter, context);
+            return nextVisitor.visitSecond(text, filter, context);
         }
         throw new UnsupportedSymbolException(text);
     }

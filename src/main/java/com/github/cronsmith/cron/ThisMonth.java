@@ -19,9 +19,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -38,7 +42,7 @@ public class ThisMonth implements TheMonth, Serializable {
     private int index;
     private LocalDateTime month;
     private int lastMonth;
-    private final StringBuilder cron;
+    private final List<Range<Object>> ranges = new ArrayList<>();
 
     ThisMonth(Year year, int month) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
@@ -47,22 +51,20 @@ public class ThisMonth implements TheMonth, Serializable {
         this.siblings.put(month, supplier);
         this.month = supplier.get();
         this.lastMonth = month;
-        this.cron = new StringBuilder().append(month);
+        this.ranges.add(new MonthRange(month));
     }
 
     @Override
     public TheMonth andMonth(int month) {
-        return andMonth(month, true);
+        this.ranges.add(new MonthRange(month));
+        return doAndMonth(month);
     }
 
-    private TheMonth andMonth(int month, boolean writeCron) {
+    private TheMonth doAndMonth(int month) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
         this.siblings.put(month, supplier);
         this.lastMonth = month;
-        if (writeCron) {
-            this.cron.append(",").append(month);
-        }
         return this;
     }
 
@@ -73,13 +75,9 @@ public class ThisMonth implements TheMonth, Serializable {
             throw new IllegalArgumentException(lastMonth + ">=" + month);
         }
         for (int i = lastMonth + interval; i <= month; i += interval) {
-            andMonth(i, false);
+            doAndMonth(i);
         }
-        if (interval > 1) {
-            this.cron.append("-").append(month).append("/").append(interval);
-        } else {
-            this.cron.append("-").append(month);
-        }
+        this.ranges.get(this.ranges.size() - 1).setTo(month).setInterval(interval);
         return this;
     }
 
@@ -101,9 +99,7 @@ public class ThisMonth implements TheMonth, Serializable {
     @Override
     public int getLastDay(int n) {
         int lastDayOfMonth = month.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
-        if (n < lastDayOfMonth) {
-            lastDayOfMonth -= n;
-        }
+        lastDayOfMonth -= n;
         return lastDayOfMonth;
     }
 
@@ -213,7 +209,28 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
+    }
+
+    static class MonthRange extends Range<Object> {
+
+        private static final long serialVersionUID = -71288722336240277L;
+
+        MonthRange(Object from) {
+            super(from);
+        }
+
+        public String getFrom() {
+            return AbbreviationUtils.getMonthName((Integer) super.getFrom());
+        }
+
+        public String getTo() {
+            if (super.getTo() != null) {
+                return AbbreviationUtils.getMonthName((Integer) super.getTo());
+            }
+            return null;
+        }
+
     }
 
     @Override

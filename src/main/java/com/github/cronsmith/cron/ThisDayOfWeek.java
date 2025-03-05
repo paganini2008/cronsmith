@@ -19,7 +19,9 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 import com.github.cronsmith.parser.AbbreviationUtils;
@@ -35,11 +37,12 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
 
     private static final long serialVersionUID = -5353496894925284106L;
     private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<Range<Integer>> ranges = new ArrayList<>();
     private Week week;
     private int index;
     private LocalDateTime day;
-    private int lastDayOfWeek;
-    private final StringBuilder cron;
+    private int lastDayOfWeekFlag;
+
 
     ThisDayOfWeek(Week week, int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
@@ -48,47 +51,35 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
                 () -> week.getTime().with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek, supplier);
         this.day = supplier.get();
-        this.lastDayOfWeek = dayOfWeek;
-        this.cron = new StringBuilder().append(getDayOfWeekName(dayOfWeek));
+        this.lastDayOfWeekFlag = dayOfWeek;
+        this.ranges.add(new Range<>(dayOfWeek));
     }
 
     @Override
     public TheDayOfWeek andDay(int dayOfWeek) {
-        return andDay(dayOfWeek, true);
+        this.ranges.add(new Range<>(dayOfWeek));
+        return doAndDay(dayOfWeek);
     }
 
-    private TheDayOfWeek andDay(int dayOfWeek, boolean writeCron) {
+    private TheDayOfWeek doAndDay(int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         DateTimeSupplier supplier =
                 () -> week.getTime().with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek, supplier);
-        this.lastDayOfWeek = dayOfWeek;
-        if (writeCron) {
-            this.cron.append(",").append(getDayOfWeekName(dayOfWeek));
-        }
+        this.lastDayOfWeekFlag = dayOfWeek;
         return this;
-    }
-
-    private String getDayOfWeekName(int dayOfWeek) {
-        if (week instanceof LastWeek) {
-            return String.format(week.toCronString(), dayOfWeek);
-        } else if (week instanceof TheWeek) {
-            return week.toCronString().replaceAll("%s", String.valueOf(dayOfWeek));
-        }
-        return AbbreviationUtils.getDayOfWeekName(dayOfWeek);
     }
 
     @Override
     public TheDayOfWeek toDay(int dayOfWeek, int interval) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
-        List<Integer> days = new ArrayList<Integer>();
-        for (int i = lastDayOfWeek + interval; i <= dayOfWeek; i += interval) {
-            andDay(i, false);
-            days.add(i);
+        if (lastDayOfWeekFlag >= dayOfWeek) {
+            throw new IllegalArgumentException(lastDayOfWeekFlag + ">=" + dayOfWeek);
         }
-        for (int day : days) {
-            this.cron.append(",").append(getDayOfWeekName(day));
+        for (int i = lastDayOfWeekFlag + interval; i <= dayOfWeek; i += interval) {
+            doAndDay(i);
         }
+        this.ranges.get(ranges.size() - 1).setTo(dayOfWeek).setInterval(interval);
         return this;
     }
 
@@ -149,10 +140,12 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
 
     @Override
     public Day next() {
-        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
-        day = supplier.get();
+        Map.Entry<Integer, DateTimeSupplier> entry =
+                IteratorUtils.get(siblings.entrySet().iterator(), index++);
+        day = entry.getValue().get();
         day = day.withYear(week.getYear()).withMonth(week.getMonth())
-                .with(WeekFields.ISO.weekOfMonth(), week.getWeek());
+                .with(WeekFields.ISO.weekOfMonth(), week.getWeek())
+                .with(WeekFields.ISO.dayOfWeek(), entry.getKey());
         return this;
     }
 
@@ -163,7 +156,30 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(this::getRangeString).collect(Collectors.joining(","));
+    }
+
+    public String getRangeString(Range<Integer> range) {
+        StringBuilder str = new StringBuilder();
+        if (range.getTo() != null) {
+            str.append(getDayOfWeekName(range.getFrom())).append("-")
+                    .append(getDayOfWeekName(range.getTo()));
+        } else {
+            str.append(getDayOfWeekName(range.getFrom()));
+        }
+        if (range.getInterval() != null && range.getInterval() > 1) {
+            str.append("/").append(range.getInterval());
+        }
+        return str.toString();
+    }
+
+    private String getDayOfWeekName(int dayOfWeek) {
+        if (week instanceof LastWeek) {
+            return String.format(week.toCronString(), dayOfWeek);
+        } else if (week instanceof TheWeek) {
+            return week.toCronString().replaceAll("%s", String.valueOf(dayOfWeek));
+        }
+        return AbbreviationUtils.getDayOfWeekName(dayOfWeek);
     }
 
     @Override

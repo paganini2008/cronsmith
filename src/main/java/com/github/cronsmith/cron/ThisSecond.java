@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.util.TreeMap;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -37,7 +38,7 @@ public class ThisSecond implements TheSecond, Serializable {
     private final StringBuilder cron;
 
     ThisSecond(Minute minute, int second) {
-        FieldAssertions.checkSecond(second);
+        ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
         this.minute = minute;
         DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
         this.siblings.put(second, supplier);
@@ -52,7 +53,7 @@ public class ThisSecond implements TheSecond, Serializable {
     }
 
     private ThisSecond andSecond(int second, boolean writeCron) {
-        FieldAssertions.checkSecond(second);
+        ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
         DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
         this.siblings.put(second, supplier);
         this.lastSecond = second;
@@ -64,7 +65,7 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public TheSecond toSecond(int second, int interval) {
-        FieldAssertions.checkSecond(second);
+        ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }

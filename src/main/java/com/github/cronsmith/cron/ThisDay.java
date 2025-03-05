@@ -15,8 +15,14 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -30,52 +36,78 @@ import com.github.cronsmith.IteratorUtils;
 public class ThisDay implements TheDay, Serializable {
 
     private static final long serialVersionUID = -6007054113405112202L;
-    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final TreeMap<String, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<Range> ranges = new ArrayList<>();
     private Month month;
     private int index;
     private LocalDateTime day;
-    private int lastDay;
-    private final StringBuilder cron;
+    private int lastDayFlag;
+
 
     ThisDay(Month month, int dayOfMonth) {
-        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         this.month = month;
         DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(dayOfMonth, supplier);
+        this.siblings.put(String.valueOf(dayOfMonth), supplier);
         this.day = supplier.get();
-        this.lastDay = dayOfMonth;
-        this.cron = new StringBuilder().append(dayOfMonth);
+        this.lastDayFlag = dayOfMonth;
+        this.ranges.add(new Range(dayOfMonth));
     }
 
     @Override
     public TheDay andDay(int dayOfMonth) {
-        return andDay(dayOfMonth, true);
+        this.ranges.add(new Range(dayOfMonth));
+        return doAndDay(dayOfMonth);
     }
 
-    private TheDay andDay(int dayOfMonth, boolean writeCron) {
-        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
+    private TheDay doAndDay(int dayOfMonth) {
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(dayOfMonth, supplier);
-        this.lastDay = dayOfMonth;
-        if (writeCron) {
-            this.cron.append(",").append(dayOfMonth);
+        this.siblings.put(String.valueOf(dayOfMonth), supplier);
+        this.lastDayFlag = dayOfMonth;
+        return this;
+    }
+
+    @Override
+    public TheDay andLastDay(int n) {
+        if (n < 0) {
+            throw new IllegalArgumentException("Invalid last day offset: " + n);
         }
+        this.ranges.add(new Range(n > 0 ? "L-" + n : "L"));
+        return doAndLastDay(n);
+    }
+
+    private TheDay doAndLastDay(int n) {
+        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(month.getLastDay() - n);
+        this.siblings.put(n > 0 ? "L-" + n : "L", supplier);
+        this.lastDayFlag = 99;
+        return this;
+    }
+
+    @Override
+    public TheDay andLastWeekday() {
+        this.ranges.add(new Range("LW"));
+        return doAndLastWeekday();
+    }
+
+    private TheDay doAndLastWeekday() {
+        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(month.getLastWeekday());
+        this.siblings.put("LW", supplier);
+        this.lastDayFlag = 99;
         return this;
     }
 
     @Override
     public TheDay toDay(int dayOfMonth, int interval) {
-        FieldAssertions.checkDayOfMonth(month, dayOfMonth);
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastDay + interval; i <= dayOfMonth; i += interval) {
-            andDay(i, false);
-        }
-        if (interval > 1) {
-            this.cron.append("-").append(dayOfMonth).append("/").append(interval);
-        } else {
-            this.cron.append("-").append(dayOfMonth);
+        if (lastDayFlag != 99) {
+            for (int i = lastDayFlag + interval; i <= dayOfMonth; i += interval) {
+                doAndDay(i);
+            }
+            this.ranges.get(ranges.size() - 1).setTo(dayOfMonth).setInterval(interval);
         }
         return this;
     }
@@ -137,12 +169,32 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public Day next() {
-        Map.Entry<Integer, DateTimeSupplier> entry =
+        Map.Entry<String, DateTimeSupplier> entry =
                 IteratorUtils.get(siblings.entrySet().iterator(), index++);
         day = entry.getValue().get();
         day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                .withDayOfMonth(Math.min(entry.getKey(), month.getLastDay()));
+                .withDayOfMonth(getDayOfMonth(entry.getKey()));
         return this;
+    }
+
+    private int getDayOfMonth(String repr) {
+        try {
+            return Integer.parseInt(repr);
+        } catch (RuntimeException e) {
+            if ("L".equals(repr)) {
+                return month.getLastDay();
+            } else if ("LW".equals(repr)) {
+                return month.getLastWeekday();
+            } else {
+                Pattern pattern = Pattern.compile("L\\-(\\d+)");
+                Matcher matcher = pattern.matcher(repr);
+                if (matcher.matches()) {
+                    int n = Integer.parseInt(matcher.group(1));
+                    return month.getLastDay() - n;
+                }
+                throw new IllegalArgumentException(repr);
+            }
+        }
     }
 
     @Override
@@ -152,7 +204,7 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
     }
 
     @Override

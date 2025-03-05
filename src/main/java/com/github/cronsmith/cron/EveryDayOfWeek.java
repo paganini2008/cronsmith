@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -55,13 +56,13 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
 
     private int getFromDayOfWeek() {
         int fromDayOfWeek = from.apply(week);
-        FieldAssertions.checkDayOfWeek(fromDayOfWeek);
+        ChronoField.DAY_OF_WEEK.checkValidValue(fromDayOfWeek);
         return fromDayOfWeek;
     }
 
     private int getToDayOfWeek() {
         int toDayOfWeek = to.apply(week);
-        FieldAssertions.checkDayOfWeek(toDayOfWeek);
+        ChronoField.DAY_OF_WEEK.checkValidValue(toDayOfWeek);
         return toDayOfWeek;
     }
 
@@ -147,7 +148,7 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
         int fromDayOfWeek = getFromDayOfWeek();
         int toDayOfWeek = getToDayOfWeek();
         if (interval > 1) {
-            return fromDayOfWeek + "-" + toDayOfWeek + "/" + interval;
+            return String.format("$s-%s/%s", fromDayOfWeek, toDayOfWeek, interval);
         } else {
             return String.format("%s-%s", AbbreviationUtils.getDayOfWeekName(fromDayOfWeek),
                     AbbreviationUtils.getDayOfWeekName(toDayOfWeek));

@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,7 +39,7 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
     private int lastWeek;
 
     ThisWeekOfYear(Year year, int weekOfYear) {
-        FieldAssertions.checkWeekOfYear(year, weekOfYear);
+        ChronoField.ALIGNED_WEEK_OF_YEAR.checkValidValue(weekOfYear);
         this.year = year;
         DateTimeSupplier supplier = () -> year.getTime()
                 .with(WeekFields.ISO.weekOfYear(), weekOfYear).with(WeekFields.ISO.dayOfWeek(), 1);
@@ -49,7 +50,7 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
 
     @Override
     public TheWeek andWeek(int weekOfYear) {
-        FieldAssertions.checkWeekOfYear(year, weekOfYear);
+        ChronoField.ALIGNED_WEEK_OF_YEAR.checkValidValue(weekOfYear);
         DateTimeSupplier supplier = () -> year.getTime()
                 .with(WeekFields.ISO.weekOfYear(), weekOfYear).with(WeekFields.ISO.dayOfWeek(), 1);
         this.siblings.put(weekOfYear, supplier);
@@ -59,7 +60,7 @@ public class ThisWeekOfYear implements TheWeek, Serializable {
 
     @Override
     public TheWeek toWeek(int weekOfYear, int interval) {
-        FieldAssertions.checkWeekOfYear(year, weekOfYear);
+        ChronoField.ALIGNED_WEEK_OF_YEAR.checkValidValue(weekOfYear);
         for (int i = lastWeek + interval; i < weekOfYear; i += interval) {
             andWeek(i);
         }

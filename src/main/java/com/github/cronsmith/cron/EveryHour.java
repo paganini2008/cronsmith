@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -54,26 +55,24 @@ public class EveryHour implements Hour, Serializable {
 
     private int getFromHour() {
         int fromHour = from.apply(day);
-        FieldAssertions.checkHourOfDay(fromHour);
+        ChronoField.HOUR_OF_DAY.checkValidValue(fromHour);
         return fromHour;
     }
 
     public int getToHour() {
         int toHour = to.apply(day);
-        FieldAssertions.checkHourOfDay(toHour);
+        ChronoField.HOUR_OF_DAY.checkValidValue(toHour);
         return toHour;
     }
 
     @Override
     public boolean hasNext() {
-        int toHour = getToHour();
-        boolean next = self || hour.getHour() + interval <= toHour;
+        boolean next = self || hour.getHour() + interval <= getToHour();
         if (!next) {
             if (day.hasNext()) {
                 day = day.next();
-                int fromHour = getFromHour();
                 hour = hour.withYear(day.getYear()).withMonth(day.getMonth())
-                        .withDayOfMonth(day.getDay()).withHour(fromHour);
+                        .withDayOfMonth(day.getDay()).withHour(getFromHour());
                 forward = false;
                 next = true;
             }

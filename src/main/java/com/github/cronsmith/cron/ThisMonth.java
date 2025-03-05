@@ -16,6 +16,7 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.TreeMap;
@@ -40,7 +41,7 @@ public class ThisMonth implements TheMonth, Serializable {
     private final StringBuilder cron;
 
     ThisMonth(Year year, int month) {
-        FieldAssertions.checkMonth(month);
+        ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         this.year = year;
         DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
         this.siblings.put(month, supplier);
@@ -55,7 +56,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     private TheMonth andMonth(int month, boolean writeCron) {
-        FieldAssertions.checkMonth(month);
+        ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
         this.siblings.put(month, supplier);
         this.lastMonth = month;
@@ -67,7 +68,7 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public TheMonth toMonth(int month, int interval) {
-        FieldAssertions.checkMonth(month);
+        ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         for (int i = lastMonth + interval; i <= month; i += interval) {
             andMonth(i, false);
         }
@@ -104,7 +105,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public int getLastWeekDay() {
+    public int getLastWeekday() {
         return getLatestWeekday(getLastDay());
     }
 
@@ -115,7 +116,7 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public int getLatestWeekday(int dayOfMonth) {
-        FieldAssertions.checkDayOfMonth(this, dayOfMonth);
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         LocalDateTime ldt = month.withDayOfMonth(dayOfMonth);
         LocalDateTime nextDay;
         if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {

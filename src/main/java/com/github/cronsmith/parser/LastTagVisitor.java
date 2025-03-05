@@ -60,23 +60,20 @@ public class LastTagVisitor implements TagVisitor {
                             : CronExpressionUtils.everyMonth();
             if ("L".equals(text)) {
                 if (cronExpression instanceof TheDay) {
-                    Month month = (Month) cronExpression.getParent();
-                    return ((TheDay) cronExpression).andDay(month.getLastDay());
+                    return ((TheDay) cronExpression).andLastDay();
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).lastDay();
                 }
             } else if ("LW".equals(text)) {
                 if (cronExpression instanceof TheDay) {
-                    Month month = (Month) cronExpression.getParent();
-                    return ((TheDay) cronExpression).andDay(month.getLastWeekDay());
+                    return ((TheDay) cronExpression).andLastWeekday();
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).lastWeekday();
                 }
             } else if (text.matches("L\\-\\d{1,}")) {
                 int n = Integer.parseInt(text.substring(text.indexOf("-") + 1));
                 if (cronExpression instanceof TheDay) {
-                    Month month = (Month) cronExpression.getParent();
-                    return ((TheDay) cronExpression).andDay(month.getLastDay(n));
+                    return ((TheDay) cronExpression).andLastDay(n);
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).lastDay(n);
                 }

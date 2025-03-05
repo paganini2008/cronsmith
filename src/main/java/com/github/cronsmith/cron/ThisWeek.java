@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ThisWeek implements TheWeek, Serializable {
     private final StringBuilder cron;
 
     ThisWeek(Month month, int weekOfMonth) {
-        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         this.month = month;
         DateTimeSupplier supplier =
                 () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
@@ -57,7 +58,7 @@ public class ThisWeek implements TheWeek, Serializable {
     }
 
     private ThisWeek andWeek(int weekOfMonth, boolean writeCron) {
-        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         DateTimeSupplier supplier =
                 () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
         this.siblings.put(weekOfMonth, supplier);
@@ -70,7 +71,7 @@ public class ThisWeek implements TheWeek, Serializable {
 
     @Override
     public ThisWeek toWeek(int weekOfMonth, int interval) {
-        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         List<Integer> weeks = new ArrayList<Integer>();
         for (int i = lastWeek + interval; i < weekOfMonth; i += interval) {
             andWeek(i, false);

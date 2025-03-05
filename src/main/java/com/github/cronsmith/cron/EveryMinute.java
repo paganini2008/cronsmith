@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -52,13 +53,13 @@ public class EveryMinute implements Minute, Serializable {
 
     private int getFromMinute() {
         int fromMinute = from.apply(hour);
-        FieldAssertions.checkMinute(fromMinute);
+        ChronoField.MINUTE_OF_HOUR.checkValidValue(fromMinute);
         return fromMinute;
     }
 
     private int getToMinute() {
         int toMinute = to.apply(hour);
-        FieldAssertions.checkMinute(toMinute);
+        ChronoField.MINUTE_OF_HOUR.checkValidValue(toMinute);
         return toMinute;
     }
 

@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.Comparator;
 import java.util.Map;
@@ -54,8 +55,8 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
     }
 
     ThisDayOfWeekInMonth(Month month, int weekOfMonth, int dayOfWeek) {
-        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
-        FieldAssertions.checkDayOfWeek(dayOfWeek);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
+        ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH.checkValidValue(dayOfWeek);
         this.month = month;
         DateTimeSupplier supplier =
                 () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
@@ -93,8 +94,8 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
 
     @Override
     public TheDayOfWeekInMonth and(int weekOfMonth, int dayOfWeek) {
-        FieldAssertions.checkWeekOfMonth(month, weekOfMonth);
-        FieldAssertions.checkDayOfWeek(dayOfWeek);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
+        ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH.checkValidValue(dayOfWeek);
         DateTimeSupplier supplier =
                 () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
                         .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);

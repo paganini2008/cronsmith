@@ -1,5 +1,5 @@
 /**
- * Copyright 2017-2022 Fred Feng (paganini.fy@gmail.com)
+ * Copyright 2017-2025 Fred Feng (paganini.fy@gmail.com)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -53,13 +54,13 @@ public class EveryDay implements Day, Serializable {
 
     private int getFromDay() {
         int fromDay = from.apply(month);
-        FieldAssertions.checkDayOfMonth(month, fromDay);
+        ChronoField.DAY_OF_MONTH.checkValidValue(fromDay);
         return fromDay;
     }
 
     private int getToDay() {
         int toDay = to.apply(month);
-        FieldAssertions.checkDayOfMonth(month, toDay);
+        ChronoField.DAY_OF_MONTH.checkValidValue(toDay);
         return toDay;
     }
 

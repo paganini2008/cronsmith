@@ -36,6 +36,12 @@ public interface Year extends Iterator<Year>, CronExpression {
 
     int getLastDayOfYear(int n);
 
+    default int getLastWeekdayOfYear() {
+        return getLastWeekdayOfYear(getLastDayOfYear());
+    }
+
+    int getLastWeekdayOfYear(int dayOfYear);
+
     TheDay day(int dayOfYear);
 
     default Day lastDay() {

@@ -24,6 +24,14 @@ public interface TheDay extends Day {
 
     TheDay andDay(int dayOfMonth);
 
+    default TheDay andLastDay() {
+        return andLastDay(0);
+    }
+
+    TheDay andLastDay(int n);
+
+    TheDay andLastWeekday();
+
     default TheDay toDay(int dayOfMonth) {
         return toDay(dayOfMonth, 1);
     }

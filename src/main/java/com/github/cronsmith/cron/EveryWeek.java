@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -46,23 +47,23 @@ public class EveryWeek implements Week, Serializable {
         this.from = from;
         this.to = to;
 
-        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), getFromWeek())
+        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth())
                 .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
         this.interval = interval;
         this.self = true;
 
     }
 
-    private int getFromWeek() {
-        int fromWeek = from.apply(month);
-        FieldAssertions.checkWeekOfMonth(month, fromWeek);
-        return fromWeek;
+    private int getFromWeekOfMonth() {
+        int fromWeekOfMonth = from.apply(month);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(fromWeekOfMonth);
+        return fromWeekOfMonth;
     }
 
-    private int getToWeek() {
-        int toWeek = to.apply(month);
-        FieldAssertions.checkWeekOfMonth(month, toWeek);
-        return toWeek;
+    private int getToWeekOfMonth() {
+        int toWeekOfMonth = to.apply(month);
+        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(toWeekOfMonth);
+        return toWeekOfMonth;
     }
 
     @Override
@@ -72,7 +73,7 @@ public class EveryWeek implements Week, Serializable {
             if (month.hasNext()) {
                 month = month.next();
                 week = week.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(WeekFields.ISO.weekOfMonth(), getFromWeek());
+                        .with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth());
                 forward = previous != null && previous.compareTo(week) >= 0;
                 next = true;
             }
@@ -83,7 +84,7 @@ public class EveryWeek implements Week, Serializable {
     private boolean shoudNext() {
         if (month.getMonth() == week.getMonthValue()) {
             boolean next = (week.getDayOfMonth() + 7 <= month.getLastDay());
-            next &= (week.get(WeekFields.ISO.weekOfMonth()) + interval <= getToWeek());
+            next &= (week.get(WeekFields.ISO.weekOfMonth()) + interval <= getToWeekOfMonth());
             return next;
         }
         return false;

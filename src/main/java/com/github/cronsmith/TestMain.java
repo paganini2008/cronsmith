@@ -3,6 +3,8 @@ package com.github.cronsmith;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TestMain {
 
@@ -33,6 +35,18 @@ public class TestMain {
         repr = "(((SUN|MON|TUE|WED|THU|FRI|SAT)\\-(SUN|MON|TUE|WED|THU|FRI|SAT))|([1-7]\\-[1-7]))(\\/\\d+)?";
         repr = "(\\d+\\-\\d+)(\\/\\d+)?";
         System.out.println("0-12/3".matches(repr));
+
+        repr = "L-1";
+        Pattern pattern = Pattern.compile("L\\-(\\d+)");
+        Matcher matcher = pattern.matcher(repr);
+        if (matcher.matches()) {
+            int n = Integer.parseInt(matcher.group(1));
+            int lastDayOfMonth =
+                    LocalDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth()
+                            - n;
+            System.out.println(lastDayOfMonth);
+        }
+        System.out.println(LocalDateTime.now().withDayOfMonth(100));
     }
 
 }

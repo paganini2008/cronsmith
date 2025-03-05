@@ -14,7 +14,9 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.TreeMap;
@@ -39,7 +41,7 @@ public class ThisYear implements TheYear, Serializable {
     private final StringBuilder cron;
 
     public ThisYear(Epoch epoch, int year) {
-        FieldAssertions.checkYear(year);
+        ChronoField.YEAR.checkValidValue(year);
         this.epoch = epoch;
         DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
         this.siblings.put(year, supplier);
@@ -54,7 +56,7 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     private TheYear andYear(int year, boolean writeCron) {
-        FieldAssertions.checkYear(year);
+        ChronoField.YEAR.checkValidValue(year);
         DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
         siblings.put(year, supplier);
         this.lastYear = year;
@@ -66,7 +68,7 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public TheYear toYear(int year, int interval) {
-        FieldAssertions.checkYear(year);
+        ChronoField.YEAR.checkValidValue(year);
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
@@ -99,9 +101,7 @@ public class ThisYear implements TheYear, Serializable {
     @Override
     public int getLastDayOfYear(int n) {
         int lastDayOfYear = year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
-        if (n < lastDayOfYear) {
-            lastDayOfYear -= n;
-        }
+        lastDayOfYear -= n;
         return lastDayOfYear;
     }
 
@@ -109,6 +109,27 @@ public class ThisYear implements TheYear, Serializable {
     public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
         final Year copy = (Year) this.copy();
         return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
+    }
+
+    @Override
+    public int getLastWeekdayOfYear(int dayOfYear) {
+        ChronoField.DAY_OF_YEAR.checkValidValue(dayOfYear);
+        LocalDateTime ldt = year.withDayOfYear(dayOfYear);
+        LocalDateTime nextDay;
+        if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
+            nextDay = ldt.minusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.plusDays(2);
+            }
+        } else if (ldt.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            nextDay = ldt.plusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.minusDays(2);
+            }
+        } else {
+            nextDay = ldt;
+        }
+        return nextDay.getDayOfMonth();
     }
 
     @Override

@@ -16,6 +16,7 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
@@ -57,13 +58,13 @@ public class EveryMonth implements Month, Serializable {
 
     private int getFromMonth() {
         int fromMonth = from.apply(year);
-        FieldAssertions.checkMonth(fromMonth);
+        ChronoField.MONTH_OF_YEAR.checkValidValue(fromMonth);
         return fromMonth;
     }
 
     private int getToMonth() {
         int toMonth = to.apply(year);
-        FieldAssertions.checkMonth(toMonth);
+        ChronoField.MONTH_OF_YEAR.checkValidValue(toMonth);
         return toMonth;
     }
 
@@ -108,14 +109,12 @@ public class EveryMonth implements Month, Serializable {
     @Override
     public int getLastDay(int n) {
         int lastDayOfMonth = month.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
-        if (n < lastDayOfMonth) {
-            lastDayOfMonth -= n;
-        }
+        lastDayOfMonth -= n;
         return lastDayOfMonth;
     }
 
     @Override
-    public int getLastWeekDay() {
+    public int getLastWeekday() {
         return getLatestWeekday(getLastDay());
     }
 
@@ -126,7 +125,7 @@ public class EveryMonth implements Month, Serializable {
 
     @Override
     public int getLatestWeekday(int dayOfMonth) {
-        FieldAssertions.checkDayOfMonth(this, dayOfMonth);
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         LocalDateTime ldt = month.withDayOfMonth(dayOfMonth);
         LocalDateTime nextDay;
         if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
@@ -210,8 +209,12 @@ public class EveryMonth implements Month, Serializable {
         if (fromMonth == 1 && toMonth == 12) {
             str = "*";
         } else {
-            str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
-                    AbbreviationUtils.getMonthName(toMonth));
+            if (interval > 1) {
+                str = String.format("%s-%s", fromMonth, toMonth);
+            } else {
+                str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
+                        AbbreviationUtils.getMonthName(toMonth));
+            }
         }
         return interval > 1 ? str + "/" + interval : str;
     }

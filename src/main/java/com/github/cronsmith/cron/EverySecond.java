@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import com.github.cronsmith.CRON;
 
 /**
@@ -51,13 +52,13 @@ public class EverySecond implements Second, Serializable {
 
     private int getFromSecond() {
         int fromSecond = from.apply(minute);
-        FieldAssertions.checkSecond(fromSecond);
+        ChronoField.SECOND_OF_MINUTE.checkValidValue(fromSecond);
         return fromSecond;
     }
 
     private int getToSecond() {
         int toSecond = to.apply(minute);
-        FieldAssertions.checkSecond(toSecond);
+        ChronoField.SECOND_OF_MINUTE.checkValidValue(toSecond);
         return toSecond;
     }
 

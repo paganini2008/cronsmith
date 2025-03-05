@@ -15,6 +15,7 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
     private final StringBuilder cron;
 
     ThisDayOfWeek(Week week, int dayOfWeek) {
-        FieldAssertions.checkDayOfWeek(dayOfWeek);
+        ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         this.week = week;
         DateTimeSupplier supplier =
                 () -> week.getTime().with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
@@ -57,7 +58,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
     }
 
     private TheDayOfWeek andDay(int dayOfWeek, boolean writeCron) {
-        FieldAssertions.checkDayOfWeek(dayOfWeek);
+        ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         DateTimeSupplier supplier =
                 () -> week.getTime().with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek, supplier);
@@ -79,7 +80,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
 
     @Override
     public TheDayOfWeek toDay(int dayOfWeek, int interval) {
-        FieldAssertions.checkDayOfWeek(dayOfWeek);
+        ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         List<Integer> days = new ArrayList<Integer>();
         for (int i = lastDayOfWeek + interval; i <= dayOfWeek; i += interval) {
             andDay(i, false);

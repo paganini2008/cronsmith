@@ -34,7 +34,7 @@ public interface Month extends Iterator<Month>, CronExpression {
 
     int getLastDay(int n);
 
-    int getLastWeekDay();
+    int getLastWeekday();
 
     int getLatestWeekday(int dayOfMonth);
 

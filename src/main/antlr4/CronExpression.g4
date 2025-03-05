@@ -49,7 +49,8 @@ dayOfMonthField
     | INT      
     | '?' 
     | 'LW'      
-    | 'L' INT? 
+    | 'L'
+    | 'L-' INT
     | INT 'W'     
     | INT '/' INT   
     ;

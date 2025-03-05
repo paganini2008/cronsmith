@@ -14,8 +14,10 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
@@ -55,13 +57,13 @@ public class EveryYear implements Year, Serializable {
 
     private int getFromYear() {
         int fromYear = from.apply(epoch);
-        FieldAssertions.checkYear(fromYear);
+        ChronoField.YEAR.checkValidValue(fromYear);
         return fromYear;
     }
 
     private int getToYear() {
         int toYear = to.apply(epoch);
-        FieldAssertions.checkYear(toYear);
+        ChronoField.YEAR.checkValidValue(toYear);
         return toYear;
     }
 
@@ -87,6 +89,27 @@ public class EveryYear implements Year, Serializable {
             lastDayOfYear -= n;
         }
         return lastDayOfYear;
+    }
+
+    @Override
+    public int getLastWeekdayOfYear(int dayOfYear) {
+        ChronoField.DAY_OF_YEAR.checkValidValue(dayOfYear);
+        LocalDateTime ldt = year.withDayOfYear(dayOfYear);
+        LocalDateTime nextDay;
+        if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
+            nextDay = ldt.minusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.plusDays(2);
+            }
+        } else if (ldt.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            nextDay = ldt.plusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.minusDays(2);
+            }
+        } else {
+            nextDay = ldt;
+        }
+        return nextDay.getDayOfMonth();
     }
 
     @Override

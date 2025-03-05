@@ -32,6 +32,12 @@ public interface TheDay extends Day {
 
     TheDay andLastWeekday();
 
+    default TheDay toLastDay() {
+        return toLastDay(1);
+    }
+
+    TheDay toLastDay(int interval);
+
     default TheDay toDay(int dayOfMonth) {
         return toDay(dayOfMonth, 1);
     }

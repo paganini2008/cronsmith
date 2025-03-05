@@ -69,6 +69,9 @@ public class ThisMonth implements TheMonth, Serializable {
     @Override
     public TheMonth toMonth(int month, int interval) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
+        if (lastMonth >= month) {
+            throw new IllegalArgumentException(lastMonth + ">=" + month);
+        }
         for (int i = lastMonth + interval; i <= month; i += interval) {
             andMonth(i, false);
         }

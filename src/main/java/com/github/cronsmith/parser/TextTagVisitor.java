@@ -3,6 +3,7 @@ package com.github.cronsmith.parser;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.CronExpressionUtils;
 import com.github.cronsmith.cron.Month;
+import com.github.cronsmith.cron.TheDayOfWeek;
 import com.github.cronsmith.cron.TheMonth;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
@@ -87,6 +88,8 @@ public class TextTagVisitor implements TagVisitor {
                     return ((Week) cronExpression).day(dayOfWeek);
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).everyWeek().day(dayOfWeek);
+                } else if (cronExpression instanceof TheDayOfWeek) {
+                    return ((TheDayOfWeek) cronExpression).andDay(dayOfWeek);
                 }
             } else {
                 return CronExpressionUtils.everyWeek().day(dayOfWeek);

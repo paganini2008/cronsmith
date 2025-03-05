@@ -104,12 +104,20 @@ public class ThisDay implements TheDay, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         if (lastDayFlag != 99) {
+            if (lastDayFlag >= dayOfMonth) {
+                throw new IllegalArgumentException(lastDayFlag + ">=" + dayOfMonth);
+            }
             for (int i = lastDayFlag + interval; i <= dayOfMonth; i += interval) {
                 doAndDay(i);
             }
             this.ranges.get(ranges.size() - 1).setTo(dayOfMonth).setInterval(interval);
         }
         return this;
+    }
+
+    @Override
+    public TheDay toLastDay(int interval) {
+        return toDay(month.getLastDay(), interval);
     }
 
     @Override

@@ -108,11 +108,19 @@ public class ThisDayOfYear implements TheDay, Serializable {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         if (lastDayFlag != 999) {
+            if (lastDayFlag >= dayOfYear) {
+                throw new IllegalArgumentException(lastDayFlag + ">=" + dayOfYear);
+            }
             for (int i = lastDayFlag + interval; i < dayOfYear; i += interval) {
                 andDay(i);
             }
         }
         return this;
+    }
+
+    @Override
+    public TheDay toLastDay(int interval) {
+        return toDay(year.getLastDayOfYear(), interval);
     }
 
     @Override

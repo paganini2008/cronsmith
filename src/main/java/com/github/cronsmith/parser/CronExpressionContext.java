@@ -62,8 +62,8 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
     @Override
     public CronExpression visitCron(CronContext ctx) {
         cronExpression = ctx.year() != null ? visit(ctx.year()) : null;
-        cronExpression = visit(ctx.dayOfWeek());
         cronExpression = visit(ctx.month());
+        cronExpression = visit(ctx.dayOfWeek());
         cronExpression = visit(ctx.dayOfMonth());
         cronExpression = visit(ctx.hour());
         cronExpression = visit(ctx.minute());

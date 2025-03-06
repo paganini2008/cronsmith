@@ -29,6 +29,16 @@ import com.github.cronsmith.SerializationUtils;
 @SuppressWarnings("unchecked")
 public interface CronExpression extends CronStringBuilder {
 
+    default <T extends CronExpression> T getParent(Class<T> type) {
+        T parent;
+        while ((parent = (T) getParent()) != null) {
+            if (type.isInstance(parent)) {
+                return parent;
+            }
+        }
+        return null;
+    }
+
     CronExpression getParent();
 
     LocalDateTime getTime();

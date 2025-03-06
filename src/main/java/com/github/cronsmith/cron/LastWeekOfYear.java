@@ -106,7 +106,10 @@ public class LastWeekOfYear implements LastWeek, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return ((Era) year.getParent()).year(getYear()).Dec();
+        if (year instanceof TheYear) {
+            return year.getParent(Era.class).year(getYear()).Dec();
+        }
+        return year.Dec();
     }
 
     @Override

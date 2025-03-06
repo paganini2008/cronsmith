@@ -27,7 +27,7 @@ import java.util.TimeZone;
  */
 public final class Era implements CronExpression, Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -400537561864611508L;
 
     public Era(TimeZone timeZone) {
         this.timeZone = timeZone;

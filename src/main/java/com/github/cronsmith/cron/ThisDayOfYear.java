@@ -200,7 +200,7 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return ((Era) year.getParent()).year(getYear()).month(getMonth());
+        return year;
     }
 
     @Override

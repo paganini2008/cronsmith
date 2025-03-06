@@ -33,6 +33,7 @@ public class EveryDay implements Day, Serializable {
     private LocalDateTime day;
     private final IntFunction<Month> from;
     private final IntFunction<Month> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -44,12 +45,16 @@ public class EveryDay implements Day, Serializable {
         this.month = month;
         this.from = from;
         this.to = to;
-
-        this.day = month.getTime().withDayOfMonth(getFromDay()).withHour(0).withMinute(0)
-                .withSecond(0);
+        this.supplier = getSupplier();
+        this.day = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> month.getTime().withDayOfMonth(getFromDay()).withHour(0).withMinute(0)
+                .withSecond(0);
     }
 
     private int getFromDay() {
@@ -70,8 +75,7 @@ public class EveryDay implements Day, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                        .withDayOfMonth(getFromDay());
+                day = supplier.get();
                 forward = false;
                 next = true;
             }

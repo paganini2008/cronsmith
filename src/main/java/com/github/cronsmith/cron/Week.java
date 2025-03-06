@@ -38,7 +38,7 @@ public interface Week extends Iterator<Week>, CronExpression {
     }
 
     default Day everyDay(int interval) {
-        return everyDay(DayOfWeek.MONDAY.getValue(), DayOfWeek.SUNDAY.getValue(), interval);
+        return everyDay(1, 7, interval);
     }
 
     default Day everyDay(int from, int to, int interval) {

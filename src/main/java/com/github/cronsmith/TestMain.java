@@ -1,12 +1,35 @@
 package com.github.cronsmith;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TestMain {
+
+
+    public static int getLastWeekdayOfYear(int dayOfYear) {
+        ChronoField.DAY_OF_YEAR.checkValidValue(dayOfYear);
+        LocalDateTime ldt = LocalDateTime.now().withDayOfYear(dayOfYear);
+        LocalDateTime nextDay;
+        if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
+            nextDay = ldt.minusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.plusDays(2);
+            }
+        } else if (ldt.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            nextDay = ldt.plusDays(1);
+            if (nextDay.getMonthValue() != ldt.getMonthValue()) {
+                nextDay = ldt.minusDays(2);
+            }
+        } else {
+            nextDay = ldt;
+        }
+        return nextDay.getDayOfMonth();
+    }
 
     public static void main(String[] args) {
         LocalDateTime now = LocalDateTime.now();
@@ -46,7 +69,8 @@ public class TestMain {
                             - n;
             System.out.println(lastDayOfMonth);
         }
-        System.out.println(LocalDateTime.now().withDayOfMonth(100));
+        System.out.println(LocalDateTime.now().withDayOfYear(365));
+        System.out.println(getLastWeekdayOfYear(365));
     }
 
 }

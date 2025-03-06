@@ -30,16 +30,21 @@ public class LatestWeekdayOfMonth implements Day, Serializable {
     private static final long serialVersionUID = -1745938729702028629L;
 
     private Month month;
+    private final DateTimeSupplier supplier;
     private LocalDateTime day;
     private boolean self;
     private final int dayOfMonth;
 
     LatestWeekdayOfMonth(Month month, int dayOfMonth) {
         this.month = month;
-        this.day = month.getTime()
-                .withDayOfMonth(month.getLatestWeekday(Math.min(dayOfMonth, month.getLastDay())));
+        this.supplier = getSupplier();
+        this.day = supplier.get();
         this.dayOfMonth = dayOfMonth;
         this.self = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> month.getTime().withDayOfMonth(month.getLatestWeekday(dayOfMonth));
     }
 
     @Override
@@ -48,8 +53,7 @@ public class LatestWeekdayOfMonth implements Day, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                day = day.withYear(month.getYear()).withMonth(month.getMonth()).withDayOfMonth(
-                        month.getLatestWeekday(Math.min(dayOfMonth, month.getLastDay())));
+                day = supplier.get();
                 next = true;
             }
         }

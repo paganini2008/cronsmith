@@ -25,7 +25,7 @@ import java.time.temporal.WeekFields;
  */
 public abstract class CronExpressionUtils {
 
-    private static final Epoch epoch = Epoch.getInstance();
+    private static final Era epoch = Era.getInstance();
 
     public static TheYear year() {
         return epoch.year();

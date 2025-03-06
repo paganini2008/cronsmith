@@ -37,16 +37,16 @@ public class ThisYear implements TheYear, Serializable {
 
     private static final long serialVersionUID = -5316436238766770045L;
     private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
-    private Epoch epoch;
+    private Era era;
     private LocalDateTime year;
     private int index;
     private int lastYear;
     private final List<Range<Integer>> ranges = new ArrayList<>();
 
-    public ThisYear(Epoch epoch, int year) {
+    public ThisYear(Era era, int year) {
         ChronoField.YEAR.checkValidValue(year);
-        this.epoch = epoch;
-        DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
+        this.era = era;
+        DateTimeSupplier supplier = () -> era.getTime().withYear(year);
         this.siblings.put(year, supplier);
         this.year = supplier.get();
         this.lastYear = year;
@@ -61,7 +61,7 @@ public class ThisYear implements TheYear, Serializable {
 
     private TheYear doAndYear(int year) {
         ChronoField.YEAR.checkValidValue(year);
-        DateTimeSupplier supplier = () -> epoch.getTime().withYear(year);
+        DateTimeSupplier supplier = () -> era.getTime().withYear(year);
         siblings.put(year, supplier);
         this.lastYear = year;
         return this;
@@ -126,7 +126,7 @@ public class ThisYear implements TheYear, Serializable {
         } else {
             nextDay = ldt;
         }
-        return nextDay.getDayOfMonth();
+        return nextDay.getDayOfYear();
     }
 
     @Override
@@ -167,7 +167,7 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return null;
+        return era;
     }
 
     @Override
@@ -198,20 +198,21 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     public static void main(String[] args) {
-        TheYear singleYear = Epoch.getInstance().year(2025);
+        TheYear singleYear = Era.getInstance().year(2025);
         singleYear = singleYear.andYear(2028).andYear(2030).toYear(2040, 2);
         // CronExpression cronExpression = singleYear.Apr().andJuly().andSept().toDec().week(1)
         // .andWeek(2).Sat().andSun().at(9, 15);
         // cronExpression = singleYear.week(40).Mon().andTues().toDay(7, 2).at(9, 20);
-        CronExpression cronExpression = singleYear.day(205);
+        CronExpression cronExpression =
+                singleYear.day(205).andDay(306).toDay(315, 3).andLastWeekday().at(0, 0);
         // Day day = singleYear.everyMonth().everyWeek().Mon().toFri();
         // System.out.println(day);
         // Hour hour = day.everyHour(3);
 
         System.out.println(cronExpression);
-        // day.forEach(l -> {
-        // System.out.println(l);
-        // }, 100);
+        cronExpression.forEach(l -> {
+            System.out.println(l + "\t" + cronExpression.toString());
+        }, 100);
     }
 
 }

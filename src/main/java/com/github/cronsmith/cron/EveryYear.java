@@ -34,35 +34,35 @@ public class EveryYear implements Year, Serializable {
 
     private static final long serialVersionUID = 1487831872493410360L;
 
-    EveryYear(Epoch epoch, IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
+    EveryYear(Era era, IntFunction<Era> from, IntFunction<Era> to, int interval) {
         if (interval <= 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        this.epoch = epoch;
+        this.era = era;
         this.from = from;
         this.to = to;
 
-        this.year = epoch.getTime().withYear(getFromYear());
+        this.year = era.getTime().withYear(getFromYear());
         this.interval = interval;
         this.self = true;
 
     }
 
-    private final Epoch epoch;
+    private final Era era;
     private LocalDateTime year;
-    private final IntFunction<Epoch> from;
-    private final IntFunction<Epoch> to;
+    private final IntFunction<Era> from;
+    private final IntFunction<Era> to;
     private final int interval;
     private boolean self;
 
     private int getFromYear() {
-        int fromYear = from.apply(epoch);
+        int fromYear = from.apply(era);
         ChronoField.YEAR.checkValidValue(fromYear);
         return fromYear;
     }
 
     private int getToYear() {
-        int toYear = to.apply(epoch);
+        int toYear = to.apply(era);
         ChronoField.YEAR.checkValidValue(toYear);
         return toYear;
     }
@@ -85,9 +85,7 @@ public class EveryYear implements Year, Serializable {
     @Override
     public int getLastDayOfYear(int n) {
         int lastDayOfYear = year.with(TemporalAdjusters.lastDayOfYear()).getDayOfYear();
-        if (n < lastDayOfYear) {
-            lastDayOfYear -= n;
-        }
+        lastDayOfYear -= n;
         return lastDayOfYear;
     }
 
@@ -109,7 +107,7 @@ public class EveryYear implements Year, Serializable {
         } else {
             nextDay = ldt;
         }
-        return nextDay.getDayOfMonth();
+        return nextDay.getDayOfYear();
     }
 
     @Override
@@ -159,7 +157,7 @@ public class EveryYear implements Year, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return null;
+        return era;
     }
 
     @Override

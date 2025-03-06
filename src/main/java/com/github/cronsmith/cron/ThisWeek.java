@@ -45,7 +45,8 @@ public class ThisWeek implements TheWeek, Serializable {
         ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         this.month = month;
         DateTimeSupplier supplier =
-                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth);
+                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
+                        .with(WeekFields.ISO.dayOfWeek(), 1);
         this.siblings.put(weekOfMonth, supplier);
         this.week = supplier.get();
         this.lastWeek = weekOfMonth;
@@ -53,8 +54,8 @@ public class ThisWeek implements TheWeek, Serializable {
     }
 
     @Override
-    public ThisWeek andWeek(int week) {
-        return andWeek(week, true);
+    public ThisWeek andWeek(int weekOfMonth) {
+        return andWeek(weekOfMonth, true);
     }
 
     private ThisWeek andWeek(int weekOfMonth, boolean writeCron) {

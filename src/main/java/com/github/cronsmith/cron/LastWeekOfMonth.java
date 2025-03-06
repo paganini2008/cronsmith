@@ -30,14 +30,20 @@ public class LastWeekOfMonth implements LastWeek, Serializable {
 
     private static final long serialVersionUID = 2658610900522209361L;
     private Month month;
+    private final DateTimeSupplier supplier;
     private LocalDateTime week;
     private boolean self;
 
     LastWeekOfMonth(Month month) {
         this.month = month;
-        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth())
-                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
+        this.supplier = getSupplier();
+        this.week = supplier.get();
         this.self = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth())
+                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
     }
 
     @Override
@@ -83,9 +89,7 @@ public class LastWeekOfMonth implements LastWeek, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                week = week.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(WeekFields.ISO.weekOfMonth(), month.getWeekCountOfMonth())
-                        .with(WeekFields.ISO.dayOfWeek(), 1);
+                week = supplier.get();
                 next = true;
             }
         }

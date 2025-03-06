@@ -16,7 +16,10 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -34,8 +37,8 @@ public class ThisHour implements TheHour, Serializable {
     private Day day;
     private int index;
     private LocalDateTime hour;
-    private int lastHour;
-    private final StringBuilder cron;
+    private int lastHourFlag;
+    private final List<Range<Integer>> ranges = new ArrayList<Range<Integer>>();
 
     ThisHour(Day day, int hour) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
@@ -43,23 +46,21 @@ public class ThisHour implements TheHour, Serializable {
         DateTimeSupplier supplier = () -> day.getTime().withHour(hour);
         this.siblings.put(hour, supplier);
         this.hour = supplier.get();
-        this.lastHour = hour;
-        this.cron = new StringBuilder().append(hour);
+        this.lastHourFlag = hour;
+        this.ranges.add(new Range<Integer>(hour));
     }
 
     @Override
     public ThisHour andHour(int hour) {
-        return andHour(hour, true);
+        this.ranges.add(new Range<Integer>(hour));
+        return doAndHour(hour);
     }
 
-    private ThisHour andHour(int hour, boolean writeCron) {
+    private ThisHour doAndHour(int hour) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
         DateTimeSupplier supplier = () -> day.getTime().withHour(hour);
         siblings.put(hour, supplier);
-        this.lastHour = hour;
-        if (writeCron) {
-            cron.append(",").append(hour);
-        }
+        this.lastHourFlag = hour;
         return this;
     }
 
@@ -69,14 +70,13 @@ public class ThisHour implements TheHour, Serializable {
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastHour + interval; i < hour; i += interval) {
-            andHour(i, false);
+        if (lastHourFlag >= hour) {
+            throw new IllegalArgumentException(lastHourFlag + ">=" + hour);
         }
-        if (interval > 1) {
-            cron.append("-").append(hour).append("/").append(interval);
-        } else {
-            cron.append("-").append(hour);
+        for (int i = lastHourFlag + interval; i < hour; i += interval) {
+            doAndHour(i);
         }
+        this.ranges.get(this.ranges.size() - 1).setTo(hour).setInterval(interval);
         return this;
     }
 
@@ -145,7 +145,7 @@ public class ThisHour implements TheHour, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
     }
 
     @Override

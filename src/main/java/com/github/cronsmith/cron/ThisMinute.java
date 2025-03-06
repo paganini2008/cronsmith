@@ -16,7 +16,10 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -34,8 +37,8 @@ public class ThisMinute implements TheMinute, Serializable {
     private Hour hour;
     private int index;
     private LocalDateTime minute;
-    private int lastMinute;
-    private final StringBuilder cron;
+    private int lastMinuteFlag;
+    private final List<Range<Integer>> ranges = new ArrayList<Range<Integer>>();
 
     ThisMinute(Hour hour, int minute) {
         ChronoField.MINUTE_OF_HOUR.checkValidValue(minute);
@@ -43,23 +46,21 @@ public class ThisMinute implements TheMinute, Serializable {
         DateTimeSupplier supplier = () -> hour.getTime().withMinute(minute);
         this.siblings.put(minute, supplier);
         this.minute = supplier.get();
-        this.lastMinute = minute;
-        this.cron = new StringBuilder().append(minute);
+        this.lastMinuteFlag = minute;
+        this.ranges.add(new Range<Integer>(minute));
     }
 
     @Override
     public ThisMinute andMinute(int minute) {
-        return andMinute(minute, true);
+        this.ranges.add(new Range<Integer>(minute));
+        return doAndMinute(minute);
     }
 
-    private ThisMinute andMinute(int minute, boolean writeCron) {
+    private ThisMinute doAndMinute(int minute) {
         ChronoField.MINUTE_OF_HOUR.checkValidValue(minute);
         DateTimeSupplier supplier = () -> hour.getTime().withMinute(minute);
         this.siblings.put(minute, supplier);
-        this.lastMinute = minute;
-        if (writeCron) {
-            this.cron.append(",").append(minute);
-        }
+        this.lastMinuteFlag = minute;
         return this;
     }
 
@@ -69,14 +70,13 @@ public class ThisMinute implements TheMinute, Serializable {
         if (interval < 0) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastMinute + interval; i < minute; i += interval) {
-            andMinute(i, false);
+        if (lastMinuteFlag >= minute) {
+            throw new IllegalArgumentException(lastMinuteFlag + ">=" + minute);
         }
-        if (interval > 1) {
-            this.cron.append("-").append(minute).append("/").append(interval);
-        } else {
-            this.cron.append("-").append(minute);
+        for (int i = lastMinuteFlag + interval; i < minute; i += interval) {
+            doAndMinute(i);
         }
+        this.ranges.get(this.ranges.size() - 1).setTo(minute).setInterval(interval);
         return this;
     }
 
@@ -151,7 +151,7 @@ public class ThisMinute implements TheMinute, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
     }
 
     @Override

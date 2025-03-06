@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -31,24 +30,22 @@ public class LastDayOfMonth implements Day, Serializable {
     private static final long serialVersionUID = 3379984313144390130L;
 
     private Month month;
-    private int n;
+    private final int n;
+    private final DateTimeSupplier supplier;
     private LocalDateTime day;
     private boolean self;
 
     LastDayOfMonth(Month month, int n) {
         this.month = month;
         this.n = n;
-        this.day = month.getTime().withDayOfMonth(getLastDayByN()).withHour(0).withMinute(0)
-                .withSecond(0);
+        this.supplier = getSupplier();
+        this.day = supplier.get();
         this.self = true;
     }
 
-    private int getLastDayByN() {
-        int lastDay = month.getTime().with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
-        if (n < lastDay) {
-            lastDay -= n;
-        }
-        return lastDay;
+    private DateTimeSupplier getSupplier() {
+        return () -> month.getTime().withDayOfMonth(month.getLastDay(n)).withHour(0).withMinute(0)
+                .withSecond(0);
     }
 
     @Override
@@ -99,8 +96,7 @@ public class LastDayOfMonth implements Day, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                        .withDayOfMonth(getLastDayByN());
+                day = supplier.get();
                 next = true;
             }
         }

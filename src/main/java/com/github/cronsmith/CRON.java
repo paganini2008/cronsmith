@@ -114,7 +114,7 @@ public abstract class CRON {
 
     public static void main(String[] args) {
         String cronString =
-                "2,3,4,5-30/7 0-12/3,15-45/2 2,3,4-17/2 ? 1-8,11,DEC TUE#2,WED#3,5L 2025-2030,2035/2";
+                "2,3,4,5-30/7 0-12/3,15/2,46,48,50 2,3,4-17/2 ? 1-8,11,DEC TUE#2,WED#3,5L 2025-2030,2035/2";
         System.out.println(parse(cronString));
     }
 

@@ -33,6 +33,7 @@ public class EveryHour implements Hour, Serializable {
     private LocalDateTime hour;
     private final IntFunction<Day> from;
     private final IntFunction<Day> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -44,13 +45,16 @@ public class EveryHour implements Hour, Serializable {
         this.day = day;
         this.from = from;
         this.to = to;
-
-        int fromHour = getFromHour();
-        this.hour = day.getTime().withHour(fromHour).withMinute(0).withSecond(0);
+        this.supplier = getSupplier();
+        this.hour = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
 
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> day.getTime().withHour(getFromHour()).withMinute(0).withSecond(0);
     }
 
     private int getFromHour() {
@@ -59,7 +63,7 @@ public class EveryHour implements Hour, Serializable {
         return fromHour;
     }
 
-    public int getToHour() {
+    private int getToHour() {
         int toHour = to.apply(day);
         ChronoField.HOUR_OF_DAY.checkValidValue(toHour);
         return toHour;
@@ -71,8 +75,7 @@ public class EveryHour implements Hour, Serializable {
         if (!next) {
             if (day.hasNext()) {
                 day = day.next();
-                hour = hour.withYear(day.getYear()).withMonth(day.getMonth())
-                        .withDayOfMonth(day.getDay()).withHour(getFromHour());
+                hour = supplier.get();
                 forward = false;
                 next = true;
             }

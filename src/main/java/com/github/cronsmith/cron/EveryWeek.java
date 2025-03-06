@@ -31,13 +31,13 @@ public class EveryWeek implements Week, Serializable {
 
     private static final long serialVersionUID = -6457126115562721511L;
     private Month month;
-    private LocalDateTime week;
+    private final DateTimeSupplier supplier;
     private final IntFunction<Month> from;
     private final IntFunction<Month> to;
     private final int interval;
+    private LocalDateTime week;
     private boolean self;
-    private boolean forward = true;
-    private LocalDateTime previous;
+    private boolean forward;
 
     EveryWeek(Month month, IntFunction<Month> from, IntFunction<Month> to, int interval) {
         if (interval <= 0) {
@@ -46,11 +46,13 @@ public class EveryWeek implements Week, Serializable {
         this.month = month;
         this.from = from;
         this.to = to;
-
-        this.week = month.getTime().with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth())
+        this.supplier = () -> month.getTime()
+                .with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth())
                 .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
+        this.week = supplier.get();
         this.interval = interval;
         this.self = true;
+        this.forward = true;
 
     }
 
@@ -72,9 +74,8 @@ public class EveryWeek implements Week, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                week = week.withYear(month.getYear()).withMonth(month.getMonth())
-                        .with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth());
-                forward = previous != null && previous.compareTo(week) >= 0;
+                week = supplier.get();
+                forward = false;
                 next = true;
             }
         }
@@ -101,7 +102,6 @@ public class EveryWeek implements Week, Serializable {
                 forward = true;
             }
         }
-        previous = LocalDateTime.of(week.toLocalDate(), week.toLocalTime());
         return this;
     }
 

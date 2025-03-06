@@ -43,7 +43,6 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
     private LocalDateTime day;
     private int lastDayOfWeekFlag;
 
-
     ThisDayOfWeek(Week week, int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         this.week = week;
@@ -73,6 +72,9 @@ public class ThisDayOfWeek implements TheDayOfWeek, Serializable {
     @Override
     public TheDayOfWeek toDay(int dayOfWeek, int interval) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
+        if (interval < 0) {
+            throw new IllegalArgumentException("Invalid interval: " + interval);
+        }
         if (lastDayOfWeekFlag >= dayOfWeek) {
             throw new IllegalArgumentException(lastDayOfWeekFlag + ">=" + dayOfWeek);
         }

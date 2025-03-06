@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -64,7 +65,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
         this.siblings.put(dayOfWeek + "#" + weekOfMonth, supplier);
         this.day = supplier.get();
         this.cron.append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
-                : dayOfWeek + "#" + weekOfMonth);
+                : AbbreviationUtils.getDayOfWeekName(dayOfWeek) + "#" + weekOfMonth);
     }
 
     @Override
@@ -101,7 +102,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
                         .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
         this.siblings.put(dayOfWeek + "#" + weekOfMonth, supplier);
         this.cron.append(",").append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
-                : dayOfWeek + "#" + weekOfMonth);
+                : AbbreviationUtils.getDayOfWeekName(dayOfWeek) + "#" + weekOfMonth);
         return this;
     }
 

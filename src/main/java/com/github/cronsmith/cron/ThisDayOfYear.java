@@ -17,11 +17,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
 /**
@@ -35,6 +36,7 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     private static final long serialVersionUID = -8235489088108418524L;
     private final TreeMap<String, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<Range<Integer>> ranges = new ArrayList<Range<Integer>>();
     private Year year;
     private int index;
     private LocalDateTime day;
@@ -47,6 +49,7 @@ public class ThisDayOfYear implements TheDay, Serializable {
                 .withMinute(0).withSecond(0);
         this.siblings.put(String.valueOf(dayOfYear), supplier);
         this.day = supplier.get();
+        this.ranges.add(new Range<Integer>(dayOfYear));
     }
 
     @Override
@@ -93,11 +96,17 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     @Override
     public TheDay andDay(int dayOfYear) {
+        this.ranges.add(new Range<Integer>(dayOfYear));
+        return doAndDay(dayOfYear);
+    }
+
+    private TheDay doAndDay(int dayOfYear) {
         ChronoField.DAY_OF_YEAR.checkValidValue(dayOfYear);
         DateTimeSupplier supplier = () -> year.getTime().withDayOfYear(dayOfYear).withHour(0)
                 .withMinute(0).withSecond(0);
         this.siblings.put(String.valueOf(dayOfYear), supplier);
         this.lastDayFlag = dayOfYear;
+        this.ranges.add(new Range<Integer>(dayOfYear));
         return this;
     }
 
@@ -112,9 +121,10 @@ public class ThisDayOfYear implements TheDay, Serializable {
                 throw new IllegalArgumentException(lastDayFlag + ">=" + dayOfYear);
             }
             for (int i = lastDayFlag + interval; i < dayOfYear; i += interval) {
-                andDay(i);
+                doAndDay(i);
             }
         }
+        this.ranges.get(this.ranges.size() - 1).setTo(dayOfYear).setInterval(interval);
         return this;
     }
 
@@ -163,7 +173,8 @@ public class ThisDayOfYear implements TheDay, Serializable {
                 IteratorUtils.get(siblings.entrySet().iterator(), index++);
         day = entry.getValue().get();
         day = day.withYear(year.getYear());
-        day = day.withDayOfYear(getDayOfYear(entry.getKey()));
+        int dayOfYear = getDayOfYear(entry.getKey());
+        day = day.withDayOfYear(dayOfYear);
         return this;
     }
 
@@ -189,24 +200,12 @@ public class ThisDayOfYear implements TheDay, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return year.month(getMonth());
+        return ((Era) year.getParent()).year(getYear()).month(getMonth());
     }
 
     @Override
-    public String toCronString() {
-        Map.Entry<String, DateTimeSupplier> entry =
-                IteratorUtils.get(siblings.entrySet().iterator(), index);
-        try {
-            Integer.parseInt(entry.getKey());
-            return String.valueOf(getDay());
-        } catch (RuntimeException e) {
-            return entry.getKey();
-        }
-    }
-
-    @Override
-    public String toString() {
-        return CRON.toCronString(this);
+    public boolean supportCronString() {
+        return false;
     }
 
 }

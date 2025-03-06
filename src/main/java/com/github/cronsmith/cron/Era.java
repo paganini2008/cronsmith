@@ -20,16 +20,16 @@ import java.util.TimeZone;
 
 /**
  * 
- * @Description: Epoch
+ * @Description: Era
  * @Author: Fred Feng
  * @Date: 02/03/2025
  * @Version 1.0.0
  */
-public final class Epoch implements CronExpression, Serializable {
+public final class Era implements CronExpression, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public Epoch(TimeZone timeZone) {
+    public Era(TimeZone timeZone) {
         this.timeZone = timeZone;
     }
 
@@ -52,7 +52,7 @@ public final class Epoch implements CronExpression, Serializable {
         return everyYear(e -> fromYear, e -> toYear, interval);
     }
 
-    public Year everyYear(IntFunction<Epoch> from, IntFunction<Epoch> to, int interval) {
+    public Year everyYear(IntFunction<Era> from, IntFunction<Era> to, int interval) {
         return new EveryYear(this, from, to, interval);
     }
 
@@ -69,12 +69,12 @@ public final class Epoch implements CronExpression, Serializable {
         return null;
     }
 
-    public static Epoch getInstance() {
+    public static Era getInstance() {
         return getInstance(TimeZone.getDefault());
     }
 
-    public static Epoch getInstance(TimeZone timeZone) {
-        return new Epoch(timeZone);
+    public static Era getInstance(TimeZone timeZone) {
+        return new Era(timeZone);
     }
 
 }

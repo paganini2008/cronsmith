@@ -17,9 +17,10 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
+import java.util.ArrayList;
+import java.util.List;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
-import com.github.cronsmith.parser.AbbreviationUtils;
 
 /**
  * 
@@ -35,6 +36,7 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
     private LocalDateTime day;
     private final IntFunction<Week> from;
     private final IntFunction<Week> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -47,11 +49,16 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
         this.from = from;
         this.to = to;
 
-        this.day = week.getTime().with(WeekFields.ISO.dayOfWeek(), getFromDayOfWeek()).withHour(0)
-                .withMinute(0).withSecond(0);
+        this.supplier = getSupplier();
+        this.day = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> week.getTime().with(WeekFields.ISO.dayOfWeek(), getFromDayOfWeek()).withHour(0)
+                .withMinute(0).withSecond(0);
     }
 
     private int getFromDayOfWeek() {
@@ -72,9 +79,7 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
         if (!next) {
             if (week.hasNext()) {
                 week = week.next();
-                day = day.withYear(week.getYear()).withMonth(week.getMonth())
-                        .with(WeekFields.ISO.weekOfMonth(), week.getWeek())
-                        .with(WeekFields.ISO.dayOfWeek(), getFromDayOfWeek());
+                day = supplier.get();
                 forward = false;
                 next = true;
             }
@@ -147,12 +152,20 @@ public class EveryDayOfWeek implements DayOfWeek, Serializable {
     public String toCronString() {
         int fromDayOfWeek = getFromDayOfWeek();
         int toDayOfWeek = getToDayOfWeek();
-        if (interval > 1) {
-            return String.format("$s-%s/%s", fromDayOfWeek, toDayOfWeek, interval);
+        if (week instanceof LastWeek) {
+            List<String> list = new ArrayList<String>();
+            for (int i = fromDayOfWeek; i <= toDayOfWeek; i += interval) {
+                list.add(String.format(week.toCronString(), i));
+            }
+            return String.join(",", list);
         } else {
-            return String.format("%s-%s", AbbreviationUtils.getDayOfWeekName(fromDayOfWeek),
-                    AbbreviationUtils.getDayOfWeekName(toDayOfWeek));
+            if (interval > 1) {
+                return String.format("%s-%s/%s", fromDayOfWeek, toDayOfWeek, interval);
+            } else {
+                return String.format("%s-%s", fromDayOfWeek, toDayOfWeek);
+            }
         }
+
     }
 
     @Override

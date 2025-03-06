@@ -33,6 +33,7 @@ public class EveryMinute implements Minute, Serializable {
     private LocalDateTime minute;
     private final IntFunction<Hour> from;
     private final IntFunction<Hour> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -44,11 +45,15 @@ public class EveryMinute implements Minute, Serializable {
         this.hour = hour;
         this.from = from;
         this.to = to;
-
-        this.minute = hour.getTime().withMinute(getFromMinute()).withSecond(0);
+        this.supplier = getSupplier();
+        this.minute = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> hour.getTime().withMinute(getFromMinute()).withSecond(0);
     }
 
     private int getFromMinute() {
@@ -69,9 +74,7 @@ public class EveryMinute implements Minute, Serializable {
         if (!next) {
             if (hour.hasNext()) {
                 hour = hour.next();
-                minute = minute.withYear(hour.getYear()).withMonth(hour.getMonth())
-                        .withDayOfMonth(hour.getDay()).withHour(hour.getHour())
-                        .withMinute(getFromMinute());
+                minute = supplier.get();
                 forward = false;
                 next = true;
             }

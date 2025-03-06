@@ -37,6 +37,7 @@ public class EveryMonth implements Month, Serializable {
     private LocalDateTime month;
     private final IntFunction<Year> from;
     private final IntFunction<Year> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -48,12 +49,16 @@ public class EveryMonth implements Month, Serializable {
         this.year = year;
         this.from = from;
         this.to = to;
-
-        this.month = year.getTime().withMonth(getFromMonth()).withDayOfMonth(1).withHour(0)
-                .withMinute(0).withSecond(0);
+        this.supplier = getSuppiler();
+        this.month = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
+    }
+
+    private DateTimeSupplier getSuppiler() {
+        return () -> year.getTime().withMonth(getFromMonth()).withDayOfMonth(1).withHour(0)
+                .withMinute(0).withSecond(0);
     }
 
     private int getFromMonth() {
@@ -74,7 +79,7 @@ public class EveryMonth implements Month, Serializable {
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                month = month.withYear(year.getYear()).withMonth(getFromMonth());
+                month = supplier.get();
                 forward = false;
                 next = true;
             }
@@ -209,12 +214,8 @@ public class EveryMonth implements Month, Serializable {
         if (fromMonth == 1 && toMonth == 12) {
             str = "*";
         } else {
-            if (interval > 1) {
-                str = String.format("%s-%s", fromMonth, toMonth);
-            } else {
-                str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
-                        AbbreviationUtils.getMonthName(toMonth));
-            }
+            str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
+                    AbbreviationUtils.getMonthName(toMonth));
         }
         return interval > 1 ? str + "/" + interval : str;
     }

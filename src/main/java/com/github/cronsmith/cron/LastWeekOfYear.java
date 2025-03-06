@@ -15,7 +15,6 @@ package com.github.cronsmith.cron;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -31,19 +30,20 @@ public class LastWeekOfYear implements LastWeek, Serializable {
 
     private static final long serialVersionUID = -2099892494149322184L;
     private Year year;
+    private final DateTimeSupplier supplier;
     private LocalDateTime week;
     private boolean self;
 
     LastWeekOfYear(Year year) {
         this.year = year;
-        this.week = init(year.getTime());
+        this.supplier = getSupplier();
+        this.week = supplier.get();
         this.self = true;
     }
 
-    private LocalDateTime init(LocalDateTime ldt) {
-        LocalDateTime lastDayOfYear = ldt.with(TemporalAdjusters.lastDayOfYear());
-        return lastDayOfYear.with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0)
-                .withSecond(0);
+    private DateTimeSupplier getSupplier() {
+        return () -> year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
+                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
     }
 
     @Override
@@ -89,8 +89,7 @@ public class LastWeekOfYear implements LastWeek, Serializable {
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                week = week.withYear(year.getYear());
-                week = init(week);
+                week = supplier.get();
                 next = true;
             }
         }
@@ -107,7 +106,7 @@ public class LastWeekOfYear implements LastWeek, Serializable {
 
     @Override
     public CronExpression getParent() {
-        return year.Dec();
+        return ((Era) year.getParent()).year(getYear()).Dec();
     }
 
     @Override
@@ -118,6 +117,14 @@ public class LastWeekOfYear implements LastWeek, Serializable {
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    public static void main(String[] args) {
+        CronExpression cronExpression = CronExpressionUtils.year().lastWeek();
+        System.out.println(cronExpression);
+        cronExpression.forEach(l -> {
+            System.out.println(l + "\t");
+        }, 10);
     }
 
 }

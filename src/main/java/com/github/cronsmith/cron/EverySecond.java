@@ -32,6 +32,7 @@ public class EverySecond implements Second, Serializable {
     private LocalDateTime second;
     private final IntFunction<Minute> from;
     private final IntFunction<Minute> to;
+    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
@@ -43,11 +44,15 @@ public class EverySecond implements Second, Serializable {
         this.minute = minute;
         this.from = from;
         this.to = to;
-
-        this.second = minute.getTime().withSecond(getFromSecond());
+        this.supplier = getSupplier();
+        this.second = supplier.get();
         this.interval = interval;
         this.self = true;
         this.forward = true;
+    }
+
+    private DateTimeSupplier getSupplier() {
+        return () -> minute.getTime().withSecond(getFromSecond());
     }
 
     private int getFromSecond() {
@@ -68,9 +73,7 @@ public class EverySecond implements Second, Serializable {
         if (!next) {
             if (minute.hasNext()) {
                 minute = minute.next();
-                second = second.withYear(minute.getYear()).withMonth(minute.getMonth())
-                        .withDayOfMonth(minute.getDay()).withHour(minute.getHour())
-                        .withMinute(minute.getMinute()).withSecond(getFromSecond());
+                second = supplier.get();
                 forward = false;
                 next = true;
             }

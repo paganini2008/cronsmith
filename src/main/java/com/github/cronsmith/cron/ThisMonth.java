@@ -41,7 +41,7 @@ public class ThisMonth implements TheMonth, Serializable {
     private Year year;
     private int index;
     private LocalDateTime month;
-    private int lastMonth;
+    private int lastMonthFlag;
     private final List<Range<Object>> ranges = new ArrayList<>();
 
     ThisMonth(Year year, int month) {
@@ -50,7 +50,7 @@ public class ThisMonth implements TheMonth, Serializable {
         DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
         this.siblings.put(month, supplier);
         this.month = supplier.get();
-        this.lastMonth = month;
+        this.lastMonthFlag = month;
         this.ranges.add(new MonthRange(month));
     }
 
@@ -64,17 +64,20 @@ public class ThisMonth implements TheMonth, Serializable {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
         this.siblings.put(month, supplier);
-        this.lastMonth = month;
+        this.lastMonthFlag = month;
         return this;
     }
 
     @Override
     public TheMonth toMonth(int month, int interval) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
-        if (lastMonth >= month) {
-            throw new IllegalArgumentException(lastMonth + ">=" + month);
+        if (interval < 0) {
+            throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastMonth + interval; i <= month; i += interval) {
+        if (lastMonthFlag >= month) {
+            throw new IllegalArgumentException(lastMonthFlag + ">=" + month);
+        }
+        for (int i = lastMonthFlag + interval; i <= month; i += interval) {
             doAndMonth(i);
         }
         this.ranges.get(this.ranges.size() - 1).setTo(month).setInterval(interval);
@@ -239,7 +242,7 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     public static void main(String[] args) {
-        TheYear singleYear = Epoch.getInstance().year(2025);
+        TheYear singleYear = Era.getInstance().year(2025);
         singleYear = singleYear.andYear(2030).andYear(2028);
         TheMonth singleMonth = singleYear.July().andAug().andMonth(11);
         CronExpression cronExpression = singleMonth.lastWeek().Tues().andWed().toSun().everyHour(2)

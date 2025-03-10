@@ -15,6 +15,13 @@
       <email>paganini.fy@gmail.com</email>
     </developer> 
   </developers>  
+  <licenses>
+    <license>
+        <name>MIT License</name>
+        <url>https://opensource.org/licenses/MIT</url>
+        <distribution>repo</distribution>
+    </license>
+  </licenses>
   <scm> 
     <connection>https://github.com/paganini2008/cronsmith.git</connection>  
     <developerConnection>https://github.com/paganini2008/cronsmith.git</developerConnection>  

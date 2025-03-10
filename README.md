@@ -1,4 +1,4 @@
-# Cronsmith
+# Cronsmith - The Ultimate Cron Expression Generator & Parser
 
 [![Java](https://img.shields.io/badge/Java-Compatible-orange.svg)](https://www.java.com)
 [![Cron](https://img.shields.io/badge/Cron-Supported-blue.svg)](https://en.wikipedia.org/wiki/Cron)

@@ -13,7 +13,9 @@ import java.util.Map;
  * @Date: 23/02/2025
  * @Version 1.0.0
  */
-public abstract class AbbreviationUtils {
+public class AbbreviationUtils {
+
+    private AbbreviationUtils() {}
 
     private static final Map<String, Integer> dayOfWeekNameValues = new LinkedHashMap<>();
     private static final Map<Integer, String> dayOfWeekNames;

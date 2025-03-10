@@ -1,4 +1,4 @@
-// Generated from CronExpression.g4 by ANTLR 4.13.0
+// Generated from CronExpression.g4 by ANTLR 4.9.3
 
 package com.github.cronsmith.antlr;
 
@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
  */
-@SuppressWarnings("CheckReturnValue")
 public class CronExpressionBaseListener implements CronExpressionListener {
 	/**
 	 * {@inheritDoc}

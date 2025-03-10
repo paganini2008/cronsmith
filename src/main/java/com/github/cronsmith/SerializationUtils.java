@@ -19,6 +19,8 @@ import java.io.Serializable;
  */
 public class SerializationUtils {
 
+    private SerializationUtils() {}
+
     public static <T> T copy(T serializable) {
         byte[] bytes = serialize(serializable);
         return deserialize(bytes);

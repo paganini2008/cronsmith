@@ -7,17 +7,16 @@ import java.time.ZoneId;
 import java.util.Iterator;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
-import com.github.cronsmith.CronScheduler;
-import com.github.cronsmith.CronSchedulerImpl;
-import com.github.cronsmith.DefaultPeriodicalExecutor;
 import com.github.cronsmith.IteratorUtils;
-import com.github.cronsmith.PeriodicalExecutor;
 import com.github.cronsmith.SerializationUtils;
+import com.github.cronsmith.scheduler.CronScheduler;
+import com.github.cronsmith.scheduler.CronSchedulerImpl;
+import com.github.cronsmith.scheduler.DefaultPeriodicalExecutor;
+import com.github.cronsmith.scheduler.PeriodicalExecutor;
 
 /**
  * 
- * A CronExpression is essentially an iterator object that represents the entire syntax tree
- * structure.
+ * CronExpression represents the entire syntax tree structure.
  * 
  * @Author: Fred Feng
  * @Date: 26/02/2025

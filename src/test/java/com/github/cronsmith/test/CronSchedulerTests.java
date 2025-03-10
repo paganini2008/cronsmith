@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import com.github.cronsmith.CronFuture;
 import com.github.cronsmith.cron.CronBuilder;
+import com.github.cronsmith.scheduler.CronFuture;
 
 /**
  * 

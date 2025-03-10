@@ -51,12 +51,20 @@ public abstract class CRON {
     }
 
     private static void printTree(ParseTree tree, Parser parser, int indent) {
-        String indentString = "  ".repeat(indent);
+        String indentString = repeat("  ", indent);
         String nodeText = Trees.getNodeText(tree, parser);
         System.out.println(indentString + nodeText);
         for (int i = 0; i < tree.getChildCount(); i++) {
             printTree(tree.getChild(i), parser, indent + 2);
         }
+    }
+
+    private static String repeat(String str, int count) {
+        String result = "";
+        for (int i = 0; i < count; i++) {
+            result = result.concat(str);
+        }
+        return result;
     }
 
     public static String toCronString(CronExpression cronExpression) {

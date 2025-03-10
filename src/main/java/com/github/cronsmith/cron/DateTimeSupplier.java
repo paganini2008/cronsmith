@@ -6,7 +6,8 @@ import java.util.function.Supplier;
 
 /**
  * 
- * @Description: DateTimeSupplier
+ * Represents a function that always produces LocalDateTime object.
+ * 
  * @Author: Fred Feng
  * @Date: 03/02/2025
  * @Version 1.0.0

@@ -1,6 +1,6 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
-import com.github.cronsmith.CronScheduledEvent.EventType;
+import com.github.cronsmith.scheduler.CronScheduledEvent.EventType;
 
 /**
  * 

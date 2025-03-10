@@ -1,4 +1,4 @@
-// Generated from CronExpression.g4 by ANTLR 4.13.0
+// Generated from CronExpression.g4 by ANTLR 4.9.3
 
 package com.github.cronsmith.antlr;
 
@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * @param <T> The return type of the visit operation. Use {@link Void} for
  * operations with no return type.
  */
-@SuppressWarnings("CheckReturnValue")
 public class CronExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements CronExpressionVisitor<T> {
 	/**
 	 * {@inheritDoc}

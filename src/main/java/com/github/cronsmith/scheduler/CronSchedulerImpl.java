@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -9,8 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import com.github.cronsmith.CronScheduledEvent.EventType;
+import com.github.cronsmith.IteratorUtils;
 import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.scheduler.CronScheduledEvent.EventType;
 
 /**
  * 

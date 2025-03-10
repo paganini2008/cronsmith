@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

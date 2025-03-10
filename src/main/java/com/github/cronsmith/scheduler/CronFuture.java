@@ -1,8 +1,8 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Future;
-import com.github.cronsmith.CronScheduledEvent.EventType;
+import com.github.cronsmith.scheduler.CronScheduledEvent.EventType;
 
 /**
  * Cronable Future

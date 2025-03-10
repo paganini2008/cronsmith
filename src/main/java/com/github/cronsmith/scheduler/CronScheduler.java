@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;

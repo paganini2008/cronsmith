@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -73,6 +73,13 @@ public class CronScheduledEvent extends EventObject {
         return str;
     }
 
+    /**
+     * 
+     * @Description: EventType
+     * @Author: Fred Feng
+     * @Date: 09/03/2025
+     * @Version 1.0.0
+     */
     public static enum EventType {
 
         SCHEDULED, FINISHED, PAUSED, RESUMED, CANCELLED, REMOVED, FAILED;

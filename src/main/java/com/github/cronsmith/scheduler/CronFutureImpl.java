@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.ExecutionException;
@@ -6,7 +6,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.github.cronsmith.CronScheduledEvent.EventType;
+import com.github.cronsmith.scheduler.CronScheduledEvent.EventType;
 
 /**
  * 

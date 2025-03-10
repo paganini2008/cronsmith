@@ -9,11 +9,13 @@ import java.util.Iterator;
  * @Date: 27/02/2025
  * @Version 1.0.0
  */
-public abstract class IteratorUtils {
+public class IteratorUtils {
+
+    private IteratorUtils() {}
 
     public static <T> Iterable<T> forEach(Iterator<T> delegate) {
         if (delegate == null) {
-            throw new NullPointerException("Null iterator");
+            throw new NullPointerException("Iterator is null");
         }
         return () -> delegate;
     }

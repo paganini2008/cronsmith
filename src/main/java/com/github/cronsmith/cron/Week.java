@@ -26,14 +26,14 @@ public interface Week extends Iterator<Week>, CronExpression {
     }
 
     default Day everyDay(int interval) {
-        return everyDay(1, 7, interval);
+        return everyDay(1, interval);
     }
 
-    default Day everyDay(int from, int to, int interval) {
-        return everyDay(w -> from, w -> to, interval);
+    default Day everyDay(int from, int interval) {
+        return everyDay(w -> from, interval);
     }
 
-    Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval);
+    Day everyDay(IntFunction<Week> from, int interval);
 
     TheDayOfWeek day(int dayOfWeek);
 

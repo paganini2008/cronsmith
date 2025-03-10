@@ -28,26 +28,26 @@ public class CronExpressionBuilderTests {
 
     @Test
     public void testB() {
-        CronExpression cronExpression =
-                new CronBuilder().everyMinute(5).second(5).andSecond(10).toSecond(30);
+        CronExpression cronExpression = new CronBuilder().everyMinute(5).second(5).andSecond(10)
+                .toSecond(30).andSecond(32).toSecond(59, 2);
         System.out.println(cronExpression.toString());
-        assertEquals("5,10-30 */5 * * * ?", cronExpression.toString());
+        assertEquals("5,10-30,32/2 */5 * * * ?", cronExpression.toString());
     }
 
     @Test
     public void testC() {
-        CronExpression cronExpression =
-                new CronBuilder().everyMonth().day(10).everyHour(2).everyMinute(5);
+        CronExpression cronExpression = new CronBuilder().everyMonth().day(10).andDay(15).andDay(16)
+                .andLastDay().everyHour(2).everyMinute(5);
         System.out.println(cronExpression.toString());
-        assertEquals("0 */5 */2 10 * ?", cronExpression.toString());
+        assertEquals("0 */5 */2 10,15,16,L * ?", cronExpression.toString());
     }
 
     @Test
     public void testD() {
-        CronExpression cronExpression =
-                new CronBuilder().everyMonth().lastWeekday().hour(10).minute(1).toMinute(15);
+        CronExpression cronExpression = new CronBuilder().everyMonth(3).day(10).andLastWeekday()
+                .hour(12).minute(1).toMinute(15, 1);
         System.out.println(cronExpression.toString());
-        assertEquals("0 1-15 10 LW * ?", cronExpression.toString());
+        assertEquals("0 1-15 12 10,LW */3 ?", cronExpression.toString());
     }
 
     @Test
@@ -91,33 +91,45 @@ public class CronExpressionBuilderTests {
 
     @Test
     public void testJ() {
-        CronExpression cronExpression = new CronBuilder().everyYear(2).Mar().andApr().andMar()
+        CronExpression cronExpression = new CronBuilder().everyYear(2).Mar().andApr().andMay()
                 .toDec().everyWeek(2).Tues().toFri().hour(10).andHour(12).toHour(22).everyMinute()
                 .second(10).andSecond(20).andSecond(30);
         System.out.println(cronExpression.toString());
-        assertEquals("10,20,30 * 10,12-22 ? MAR,APR,MAR-DEC TUE-FRI */2",
+        assertEquals("10,20,30 * 10,12-22 ? MAR,APR,MAY-DEC TUE-FRI 2025/2",
                 cronExpression.toString());
     }
 
     @Test
     public void testK() {
         CronExpression cronExpression = new CronBuilder().year(2025).toYear(2030).andYear(2035)
-                .toEnd(2).everyMonth(2, 12, 2).dayOfWeek(2, DayOfWeek.TUESDAY)
+                .toEnd(2).everyMonth(2, 2).dayOfWeek(2, DayOfWeek.TUESDAY)
                 .and(3, DayOfWeek.WEDNESDAY).andLastFri().hour(2).andHour(3).andHour(4)
                 .toHour(17, 2).minute(0).toMinute(12, 3).andMinute(15).toMinute(40, 2).andMinute(46)
                 .andMinute(48).andMinute(50).everySecond(5);
         System.out.println(cronExpression.toString());
-        assertEquals("*/5 0-12/3,15-40/2,46,48,50 2,3,4-17/2 ? 2/2 TUE#2,WED#3,5L 2025-2030,2035/2",
+        assertEquals(
+                "*/5 0-12/3,15-40/2,46,48,50 2,3,4-17/2 ? FEB-DEC/2 TUE#2,WED#3,5L 2025-2030,2035/2",
                 cronExpression.toString());
     }
 
     @Test
     public void testL() {
-        CronExpression cronExpression = new CronBuilder().everyYear(2026, 4).everyMonth(5, 7, 1)
-                .day(10).andDay(15).andDay(20).andLastDay(2).everyHour(10, 15, 1).at(10, 0)
+        CronExpression cronExpression = new CronBuilder().everyYear(2025, 4).everyMonth(5, 1)
+                .day(10).andDay(15).andDay(20).andLastDay(2).hour(10).toHour(15, 1).at(10, 0)
                 .andSecond(15).andSecond(30).andSecond(45);
         System.out.println(cronExpression.toString());
-        assertEquals("0,15,30,45 10 10-15 10,15,20,L-2 MAY-JUL ? 2026/4",
+        assertEquals("0,15,30,45 10 10-15 10,15,20,L-2 MAY-DEC ? 2025/4",
+                cronExpression.toString());
+    }
+
+    @Test
+    public void testM() {
+        CronExpression cronExpression = new CronBuilder().year().andYear(2026).andYear(2030)
+                .toEnd(2).Mar().andJuly().andSept().dayOfWeek(1, DayOfWeek.SATURDAY)
+                .and(2, DayOfWeek.THURSDAY).andLast(DayOfWeek.FRIDAY).hour(0).toHour(12, 3)
+                .everyMinute(10).second(0).andSecond(15).andSecond(30).andSecond(45).toSecond(59);
+        System.out.println(cronExpression.toString());
+        assertEquals("0,15,30,45/1 */10 0-12/3 ? MAR,JUL,SEP SAT#1,THU#2,5L 2025,2026,2030/2",
                 cronExpression.toString());
     }
 

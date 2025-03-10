@@ -2,6 +2,7 @@
 package com.github.cronsmith.cron;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.WeekFields;
@@ -68,7 +69,7 @@ public final class CronBuilder implements CronExpression, Serializable {
 
     @Override
     public LocalDateTime getTime() {
-        return startTime;
+        return LocalDate.of(startTime.getYear(), 1, 1).atStartOfDay();
     }
 
     @Override
@@ -81,6 +82,11 @@ public final class CronBuilder implements CronExpression, Serializable {
         return null;
     }
 
+    @Override
+    public boolean supportCronString() {
+        return false;
+    }
+
     public Year everyYear() {
         return everyYear(1);
     }
@@ -90,16 +96,11 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Year everyYear(int fromYear, int interval) {
-        return everyYear(fromYear, Year.MAX_YEAR, interval);
+        return everyYear(e -> fromYear, interval);
     }
 
-    public Year everyYear(int fromYear, int toYear, int interval) {
-        return everyYear(e -> fromYear, e -> toYear, interval);
-    }
-
-    public Year everyYear(IntFunction<CronBuilder> from, IntFunction<CronBuilder> to,
-            int interval) {
-        return new EveryYear(this, from, to, interval);
+    public Year everyYear(IntFunction<CronBuilder> from, int interval) {
+        return new EveryYear(this, from, interval);
     }
 
     public Month everyMonth() {
@@ -111,15 +112,11 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Month everyMonth(int fromMonth, int interval) {
-        return everyMonth(fromMonth, 12, interval);
+        return everyMonth(y -> fromMonth, interval);
     }
 
-    public Month everyMonth(int fromMonth, int toMonth, int interval) {
-        return everyMonth(y -> fromMonth, y -> toMonth, interval);
-    }
-
-    public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
-        return everyYear().everyMonth(from, to, interval);
+    public Month everyMonth(IntFunction<Year> from, int interval) {
+        return everyYear().everyMonth(from, interval);
     }
 
     public Week everyWeek() {
@@ -131,17 +128,11 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Week everyWeek(int fromWeekOfMonth, int interval) {
-        return everyMonth().everyWeek(m -> fromWeekOfMonth, m -> {
-            return m.getWeekCountOfMonth();
-        }, interval);
+        return everyWeek(m -> fromWeekOfMonth, interval);
     }
 
-    public Week everyWeek(int fromWeekOfMonth, int toWeekOfMonth, int interval) {
-        return everyWeek(m -> fromWeekOfMonth, m -> toWeekOfMonth, interval);
-    }
-
-    public Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval) {
-        return everyMonth().everyWeek(from, to, interval);
+    public Week everyWeek(IntFunction<Month> from, int interval) {
+        return everyMonth().everyWeek(from, interval);
     }
 
     public Day everyDay() {
@@ -153,17 +144,11 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Day everyDay(int fromDayOfMonth, int interval) {
-        return everyDay(m -> fromDayOfMonth, m -> {
-            return m.getLastDay();
-        }, interval);
+        return everyDay(m -> fromDayOfMonth, interval);
     }
 
-    public Day everyDay(int fromDayOfMonth, int toDayOfMonth, int interval) {
-        return everyDay(m -> fromDayOfMonth, m -> toDayOfMonth, interval);
-    }
-
-    public Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval) {
-        return everyMonth().everyDay(from, to, interval);
+    public Day everyDay(IntFunction<Month> from, int interval) {
+        return everyMonth().everyDay(from, interval);
     }
 
     public Hour everyHour() {
@@ -171,15 +156,15 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Hour everyHour(int interval) {
-        return everyHour(0, 23, interval);
+        return everyHour(0, interval);
     }
 
-    public Hour everyHour(int fromHour, int toHour, int interval) {
-        return everyHour(d -> fromHour, d -> toHour, interval);
+    public Hour everyHour(int fromHour, int interval) {
+        return everyHour(d -> fromHour, interval);
     }
 
-    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
-        return everyDay().everyHour(from, to, interval);
+    public Hour everyHour(IntFunction<Day> from, int interval) {
+        return everyDay().everyHour(from, interval);
     }
 
     public Minute everyMinute() {
@@ -187,15 +172,15 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Minute everyMinute(int interval) {
-        return everyMinute(0, 59, interval);
+        return everyMinute(0, interval);
     }
 
-    public Minute everyMinute(int fromMinute, int toMinute, int interval) {
-        return everyMinute(h -> fromMinute, h -> toMinute, interval);
+    public Minute everyMinute(int fromMinute, int interval) {
+        return everyMinute(h -> fromMinute, interval);
     }
 
-    public Minute everyMinute(IntFunction<Hour> from, IntFunction<Hour> to, int interval) {
-        return everyHour().everyMinute(from, to, interval);
+    public Minute everyMinute(IntFunction<Hour> from, int interval) {
+        return everyHour().everyMinute(from, interval);
     }
 
     public Second everySecond() {
@@ -203,15 +188,15 @@ public final class CronBuilder implements CronExpression, Serializable {
     }
 
     public Second everySecond(int interval) {
-        return everySecond(0, 59, interval);
+        return everySecond(0, interval);
     }
 
-    public Second everySecond(int fromSecond, int toSecond, int interval) {
-        return everySecond(m -> fromSecond, m -> toSecond, interval);
+    public Second everySecond(int fromSecond, int interval) {
+        return everySecond(m -> fromSecond, interval);
     }
 
-    public Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
-        return everyMinute().everySecond(from, to, interval);
+    public Second everySecond(IntFunction<Minute> from, int interval) {
+        return everyMinute().everySecond(from, interval);
     }
 
     public TheYear year() {

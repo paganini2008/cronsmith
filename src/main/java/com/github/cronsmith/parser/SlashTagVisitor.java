@@ -43,21 +43,26 @@ public class SlashTagVisitor implements TagVisitor {
         if (text.matches("(\\*|\\d+)\\/(\\d+)") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 from = 0;
+                every = true;
             }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof Minute) {
-                    return ((Minute) cronExpression).everySecond(from, 59, interval);
+                    return every ? ((Minute) cronExpression).everySecond(from, interval)
+                            : ((Minute) cronExpression).second(from).toSecond(59, interval);
                 } else if (cronExpression instanceof TheSecond) {
                     return ((TheSecond) cronExpression).andSecond(from).toSecond(59, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).everySecond(from, 59, interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId());
+            return every ? cronBuilder.everySecond(from, interval)
+                    : cronBuilder.everyMinute().second(from).toSecond(59, interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitSecond(text, filter, context);
         }
@@ -69,21 +74,26 @@ public class SlashTagVisitor implements TagVisitor {
         if (text.matches("(\\*|\\d+)\\/(\\d+)") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 from = 0;
+                every = true;
             }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof Hour) {
-                    return ((Hour) cronExpression).everyMinute(from, 59, interval);
+                    return every ? ((Hour) cronExpression).everyMinute(from, interval)
+                            : ((Hour) cronExpression).minute(from).toMinute(59, interval);
                 } else if (cronExpression instanceof TheMinute) {
                     return ((TheMinute) cronExpression).andMinute(from).toMinute(59, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).everyMinute(from, 59, interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId());
+            return every ? cronBuilder.everyMinute(from, interval)
+                    : cronBuilder.minute(from).toMinute(59, interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitMinute(text, filter, context);
         }
@@ -95,21 +105,26 @@ public class SlashTagVisitor implements TagVisitor {
         if (text.matches("(\\*|\\d+)\\/(\\d+)") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 from = 0;
+                every = true;
             }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof Day) {
-                    return ((Day) cronExpression).everyHour(from, 23, interval);
+                    return every ? ((Day) cronExpression).everyHour(from, interval)
+                            : ((Day) cronExpression).hour(from).toHour(23, interval);
                 } else if (cronExpression instanceof TheHour) {
                     return ((TheHour) cronExpression).andHour(from).toHour(23, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).everyHour(from, 23, interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId());
+            return every ? cronBuilder.everyHour(from, interval)
+                    : cronBuilder.hour(from).toHour(23, interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitHour(text, filter, context);
         }
@@ -122,22 +137,26 @@ public class SlashTagVisitor implements TagVisitor {
         if (text.matches("(\\*|\\d+)\\/(\\d+)") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
             int from;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 from = 0;
+                every = true;
             }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof Month) {
-                    return ((Month) cronExpression).everyDay(from, interval);
+                    return every ? ((Month) cronExpression).everyDay(from, interval)
+                            : ((Month) cronExpression).day(from).toLastDay(interval);
                 } else if (cronExpression instanceof TheDay) {
                     return ((TheDay) cronExpression).andDay(from).toLastDay(interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).everyMonth().everyDay(from,
-                    interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId());
+            return every ? cronBuilder.everyMonth().everyDay(from, interval)
+                    : cronBuilder.everyMonth().day(from).toLastDay(interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitDayOfMonth(text, filter, context);
         }
@@ -152,11 +171,13 @@ public class SlashTagVisitor implements TagVisitor {
             String[] args = text.split("\\/");
             int from;
             boolean useNumber = true;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 if ("*".equals(args[0])) {
                     from = 1;
+                    every = true;
                 } else {
                     from = AbbreviationUtils.getMonthValue(args[0]);
                 }
@@ -167,13 +188,16 @@ public class SlashTagVisitor implements TagVisitor {
             if (cronExpression != null) {
                 cronExpression.getBuilder().setUseMonthAsNumber(useNumber);
                 if (cronExpression instanceof Year) {
-                    return ((Year) cronExpression).everyMonth(from, 12, interval);
+                    return every ? ((Year) cronExpression).everyMonth(from, interval)
+                            : ((Year) cronExpression).month(from).toMonth(12, interval);
                 } else if (cronExpression instanceof TheMonth) {
                     return ((TheMonth) cronExpression).andMonth(from).toMonth(12, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).setUseMonthAsNumber(useNumber)
-                    .everyMonth(from, 12, interval);
+            CronBuilder cronBuilder =
+                    new CronBuilder().setZoneId(context.getZoneId()).setUseMonthAsNumber(useNumber);
+            return every ? cronBuilder.everyMonth(from, interval)
+                    : cronBuilder.everyYear().month(from).toMonth(12, interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitMonth(text, filter, context);
         }
@@ -188,11 +212,13 @@ public class SlashTagVisitor implements TagVisitor {
             String[] args = text.split("\\/");
             int from;
             boolean useNumber = true;
+            boolean every = false;
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
                 if ("*".equals(args[0])) {
                     from = 1;
+                    every = true;
                 } else {
                     from = AbbreviationUtils.getDayOfWeekValue(args[0]);
                 }
@@ -203,13 +229,16 @@ public class SlashTagVisitor implements TagVisitor {
             cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
             if (cronExpression != null) {
                 if (cronExpression instanceof Month) {
-                    return ((Month) cronExpression).everyWeek().everyDay(from, 7, interval);
+                    return every ? ((Month) cronExpression).everyWeek().everyDay(from, interval)
+                            : ((Month) cronExpression).everyWeek().day(from).toDay(7, interval);
                 } else if (cronExpression instanceof TheDayOfWeek) {
                     return ((TheDayOfWeek) cronExpression).andDay(from).toDay(7, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId())
-                    .setUseDayOfWeekAsNumber(useNumber).everyWeek().everyDay(from, 7, interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId())
+                    .setUseDayOfWeekAsNumber(useNumber);
+            return every ? cronBuilder.everyWeek().everyDay(from, interval)
+                    : cronBuilder.everyWeek().day(from).toDay(7, interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitDayOfWeek(text, filter, context);
         }
@@ -218,18 +247,32 @@ public class SlashTagVisitor implements TagVisitor {
 
     @Override
     public CronExpression visitYear(String text, String filter, CronExpressionContext context) {
-        if (text.matches("(\\d{4})\\/(\\d+)") && (filter == null || filter.contains("/"))) {
+        if (text.matches("((\\*)|(\\d{4}))\\/(\\d+)") && (filter == null || filter.contains("/"))) {
             String[] args = text.split("\\/");
-            int from = Integer.parseInt(args[0]);
+            boolean every = false;;
+            int from;
+            try {
+                from = Integer.parseInt(args[0]);
+            } catch (RuntimeException e) {
+                from = 0;
+                every = true;
+            }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
+                if (from == 0) {
+                    from = cronExpression.getBuilder().getStartTime().getYear();
+                }
                 if (cronExpression instanceof TheYear) {
                     return ((TheYear) cronExpression).andYear(from).toYear(Year.MAX_YEAR, interval);
                 }
             }
-            return new CronBuilder().setZoneId(context.getZoneId()).everyYear(from, Year.MAX_YEAR,
-                    interval);
+            CronBuilder cronBuilder = new CronBuilder().setZoneId(context.getZoneId());
+            if (from == 0) {
+                from = cronBuilder.getStartTime().getYear();
+            }
+            return every ? cronBuilder.everyYear(from, interval)
+                    : cronBuilder.year(from).toEnd(interval);
         } else if (nextVisitor != null) {
             return nextVisitor.visitYear(text, filter, context);
         }

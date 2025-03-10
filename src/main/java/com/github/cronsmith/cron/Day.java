@@ -27,14 +27,14 @@ public interface Day extends Iterator<Day>, CronExpression {
     }
 
     default Hour everyHour(int interval) {
-        return everyHour(0, 23, interval);
+        return everyHour(0, interval);
     }
 
-    default Hour everyHour(int from, int to, int interval) {
-        return everyHour(d -> from, d -> to, interval);
+    default Hour everyHour(int from, int interval) {
+        return everyHour(d -> from, interval);
     }
 
-    Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval);
+    Hour everyHour(IntFunction<Day> from, int interval);
 
     TheHour hour(int hourOfDay);
 

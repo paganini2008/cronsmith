@@ -27,15 +27,15 @@ public interface Minute extends Iterator<Minute>, CronExpression {
     }
 
     default Second everySecond(int interval) {
-        return everySecond(0, 59, interval);
+        return everySecond(0, interval);
     }
 
-    default Second everySecond(int from, int to, int interval) {
-        return everySecond(m -> from, m -> to, interval);
+    default Second everySecond(int from, int interval) {
+        return everySecond(m -> from, interval);
     }
 
     TheSecond second(int second);
 
-    Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval);
+    Second everySecond(IntFunction<Minute> from, int interval);
 
 }

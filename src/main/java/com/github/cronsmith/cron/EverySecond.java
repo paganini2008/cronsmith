@@ -1,6 +1,5 @@
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.function.Supplier;
@@ -13,34 +12,31 @@ import com.github.cronsmith.CRON;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EverySecond implements Second, Serializable {
+public class EverySecond implements Second, IntervalChronoUnit {
 
     private static final long serialVersionUID = -2606684197757806223L;
     private Minute minute;
     private LocalDateTime second;
     private final IntFunction<Minute> from;
-    private final IntFunction<Minute> to;
-    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EverySecond(Minute minute, IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
-        if (interval <= 0) {
+    EverySecond(Minute minute, IntFunction<Minute> from, int interval) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.minute = minute;
         this.from = from;
-        this.to = to;
-        this.supplier = getSupplier();
-        this.second = supplier.get();
         this.interval = interval;
+        this.second = minute.getTime().withSecond(getFromSecond() + (interval - 1));
         this.self = true;
         this.forward = true;
     }
 
-    private DateTimeSupplier getSupplier() {
-        return () -> minute.getTime().withSecond(getFromSecond());
+    @Override
+    public int getFrom() {
+        return getFromSecond();
     }
 
     private int getFromSecond() {
@@ -49,19 +45,13 @@ public class EverySecond implements Second, Serializable {
         return fromSecond;
     }
 
-    private int getToSecond() {
-        int toSecond = to.apply(minute);
-        ChronoField.SECOND_OF_MINUTE.checkValidValue(toSecond);
-        return toSecond;
-    }
-
     @Override
     public boolean hasNext() {
-        boolean next = (self || second.getSecond() + interval <= getToSecond());
+        boolean next = (self || second.getSecond() + interval <= 59);
         if (!next) {
             if (minute.hasNext()) {
                 minute = minute.next();
-                second = supplier.get();
+                second = minute.getTime().withSecond(getFromSecond() + (interval - 1));
                 forward = false;
                 next = true;
             }
@@ -143,20 +133,22 @@ public class EverySecond implements Second, Serializable {
     }
 
     @Override
+    public int getInterval() {
+        return interval;
+    }
+
+    @Override
     public String toCronString() {
         int fromSecond = getFromSecond();
-        int toSecond = getToSecond();
-        String str;
-        boolean slashed = false;
-        if (fromSecond == 0 && toSecond == 59) {
+        String str = "";
+        boolean slashed = interval > 1;
+        if (fromSecond == 0) {
             str = "*";
-        } else if (fromSecond > 0 && toSecond == 59) {
+        } else if (fromSecond > 0) {
             str = String.valueOf(fromSecond);
             slashed = true;
-        } else {
-            str = fromSecond + "-" + toSecond;
         }
-        return interval > 1 ? str + "/" + interval : slashed ? str + "/1" : str;
+        return slashed ? str + "/" + interval : str;
     }
 
     @Override

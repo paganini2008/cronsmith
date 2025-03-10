@@ -1,7 +1,6 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
@@ -9,7 +8,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -21,52 +19,52 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisYear implements TheYear, Serializable {
+public class ThisYear implements TheYear {
 
     private static final long serialVersionUID = -5316436238766770045L;
-    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<TagIterator> iterators = new ArrayList<>();
     private CronBuilder builder;
     private LocalDateTime year;
     private int index;
-    private int lastYear;
-    private final List<Range<Integer>> ranges = new ArrayList<>();
+    private int startYearFlag;
 
-    public ThisYear(CronBuilder builder, int year) {
+    ThisYear(CronBuilder builder, int year) {
         if (year > MAX_YEAR) {
-            throw new IllegalArgumentException("Exceed the max year: " + MAX_YEAR);
+            throw new IllegalArgumentException("Great than the maximum year: " + MAX_YEAR);
+        }
+        if (year < builder.getStartTime().getYear()) {
+            throw new IllegalArgumentException(
+                    "Less than the minimum year: " + builder.getStartTime().getYear());
         }
         this.builder = builder;
-        DateTimeSupplier supplier = () -> builder.getTime().withYear(year);
-        this.siblings.put(year, supplier);
-        this.year = supplier.get();
-        this.lastYear = year;
-        this.ranges.add(new YearRange(year));
+        this.iterators.add(new SingleValueIterator(b -> year));
+        this.year = builder.getTime().withYear(year);
+        this.startYearFlag = year;
     }
 
     @Override
     public TheYear andYear(int year) {
-        this.ranges.add(new YearRange(year));
-        return doAndYear(year);
-    }
-
-    private TheYear doAndYear(int year) {
         ChronoField.YEAR.checkValidValue(year);
-        DateTimeSupplier supplier = () -> builder.getTime().withYear(year);
-        siblings.put(year, supplier);
-        this.lastYear = year;
+        this.iterators.add(new SingleValueIterator(b -> year));
+        this.startYearFlag = year;
         return this;
     }
 
     @Override
     public TheYear toYear(int year, int interval) {
         ChronoField.YEAR.checkValidValue(year);
-        if (interval < 0) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastYear + interval; i <= year; i += interval) {
-            doAndYear(i);
+        if (startYearFlag >= year) {
+            throw new IllegalArgumentException(startYearFlag + ">=" + year);
         }
-        this.ranges.get(ranges.size() - 1).setTo(year).setInterval(interval);
+        final int fromYear = startYearFlag;
+        ValueRangeIterator rangeIterator =
+                new ValueRangeIterator(b -> fromYear, b -> year, interval);
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(fromYear)));
+        this.iterators.add(rangeIterator);
+        this.startYearFlag = year;
         return this;
     }
 
@@ -93,9 +91,9 @@ public class ThisYear implements TheYear, Serializable {
     }
 
     @Override
-    public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
+    public Month everyMonth(IntFunction<Year> from, int interval) {
         final Year copy = (Year) this.copy();
-        return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryMonth(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -145,13 +143,17 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public boolean hasNext() {
-        return index < siblings.size();
+        return index < iterators.size();
     }
 
     @Override
     public Year next() {
-        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
-        year = supplier.get();
+        TagIterator iterator = iterators.get(index);
+        year = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
+        }
         return this;
     }
 
@@ -167,7 +169,7 @@ public class ThisYear implements TheYear, Serializable {
 
     @Override
     public String toCronString() {
-        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
@@ -175,20 +177,112 @@ public class ThisYear implements TheYear, Serializable {
         return CRON.toCronString(this);
     }
 
-    static class YearRange extends Range<Integer> {
+    private class SingleValueIterator implements TagIterator {
 
-        public YearRange(Integer from) {
-            super(from);
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<CronBuilder> ifun;
+        private final int value;
+
+        SingleValueIterator(IntFunction<CronBuilder> ifun) {
+            this.ifun = ifun;
+            this.value = ifun.apply(builder);
+            this.self = true;
         }
 
-        public Integer getTo() {
-            if (Integer.valueOf(Year.MAX_YEAR).equals(super.getTo())) {
-                return null;
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
             }
-            return super.getTo();
+            int year = ifun.apply(builder);
+            return builder.getTime().withYear(year);
         }
 
-        private static final long serialVersionUID = -7908364182076275624L;
+        @Override
+        public String getTag() {
+            return String.valueOf(value);
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
+    }
+
+    private class ValueRangeIterator implements TagIterator {
+
+        private static final long serialVersionUID = -2056254572492151394L;
+
+        ValueRangeIterator(IntFunction<CronBuilder> from, IntFunction<CronBuilder> to,
+                int interval) {
+            this.from = from;
+            this.to = to;
+            this.fromScalar = from.apply(builder);
+            this.toScalar = to.apply(builder);
+            this.interval = interval;
+            reset();
+        }
+
+        private final IntFunction<CronBuilder> from;
+        private final IntFunction<CronBuilder> to;
+        protected final int fromScalar;
+        protected final int toScalar;
+        protected final int interval;
+        private boolean self;
+
+        private LocalDateTime ldt;
+
+        @Override
+        public void reset() {
+            this.ldt = builder.getTime().withYear(from.apply(builder));
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self || ldt.getYear() + interval <= to.apply(builder);
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            } else {
+                ldt = ldt.plusYears(interval);
+            }
+            return ldt;
+        }
+
+        @Override
+        public String getTag() {
+            String str;
+            boolean slashed = interval > 1;
+            if (fromScalar >= getBuilder().getStartTime().getYear() && toScalar == MAX_YEAR) {
+                str = String.valueOf(fromScalar);
+                slashed = true;
+            } else {
+                str = fromScalar + "-" + toScalar;
+            }
+            return slashed ? str + "/" + interval : str;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
 
     }
 

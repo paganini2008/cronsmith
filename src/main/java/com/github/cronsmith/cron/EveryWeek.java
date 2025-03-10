@@ -1,10 +1,10 @@
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.function.Supplier;
+import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
 
@@ -15,36 +15,29 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryWeek implements Week, Serializable {
+public class EveryWeek implements Week, IntervalChronoUnit {
 
     private static final long serialVersionUID = -6457126115562721511L;
     private Month month;
-    private final DateTimeSupplier supplier;
     private final IntFunction<Month> from;
-    private final IntFunction<Month> to;
     private final int interval;
     private LocalDateTime week;
     private boolean self;
     private boolean forward;
     private LocalDateTime previous;
 
-    EveryWeek(Month month, IntFunction<Month> from, IntFunction<Month> to, int interval) {
-        if (interval <= 0) {
+    EveryWeek(Month month, IntFunction<Month> from, int interval) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.month = month;
         this.from = from;
-        this.to = to;
-        this.supplier = getSupplier();
-        this.week = supplier.get();
         this.interval = interval;
+        this.week = month.getTime()
+                .with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth() + (interval - 1))
+                .with(WeekFields.ISO.dayOfWeek(), 1);
         this.self = true;
         this.forward = true;
-    }
-
-    private DateTimeSupplier getSupplier() {
-        return () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth())
-                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
     }
 
     private int getFromWeekOfMonth() {
@@ -53,10 +46,9 @@ public class EveryWeek implements Week, Serializable {
         return fromWeekOfMonth;
     }
 
-    private int getToWeekOfMonth() {
-        int toWeekOfMonth = to.apply(month);
-        ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(toWeekOfMonth);
-        return toWeekOfMonth;
+    @Override
+    public int getFrom() {
+        return getFromWeekOfMonth();
     }
 
     @Override
@@ -65,7 +57,9 @@ public class EveryWeek implements Week, Serializable {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                week = supplier.get();
+                week = month.getTime()
+                        .with(WeekFields.ISO.weekOfMonth(), getFromWeekOfMonth() + (interval - 1))
+                        .with(WeekFields.ISO.dayOfWeek(), 1);
                 forward = previous != null && previous.compareTo(week) >= 0;
                 next = true;
             }
@@ -80,7 +74,7 @@ public class EveryWeek implements Week, Serializable {
         } else {
             weekOfMonth = 1;
         }
-        return weekOfMonth + interval <= getToWeekOfMonth();
+        return weekOfMonth + interval <= month.getWeekCountOfMonth();
     }
 
     @Override
@@ -146,9 +140,9 @@ public class EveryWeek implements Week, Serializable {
     }
 
     @Override
-    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, int interval) {
         final Week copy = (Week) this.copy();
-        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -157,8 +151,15 @@ public class EveryWeek implements Week, Serializable {
     }
 
     @Override
+    public int getInterval() {
+        return interval;
+    }
+
+    @Override
     public String toCronString() {
-        return "";
+        String repr =
+                getBuilder().isUseMonthAsNumber() ? "" + 1 : AbbreviationUtils.getDayOfWeekName(1);
+        return interval > 1 ? repr + "/" + interval : repr;
     }
 
     @Override

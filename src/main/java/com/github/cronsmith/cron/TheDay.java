@@ -18,7 +18,7 @@ public interface TheDay extends Day {
 
     Day andLastDay(int n);
 
-    Day andLatestWeekday(int dayOfMonth);
+    TheDay andLatestWeekday(int dayOfMonth);
 
     Day andLastWeekday();
 
@@ -27,6 +27,10 @@ public interface TheDay extends Day {
     }
 
     Day toLastDay(int interval);
+
+    Day toLastWeekday(int interval);
+
+    TheDay toLatestWeekday(int dayOfMonth, int interval);
 
     default TheDay toDay(int dayOfMonth) {
         return toDay(dayOfMonth, 1);

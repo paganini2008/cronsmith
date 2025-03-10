@@ -1,16 +1,13 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
 
 /**
  * 
@@ -19,50 +16,46 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisSecond implements TheSecond, Serializable {
+public class ThisSecond implements TheSecond {
 
     private static final long serialVersionUID = 6264419114715870528L;
-    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<TagIterator> iterators = new ArrayList<>();
     private Minute minute;
     private int index;
     private LocalDateTime second;
-    private int lastSecond;
-    private final List<Range<Integer>> ranges = new ArrayList<>();
+    private int startSecondFlag;
 
     ThisSecond(Minute minute, int second) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
         this.minute = minute;
-        DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
-        this.siblings.put(second, supplier);
-        this.second = supplier.get();
-        this.lastSecond = second;
-        this.ranges.add(new Range<Integer>(second));
+        this.iterators.add(new SingleValueIterator(m -> second));
+        this.second = minute.getTime().withSecond(second);
+        this.startSecondFlag = second;
     }
 
     @Override
     public ThisSecond andSecond(int second) {
-        this.ranges.add(new Range<Integer>(second));
-        return doAndSecond(second);
-    }
-
-    private ThisSecond doAndSecond(int second) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
-        DateTimeSupplier supplier = () -> minute.getTime().withSecond(second);
-        this.siblings.put(second, supplier);
-        this.lastSecond = second;
+        this.iterators.add(new SingleValueIterator(m -> second));
+        this.startSecondFlag = second;
         return this;
     }
 
     @Override
     public TheSecond toSecond(int second, int interval) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
-        if (interval < 0) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        for (int i = lastSecond + interval; i <= second; i += interval) {
-            doAndSecond(i);
+        if (startSecondFlag >= second) {
+            throw new IllegalArgumentException(startSecondFlag + ">=" + second);
         }
-        this.ranges.get(this.ranges.size() - 1).setTo(second).setInterval(interval);
+        final int fromSecond = startSecondFlag;
+        ValueRangeIterator rangeIterator =
+                new ValueRangeIterator(m -> fromSecond, m -> second, interval);
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(fromSecond)));
+        this.iterators.add(rangeIterator);
+        startSecondFlag = second;
         return this;
     }
 
@@ -85,7 +78,6 @@ public class ThisSecond implements TheSecond, Serializable {
                     break;
                 }
             }
-            index = 0;
         }
         return this;
     }
@@ -122,21 +114,26 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public boolean hasNext() {
-        boolean next = index < siblings.size();
+        boolean next = index < iterators.size();
         if (!next) {
             if (minute.hasNext()) {
                 minute = minute.next();
                 index = 0;
+                iterators.forEach(i -> i.reset());
                 next = true;
             }
         }
-        return next;
+        return next && iterators.get(index).hasNext();
     }
 
     @Override
     public Second next() {
-        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
-        second = supplier.get();
+        TagIterator iterator = iterators.get(index);
+        second = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
+        }
         second = second.withYear(minute.getYear()).withMonth(minute.getMonth())
                 .withDayOfMonth(minute.getDay()).withHour(minute.getHour())
                 .withMinute(minute.getMinute());
@@ -150,12 +147,121 @@ public class ThisSecond implements TheSecond, Serializable {
 
     @Override
     public String toCronString() {
-        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    private class SingleValueIterator implements TagIterator {
+
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<Minute> ifun;
+        private final int value;
+
+        SingleValueIterator(IntFunction<Minute> ifun) {
+            this.ifun = ifun;
+            this.value = ifun.apply(minute);
+            this.self = true;
+        }
+
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            }
+            int second = ifun.apply(minute);
+            return minute.getTime().withSecond(second);
+        }
+
+        @Override
+        public String getTag() {
+            return String.valueOf(value);
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
+    }
+
+    private class ValueRangeIterator implements TagIterator {
+
+        private static final long serialVersionUID = -2056254572492151394L;
+
+        ValueRangeIterator(IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
+            this.from = from;
+            this.to = to;
+            this.fromScalar = from.apply(minute);
+            this.toScalar = to.apply(minute);
+            this.interval = interval;
+            reset();
+        }
+
+        private final IntFunction<Minute> from;
+        private final IntFunction<Minute> to;
+        protected final int fromScalar;
+        protected final int toScalar;
+        protected final int interval;
+        private boolean self;
+
+        private LocalDateTime ldt;
+
+        @Override
+        public void reset() {
+            int from = this.from.apply(minute);
+            this.ldt = minute.getTime().withSecond(from);
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self || ldt.getSecond() + interval <= to.apply(minute);
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            } else {
+                ldt = ldt.plusSeconds(interval);
+            }
+            return ldt;
+        }
+
+        @Override
+        public String getTag() {
+            boolean slashed = interval > 1;
+            String str;
+            if (fromScalar >= 0 && toScalar == 59) {
+                str = String.valueOf(fromScalar);
+                slashed = true;
+            } else {
+                str = fromScalar + "-" + toScalar;
+            }
+            return slashed ? str + "/" + interval : str;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
     }
 
 }

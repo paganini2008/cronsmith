@@ -1,7 +1,6 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
@@ -9,7 +8,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.AbbreviationUtils;
@@ -23,53 +21,50 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 27/02/2025
  * @Version 1.0.0
  */
-public class ThisMonth implements TheMonth, Serializable {
+public class ThisMonth implements TheMonth {
 
     private static final long serialVersionUID = 229203112866380942L;
-    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<TagIterator> iterators = new ArrayList<>();
     private Year year;
     private int index;
     private LocalDateTime month;
-    private int lastMonthFlag;
-    private final List<Range<Object>> ranges = new ArrayList<>();
+    private int startMonthFlag;
 
     ThisMonth(Year year, int month) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
         this.year = year;
-        DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
-        this.siblings.put(month, supplier);
-        this.month = supplier.get();
-        this.lastMonthFlag = month;
-        this.ranges.add(new MonthRange(month));
+        this.iterators.add(new SingleValueIterator(y -> month));
+        this.month = year.getTime().withMonth(month);
+        this.startMonthFlag = month;
     }
 
     @Override
     public TheMonth andMonth(int month) {
-        this.ranges.add(new MonthRange(month));
-        return doAndMonth(month);
-    }
-
-    private TheMonth doAndMonth(int month) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
-        DateTimeSupplier supplier = () -> year.getTime().withMonth(month);
-        this.siblings.put(month, supplier);
-        this.lastMonthFlag = month;
+        if (startMonthFlag > month) {
+            throw new IllegalArgumentException("Must greater than day: " + startMonthFlag);
+        }
+        this.iterators.add(new SingleValueIterator(y -> month));
+        this.startMonthFlag = month;
         return this;
     }
 
     @Override
     public TheMonth toMonth(int month, int interval) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
-        if (interval < 0) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        if (lastMonthFlag >= month) {
-            throw new IllegalArgumentException(lastMonthFlag + ">=" + month);
+        if (startMonthFlag >= month) {
+            throw new IllegalArgumentException(startMonthFlag + ">=" + month);
         }
-        for (int i = lastMonthFlag + interval; i <= month; i += interval) {
-            doAndMonth(i);
-        }
-        this.ranges.get(this.ranges.size() - 1).setTo(month).setInterval(interval);
+        final int fromMonth = startMonthFlag;
+        ValueRangeIterator rangeIterator =
+                new ValueRangeIterator(m -> fromMonth, m -> month, interval);
+        this.iterators.removeIf(iter -> iter.toString()
+                .equals(getBuilder().isUseMonthAsNumber() ? String.valueOf(fromMonth)
+                        : AbbreviationUtils.getMonthName(fromMonth)));
+        this.iterators.add(rangeIterator);
         return this;
     }
 
@@ -116,8 +111,15 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public Day latestWeekday(int dayOfMonth) {
-        return new LatestWeekdayOfMonth(this, dayOfMonth);
+    public TheDay latestWeekday(int dayOfMonth) {
+        final Month copy = (Month) this.copy();
+        return new LatestWeekdayOfMonth(IteratorUtils.getFirst(copy), dayOfMonth);
+    }
+
+    @Override
+    public Day lastWeekday() {
+        final Month copy = (Month) this.copy();
+        return new LastWeekdayOfMonth(IteratorUtils.getFirst(copy));
     }
 
     @Override
@@ -159,9 +161,9 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval) {
+    public Day everyDay(IntFunction<Month> from, int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryDay(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryDay(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -171,9 +173,9 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public TheDayOfWeekInMonth dayOfWeek(int week, int dayOfWeek) {
+    public TheDayOfWeekInMonth dayOfWeek(int weekOfMonth, int dayOfWeek) {
         final Month copy = (Month) this.copy();
-        return new ThisDayOfWeekInMonth(IteratorUtils.getFirst(copy), week, dayOfWeek);
+        return new ThisDayOfWeekInMonth(IteratorUtils.getFirst(copy), weekOfMonth, dayOfWeek);
     }
 
     @Override
@@ -183,28 +185,33 @@ public class ThisMonth implements TheMonth, Serializable {
     }
 
     @Override
-    public Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval) {
+    public Week everyWeek(IntFunction<Month> from, int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryWeek(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryWeek(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = index < siblings.size();
+        boolean next = index < iterators.size();
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
                 index = 0;
+                iterators.forEach(i -> i.reset());
                 next = true;
             }
         }
-        return next;
+        return next && iterators.get(index).hasNext();
     }
 
     @Override
     public Month next() {
-        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
-        month = supplier.get();
+        TagIterator iterator = iterators.get(index);
+        month = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
+        }
         month = month.withYear(year.getYear());
         return this;
     }
@@ -216,32 +223,7 @@ public class ThisMonth implements TheMonth, Serializable {
 
     @Override
     public String toCronString() {
-        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
-    }
-
-    class MonthRange extends Range<Object> {
-
-        private static final long serialVersionUID = -71288722336240277L;
-
-        MonthRange(Object from) {
-            super(from);
-        }
-
-        public String getFrom() {
-            int from = (Integer) super.getFrom();
-            return getBuilder().isUseMonthAsNumber() ? String.valueOf(from)
-                    : AbbreviationUtils.getMonthName(from);
-        }
-
-        public String getTo() {
-            if (super.getTo() != null) {
-                int to = (Integer) super.getTo();
-                return getBuilder().isUseMonthAsNumber() ? String.valueOf(to)
-                        : AbbreviationUtils.getMonthName(to);
-            }
-            return null;
-        }
-
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
@@ -249,13 +231,109 @@ public class ThisMonth implements TheMonth, Serializable {
         return CRON.toCronString(this);
     }
 
-    public static void main(String[] args) {
-        TheYear singleYear = new CronBuilder().year(2025);
-        singleYear = singleYear.andYear(2030).andYear(2028);
-        TheMonth singleMonth = singleYear.July().andAug().andMonth(11);
-        CronExpression cronExpression = singleMonth.lastWeek().Tues().andWed().toSun().everyHour(2)
-                .minute(10).toMinute(50, 3).second(6);
-        System.out.println(cronExpression);
+    private class SingleValueIterator implements TagIterator {
+
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<Year> ifun;
+        private final int value;
+
+        SingleValueIterator(IntFunction<Year> ifun) {
+            this.ifun = ifun;
+            this.value = ifun.apply(year);
+            this.self = true;
+        }
+
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            }
+            int month = ifun.apply(year);
+            return year.getTime().withMonth(month);
+        }
+
+        @Override
+        public String getTag() {
+            return getBuilder().isUseMonthAsNumber() ? String.valueOf(value)
+                    : AbbreviationUtils.getMonthName(value);
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+    }
+
+    private class ValueRangeIterator implements TagIterator {
+
+        private static final long serialVersionUID = -2056254572492151394L;
+
+        ValueRangeIterator(IntFunction<Year> from, IntFunction<Year> to, int interval) {
+            this.from = from;
+            this.to = to;
+            this.fromScalar = from.apply(year);
+            this.toScalar = to.apply(year);
+            this.interval = interval;
+            reset();
+        }
+
+        private final IntFunction<Year> from;
+        private final IntFunction<Year> to;
+        protected final int fromScalar;
+        protected final int toScalar;
+        protected final int interval;
+        private boolean self;
+
+        private LocalDateTime ldt;
+
+        @Override
+        public void reset() {
+            this.ldt = year.getTime().withMonth(from.apply(year));
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self || ldt.getMonthValue() + interval <= to.apply(year);
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            } else {
+                ldt = ldt.plusMonths(interval);
+            }
+            return ldt;
+        }
+
+        @Override
+        public String getTag() {
+            boolean numberFlag = getBuilder().isUseMonthAsNumber();
+            String str = (numberFlag ? String.valueOf(fromScalar)
+                    : AbbreviationUtils.getMonthName(fromScalar)) + "-"
+                    + (numberFlag ? String.valueOf(toScalar)
+                            : AbbreviationUtils.getMonthName(toScalar));
+            return interval > 1 ? str + "/" + interval : str;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
     }
 
 }

@@ -1,14 +1,12 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -20,44 +18,22 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
+public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth {
 
     private static final long serialVersionUID = -5853750543470928852L;
 
-    private final TreeMap<String, DateTimeSupplier> siblings =
-            new TreeMap<>(new WeekInMonthComparator());
-    private final StringBuilder cron = new StringBuilder();
+    private final TreeSet<TagIterator> iterators = new TreeSet<>();
     private Month month;
     private LocalDateTime day;
     private int index;
-
-    private static class WeekInMonthComparator implements Comparator<String>, Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public int compare(String a, String b) {
-            String x = a.split("#", 2)[1];
-            String y = b.split("#", 2)[1];
-            return Integer.parseInt(x) - Integer.parseInt(y);
-        }
-
-    }
 
     ThisDayOfWeekInMonth(Month month, int weekOfMonth, int dayOfWeek) {
         ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH.checkValidValue(dayOfWeek);
         this.month = month;
-        DateTimeSupplier supplier =
-                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
-                        .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
-        this.siblings.put(dayOfWeek + "#" + weekOfMonth, supplier);
-        this.day = supplier.get();
-        this.cron
-                .append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
-                        : (getBuilder().isUseDayOfWeekAsNumber() ? dayOfWeek
-                                : AbbreviationUtils.getDayOfWeekName(dayOfWeek)) + "#"
-                                + weekOfMonth);
+        this.iterators.add(new SingleValueIterator(m -> weekOfMonth, m -> dayOfWeek));
+        this.day = month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
+                .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
     }
 
     @Override
@@ -89,21 +65,15 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
     public TheDayOfWeekInMonth and(int weekOfMonth, int dayOfWeek) {
         ChronoField.ALIGNED_WEEK_OF_MONTH.checkValidValue(weekOfMonth);
         ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH.checkValidValue(dayOfWeek);
-        DateTimeSupplier supplier =
-                () -> month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
-                        .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
-        this.siblings.put(dayOfWeek + "#" + weekOfMonth, supplier);
-        this.cron.append(",")
-                .append(month.getWeekCountOfMonth() == weekOfMonth ? dayOfWeek + "L"
-                        : (getBuilder().isUseDayOfWeekAsNumber() ? dayOfWeek
-                                : AbbreviationUtils.getDayOfWeekName(dayOfWeek)) + "#"
-                                + weekOfMonth);
+        this.iterators.add(new SingleValueIterator(m -> weekOfMonth, m -> dayOfWeek));
         return this;
     }
 
     @Override
     public TheDayOfWeekInMonth andLast(int dayOfWeek) {
-        return and(month.getWeekCountOfMonth(), dayOfWeek);
+        ChronoField.ALIGNED_DAY_OF_WEEK_IN_MONTH.checkValidValue(dayOfWeek);
+        this.iterators.add(new LastDayOfWeekInMonth(m -> dayOfWeek));
+        return this;
     }
 
     @Override
@@ -113,35 +83,33 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
     }
 
     @Override
-    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
+    public Hour everyHour(IntFunction<Day> from, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = index < siblings.size();
+        boolean next = index < iterators.size();
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
                 index = 0;
+                iterators.forEach(i -> i.reset());
                 next = true;
             }
         }
-        return next;
+        return next && IteratorUtils.get(iterators.iterator(), index).hasNext();
     }
 
     @Override
     public Day next() {
-        Map.Entry<String, DateTimeSupplier> entry =
-                IteratorUtils.get(siblings.entrySet().iterator(), index++);
-        String cron = entry.getKey();
-        String[] args = cron.split("#", 2);
-        day = entry.getValue().get();
-        day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                .with(WeekFields.ISO.weekOfMonth(),
-                        Math.min(Integer.parseInt(args[1]), month.getWeekCountOfMonth()))
-                .with(WeekFields.ISO.dayOfWeek(), Integer.parseInt(args[0]));
+        TagIterator iterator = IteratorUtils.get(iterators.iterator(), index);
+        day = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
+        }
         return this;
     }
 
@@ -161,7 +129,6 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
                     break;
                 }
             }
-            index = 0;
         }
         return this;
     }
@@ -173,12 +140,85 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, Serializable {
 
     @Override
     public String toCronString() {
-        return this.cron.toString();
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    private class LastDayOfWeekInMonth extends SingleValueIterator {
+
+        private static final long serialVersionUID = -5380738194811061909L;
+
+        LastDayOfWeekInMonth(IntFunction<Month> dayOfWeekFun) {
+            super(m -> m.getWeekCountOfMonth(), dayOfWeekFun);
+        }
+
+        @Override
+        public String toString() {
+            return dayOfWeek + "L";
+        }
+    }
+
+    private class SingleValueIterator implements TagIterator, Comparable<SingleValueIterator> {
+
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<Month> weekOfMonthFun;
+        private final IntFunction<Month> dayOfWeekFun;
+        protected final int weekOfMonth;
+        protected final int dayOfWeek;
+
+        SingleValueIterator(IntFunction<Month> weekOfMonthFun, IntFunction<Month> dayOfWeekFun) {
+            this.weekOfMonthFun = weekOfMonthFun;
+            this.dayOfWeekFun = dayOfWeekFun;
+            this.weekOfMonth = weekOfMonthFun.apply(month);
+            this.dayOfWeek = dayOfWeekFun.apply(month);
+            this.self = true;
+        }
+
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            }
+            int dayOfWeek = dayOfWeekFun.apply(month);
+            int weekOfMonth = weekOfMonthFun.apply(month);
+            return month.getTime().with(WeekFields.ISO.weekOfMonth(), weekOfMonth)
+                    .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
+        }
+
+        @Override
+        public String getTag() {
+            boolean numberFlag = getBuilder().isUseDayOfWeekAsNumber();
+            return (numberFlag ? dayOfWeek : AbbreviationUtils.getDayOfWeekName(dayOfWeek)) + "#"
+                    + weekOfMonth;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
+        @Override
+        public int compareTo(SingleValueIterator other) {
+            int left = Integer.parseInt(weekOfMonth + "" + dayOfWeek);
+            int right = Integer.parseInt(other.weekOfMonth + "" + other.dayOfWeek);
+            return left - right;
+        }
     }
 
 }

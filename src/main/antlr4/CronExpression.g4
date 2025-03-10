@@ -91,6 +91,7 @@ yearField
     : yearRangeWithStep
     | yearRange     
     | INT_YEAR '/' INT
+    | '*/' INT  
     | '*'            
     | INT_YEAR      
     ;

@@ -48,14 +48,14 @@ public interface Year extends Iterator<Year>, CronExpression {
     }
 
     default Month everyMonth(int interval) {
-        return everyMonth(1, 12, interval);
+        return everyMonth(1, interval);
     }
 
-    default Month everyMonth(int from, int to, int interval) {
-        return everyMonth(y -> from, y -> to, interval);
+    default Month everyMonth(int from, int interval) {
+        return everyMonth(y -> from, interval);
     }
 
-    Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval);
+    Month everyMonth(IntFunction<Year> from, int interval);
 
     TheMonth month(int month);
 

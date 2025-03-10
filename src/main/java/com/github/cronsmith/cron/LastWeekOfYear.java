@@ -1,7 +1,6 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
@@ -14,24 +13,18 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class LastWeekOfYear implements LastWeek, Serializable {
+public class LastWeekOfYear implements LastWeek {
 
-    private static final long serialVersionUID = -2099892494149322184L;
+    private static final long serialVersionUID = 6390083273112427117L;
     private Year year;
-    private final DateTimeSupplier supplier;
     private LocalDateTime week;
     private boolean self;
 
     LastWeekOfYear(Year year) {
         this.year = year;
-        this.supplier = getSupplier();
-        this.week = supplier.get();
+        this.week = year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
+                .with(WeekFields.ISO.dayOfWeek(), 1);
         this.self = true;
-    }
-
-    private DateTimeSupplier getSupplier() {
-        return () -> year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
-                .with(WeekFields.ISO.dayOfWeek(), 1).withHour(0).withMinute(0).withSecond(0);
     }
 
     @Override
@@ -66,9 +59,9 @@ public class LastWeekOfYear implements LastWeek, Serializable {
     }
 
     @Override
-    public Day everyDay(IntFunction<Week> from, IntFunction<Week> to, int interval) {
+    public Day everyDay(IntFunction<Week> from, int interval) {
         final Week copy = (Week) this.copy();
-        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -82,7 +75,8 @@ public class LastWeekOfYear implements LastWeek, Serializable {
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                week = supplier.get();
+                week = year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
+                        .with(WeekFields.ISO.dayOfWeek(), 1);
                 next = true;
             }
         }
@@ -99,15 +93,12 @@ public class LastWeekOfYear implements LastWeek, Serializable {
 
     @Override
     public CronExpression getParent() {
-        if (year instanceof TheYear) {
-            return getBuilder().year(getYear()).Dec();
-        }
         return year.Dec();
     }
 
     @Override
     public String toCronString() {
-        return "%sL";
+        return "1L";
     }
 
     @Override

@@ -1,16 +1,11 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
@@ -22,110 +17,93 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisDay implements TheDay, Serializable {
+public class ThisDay implements TheDay {
 
     private static final long serialVersionUID = -6007054113405112202L;
-    private final TreeMap<String, DateTimeSupplier> siblings = new TreeMap<>();
-    private final List<Range<String>> ranges = new ArrayList<>();
+    private final List<TagIterator> iterators = new ArrayList<>();
     private Month month;
     private int index;
     private LocalDateTime day;
-    private int lastDayFlag;
+    private int startDayFlag;
 
     ThisDay(Month month, int dayOfMonth) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
         this.month = month;
-        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(String.valueOf(dayOfMonth), supplier);
-        this.day = supplier.get();
-        this.lastDayFlag = dayOfMonth;
-        this.ranges.add(new Range<>(String.valueOf(dayOfMonth)));
+        this.iterators.add(new SingleValueIterator(m -> dayOfMonth));
+        this.day = month.getTime().withDayOfMonth(dayOfMonth);
+        this.startDayFlag = dayOfMonth;
     }
 
     @Override
     public TheDay andDay(int dayOfMonth) {
-        this.ranges.add(new Range<>(String.valueOf(dayOfMonth)));
-        return doAndDay(dayOfMonth);
-    }
-
-    private TheDay doAndDay(int dayOfMonth) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
-        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(dayOfMonth);
-        this.siblings.put(String.valueOf(dayOfMonth), supplier);
-        this.lastDayFlag = dayOfMonth;
+        if (startDayFlag > dayOfMonth) {
+            throw new IllegalArgumentException("Must greater than day: " + startDayFlag);
+        }
+        this.iterators.add(new SingleValueIterator(m -> dayOfMonth));
+        this.startDayFlag = dayOfMonth;
         return this;
     }
 
     @Override
-    public TheDay andLastDay(int n) {
+    public Day andLastDay(int n) {
         if (n < 0) {
             throw new IllegalArgumentException("Invalid last day offset: " + n);
         }
-        this.ranges.add(new Range<>(n > 0 ? "L-" + n : "L"));
-        return doAndLastDay(n);
-    }
-
-    private TheDay doAndLastDay(int n) {
-        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(month.getLastDay(n));
-        this.siblings.put(n > 0 ? "L-" + n : "L", supplier);
-        this.lastDayFlag = 99;
+        this.iterators.add(new LastDayIterator(n));
         return this;
     }
-
 
     @Override
     public TheDay andLatestWeekday(int dayOfMonth) {
-        this.ranges.add(new Range<>(dayOfMonth + "W"));
-        return doAndLatestWeekday(dayOfMonth);
-    }
-
-    private TheDay doAndLatestWeekday(int dayOfMonth) {
-        DateTimeSupplier supplier =
-                () -> month.getTime().withDayOfMonth(month.getLatestWeekday(dayOfMonth));
-        this.siblings.put(dayOfMonth + "W", supplier);
-        this.lastDayFlag = 99;
+        ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
+        this.iterators.add(new LatestWeekdayIterator(dayOfMonth));
         return this;
     }
 
     @Override
-    public TheDay andLastWeekday() {
-        this.ranges.add(new Range<>("LW"));
-        return doAndLastWeekday();
-    }
-
-    private TheDay doAndLastWeekday() {
-        DateTimeSupplier supplier = () -> month.getTime().withDayOfMonth(month.getLastWeekday());
-        this.siblings.put("LW", supplier);
-        this.lastDayFlag = 99;
+    public Day andLastWeekday() {
+        this.iterators.add(new LastWeekdayIterator());
         return this;
     }
 
     @Override
     public TheDay toDay(int dayOfMonth, int interval) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
-        if (interval < 0) {
+        if (startDayFlag >= dayOfMonth) {
+            throw new IllegalArgumentException(startDayFlag + ">=" + dayOfMonth);
+        }
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        if (lastDayFlag == 99) {
-            throw new IllegalArgumentException("Unable to append any day to 'L' or 'LW' or 'W'");
-        }
-        if (lastDayFlag >= dayOfMonth) {
-            throw new IllegalArgumentException(lastDayFlag + ">=" + dayOfMonth);
-        }
-        for (int i = lastDayFlag + interval; i <= dayOfMonth; i += interval) {
-            doAndDay(i);
-        }
-        this.ranges.get(ranges.size() - 1).setTo(String.valueOf(dayOfMonth)).setInterval(interval);
+        final int fromDay = startDayFlag;
+        ValueRangeIterator rangeIterator =
+                new ValueRangeIterator(m -> fromDay, m -> dayOfMonth, interval);
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(fromDay)));
+        this.iterators.add(rangeIterator);
+        startDayFlag = dayOfMonth;
         return this;
     }
 
     @Override
     public Day toLastDay(int interval) {
-        if (lastDayFlag == 99) {
-            throw new IllegalArgumentException("Unable to append any day to 'L' or 'LW' or 'W'");
-        }
-        this.ranges.get(ranges.size() - 1).setInterval(interval);
-        return new EveryDay(month, m -> lastDayFlag, m -> m.getLastDay(), interval);
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(startDayFlag)));
+        this.iterators.add(new ToLastDayIterator(m -> startDayFlag, interval));
+        return this;
+    }
+
+    @Override
+    public Day toLastWeekday(int interval) {
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(startDayFlag)));
+        this.iterators.add(new ToLastWeekdayIterator(m -> startDayFlag, interval));
+        return this;
+    }
+
+    @Override
+    public TheDay toLatestWeekday(int dayOfMonth, int interval) {
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(startDayFlag)));
+        this.iterators.add(new ToLatestWeekdayIterator(m -> startDayFlag, dayOfMonth, interval));
+        return this;
     }
 
     @Override
@@ -144,7 +122,6 @@ public class ThisDay implements TheDay, Serializable {
                     break;
                 }
             }
-            index = 0;
         }
         return this;
     }
@@ -181,54 +158,35 @@ public class ThisDay implements TheDay, Serializable {
     }
 
     @Override
-    public Hour everyHour(IntFunction<Day> from, IntFunction<Day> to, int interval) {
+    public Hour everyHour(IntFunction<Day> from, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = index < siblings.size();
+        boolean next = index < iterators.size();
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
                 index = 0;
+                iterators.forEach(i -> i.reset());
                 next = true;
             }
         }
-        return next;
+        return next && iterators.get(index).hasNext();
     }
 
     @Override
     public Day next() {
-        Map.Entry<String, DateTimeSupplier> entry =
-                IteratorUtils.get(siblings.entrySet().iterator(), index++);
-        day = entry.getValue().get();
-        day = day.withYear(month.getYear()).withMonth(month.getMonth())
-                .withDayOfMonth(getDayOfMonth(entry.getKey()));
-        return this;
-    }
-
-    private int getDayOfMonth(String repr) {
-        try {
-            return Integer.parseInt(repr);
-        } catch (RuntimeException e) {
-            if ("L".equals(repr)) {
-                return month.getLastDay();
-            } else if ("LW".equals(repr)) {
-                return month.getLastWeekday();
-            } else if (repr.matches("(\\d+)W")) {
-                return Integer.parseInt(repr.replace("W", ""));
-            } else {
-                Pattern pattern = Pattern.compile("L\\-(\\d+)");
-                Matcher matcher = pattern.matcher(repr);
-                if (matcher.matches()) {
-                    int n = Integer.parseInt(matcher.group(1));
-                    return month.getLastDay() - n;
-                }
-                throw new IllegalArgumentException(repr);
-            }
+        TagIterator iterator = iterators.get(index);
+        day = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
         }
+        day = day.withYear(month.getYear()).withMonth(month.getMonth());
+        return this;
     }
 
     @Override
@@ -238,12 +196,216 @@ public class ThisDay implements TheDay, Serializable {
 
     @Override
     public String toCronString() {
-        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    private class ToLastWeekdayIterator extends ValueRangeIterator {
+
+        private static final long serialVersionUID = -286992600993560352L;
+
+        ToLastWeekdayIterator(IntFunction<Month> from, int interval) {
+            super(from, m -> m.getLastWeekday(), interval);
+        }
+
+        @Override
+        public String getTag() {
+            String str = fromScalar + "-LW";
+            return interval > 1 ? str + "/" + interval : str;
+        }
+
+    }
+
+    private class ToLatestWeekdayIterator extends ValueRangeIterator {
+
+        private static final long serialVersionUID = -6562272372696442395L;
+
+        ToLatestWeekdayIterator(IntFunction<Month> from, int dayOfMonth, int interval) {
+            super(from, m -> m.getLatestWeekday(dayOfMonth), interval);
+            this.dayOfMonth = dayOfMonth;
+        }
+
+        private final int dayOfMonth;
+
+        @Override
+        public String getTag() {
+            String str = fromScalar + "-" + dayOfMonth + "W";
+            return interval > 1 ? str + "/" + interval : str;
+        }
+
+    }
+
+    private class ToLastDayIterator extends ValueRangeIterator {
+
+        private static final long serialVersionUID = -9151384314936251635L;
+
+        ToLastDayIterator(IntFunction<Month> from, int interval) {
+            super(from, m -> m.getLastDay(), interval);
+        }
+
+        @Override
+        public String getTag() {
+            String str = String.valueOf(fromScalar);
+            return interval > 1 ? str + "/" + interval : str;
+        }
+
+    }
+
+    private class LastWeekdayIterator extends SingleValueIterator {
+
+        private static final long serialVersionUID = 4743397573090324283L;
+
+        LastWeekdayIterator() {
+            super(m -> m.getLastWeekday());
+        }
+
+        @Override
+        public String getTag() {
+            return "LW";
+        }
+
+    }
+
+    private class LatestWeekdayIterator extends SingleValueIterator {
+
+        private static final long serialVersionUID = 8781405992563059020L;
+
+        LatestWeekdayIterator(int dayOfMonth) {
+            super(m -> m.getLatestWeekday(dayOfMonth));
+            this.dayOfMonth = dayOfMonth;
+        }
+
+        private final int dayOfMonth;
+
+        @Override
+        public String getTag() {
+            return dayOfMonth + "W";
+        }
+
+    }
+
+    private class LastDayIterator extends SingleValueIterator {
+
+        private static final long serialVersionUID = -212509240909099044L;
+
+        LastDayIterator(int n) {
+            super(m -> m.getLastDay(n));
+            this.n = n;
+        }
+
+        private final int n;
+
+        @Override
+        public String getTag() {
+            return n > 0 ? "L-" + n : "L";
+        }
+
+    }
+
+    private class SingleValueIterator implements TagIterator {
+
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<Month> ifun;
+        private final int value;
+
+        SingleValueIterator(IntFunction<Month> ifun) {
+            this.ifun = ifun;
+            this.value = ifun.apply(month);
+            this.self = true;
+        }
+
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            }
+            int dayOfMonth = ifun.apply(month);
+            return month.getTime().withDayOfMonth(dayOfMonth);
+        }
+
+        @Override
+        public String getTag() {
+            return String.valueOf(value);
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
+    }
+
+    private class ValueRangeIterator implements TagIterator {
+
+        private static final long serialVersionUID = -2056254572492151394L;
+
+        ValueRangeIterator(IntFunction<Month> from, IntFunction<Month> to, int interval) {
+            this.from = from;
+            this.to = to;
+            this.fromScalar = from.apply(month);
+            this.toScalar = to.apply(month);
+            this.interval = interval;
+            reset();
+        }
+
+        private final IntFunction<Month> from;
+        private final IntFunction<Month> to;
+        protected final int fromScalar;
+        protected final int toScalar;
+        protected final int interval;
+        private boolean self;
+
+        private LocalDateTime ldt;
+
+        @Override
+        public void reset() {
+            int from = this.from.apply(month);
+            this.ldt = month.getTime().withDayOfMonth(from);
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self || ldt.getDayOfMonth() + interval <= to.apply(month);
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            } else {
+                ldt = ldt.plusDays(interval);
+            }
+            return ldt;
+        }
+
+        @Override
+        public String getTag() {
+            String str = fromScalar + "-" + toScalar;
+            return interval > 1 ? str + "/" + interval : str;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
     }
 
 }

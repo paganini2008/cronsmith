@@ -1,8 +1,6 @@
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
@@ -17,22 +15,18 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryYear implements Year, Serializable {
+public class EveryYear implements Year {
 
     private static final long serialVersionUID = 1487831872493410360L;
 
-    EveryYear(CronBuilder builder, IntFunction<CronBuilder> from, IntFunction<CronBuilder> to,
-            int interval) {
-        if (interval <= 0) {
+    EveryYear(CronBuilder builder, IntFunction<CronBuilder> from, int interval) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.builder = builder;
         this.from = from;
-        this.to = to;
-
-        this.year = builder.getTime().withYear(getFromYear()).withMonth(1).withDayOfMonth(1)
-                .withHour(0).withMinute(0).withSecond(0);
         this.interval = interval;
+        this.year = builder.getTime().withYear(getFromYear() + (interval - 1));
         this.self = true;
 
     }
@@ -40,24 +34,19 @@ public class EveryYear implements Year, Serializable {
     private final CronBuilder builder;
     private LocalDateTime year;
     private final IntFunction<CronBuilder> from;
-    private final IntFunction<CronBuilder> to;
     private final int interval;
     private boolean self;
 
     private int getFromYear() {
         int fromYear = from.apply(builder);
         if (fromYear > MAX_YEAR) {
-            throw new IllegalArgumentException("Exceed the max year: " + MAX_YEAR);
+            throw new IllegalArgumentException("Great than the maximum year: " + MAX_YEAR);
+        }
+        if (fromYear < builder.getStartTime().getYear()) {
+            throw new IllegalArgumentException(
+                    "Less than the minimum year: " + builder.getStartTime().getYear());
         }
         return fromYear;
-    }
-
-    private int getToYear() {
-        int toYear = to.apply(builder);
-        if (toYear > MAX_YEAR) {
-            throw new IllegalArgumentException("Exceed the max year: " + MAX_YEAR);
-        }
-        return toYear;
     }
 
     @Override
@@ -105,7 +94,7 @@ public class EveryYear implements Year, Serializable {
 
     @Override
     public boolean hasNext() {
-        return (self || year.getYear() + interval <= getToYear());
+        return (self || year.getYear() + interval <= MAX_YEAR);
     }
 
     @Override
@@ -119,9 +108,9 @@ public class EveryYear implements Year, Serializable {
     }
 
     @Override
-    public Month everyMonth(IntFunction<Year> from, IntFunction<Year> to, int interval) {
+    public Month everyMonth(IntFunction<Year> from, int interval) {
         final Year copy = (Year) this.copy();
-        return new EveryMonth(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryMonth(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -161,18 +150,19 @@ public class EveryYear implements Year, Serializable {
     @Override
     public String toCronString() {
         int fromYear = getFromYear();
-        int toYear = getToYear();
-        String str;
-        boolean slashed = false;
-        if (fromYear == getBuilder().getStartTime().getYear() && toYear == MAX_YEAR) {
-            str = "*";
-        } else if (fromYear > LocalDate.now().getYear() && toYear == MAX_YEAR) {
+        String str = "";
+        boolean slashed = interval > 1;
+        if (fromYear == getBuilder().getStartTime().getYear()) {
+            if (slashed) {
+                str = String.valueOf(fromYear);
+            } else {
+                str = "*";
+            }
+        } else if (fromYear > getBuilder().getStartTime().getYear()) {
             str = String.valueOf(fromYear);
             slashed = true;
-        } else {
-            str = fromYear + "-" + toYear;
         }
-        return interval > 1 ? str + "/" + interval : slashed ? str + "/1" : str;
+        return slashed ? str + "/" + interval : str;
     }
 
     @Override

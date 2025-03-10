@@ -1,6 +1,5 @@
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
@@ -18,35 +17,26 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryMonth implements Month, Serializable {
+public class EveryMonth implements Month, IntervalChronoUnit {
 
     private static final long serialVersionUID = -7085376125910878673L;
     private Year year;
     private LocalDateTime month;
     private final IntFunction<Year> from;
-    private final IntFunction<Year> to;
-    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EveryMonth(Year year, IntFunction<Year> from, IntFunction<Year> to, int interval) {
-        if (interval <= 0) {
+    EveryMonth(Year year, IntFunction<Year> from, int interval) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.year = year;
         this.from = from;
-        this.to = to;
-        this.supplier = getSuppiler();
-        this.month = supplier.get();
         this.interval = interval;
+        this.month = year.getTime().withMonth(getFromMonth() + (interval - 1));
         this.self = true;
         this.forward = true;
-    }
-
-    private DateTimeSupplier getSuppiler() {
-        return () -> year.getTime().withMonth(getFromMonth()).withDayOfMonth(1).withHour(0)
-                .withMinute(0).withSecond(0);
     }
 
     private int getFromMonth() {
@@ -55,19 +45,13 @@ public class EveryMonth implements Month, Serializable {
         return fromMonth;
     }
 
-    private int getToMonth() {
-        int toMonth = to.apply(year);
-        ChronoField.MONTH_OF_YEAR.checkValidValue(toMonth);
-        return toMonth;
-    }
-
     @Override
     public boolean hasNext() {
-        boolean next = (self || month.getMonthValue() + interval <= getToMonth());
+        boolean next = (self || month.getMonthValue() + interval <= 12);
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                month = supplier.get();
+                month = year.getTime().withMonth(getFromMonth() + (interval - 1));
                 forward = false;
                 next = true;
             }
@@ -100,6 +84,16 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
+    public int getFrom() {
+        return getFromMonth();
+    }
+
+    @Override
+    public int getInterval() {
+        return interval;
+    }
+
+    @Override
     public int getLastDay(int n) {
         int lastDayOfMonth = month.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
         lastDayOfMonth -= n;
@@ -112,8 +106,15 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public Day latestWeekday(int dayOfMonth) {
-        return new LatestWeekdayOfMonth(this, dayOfMonth);
+    public TheDay latestWeekday(int dayOfMonth) {
+        final Month copy = (Month) this.copy();
+        return new LatestWeekdayOfMonth(IteratorUtils.getFirst(copy), dayOfMonth);
+    }
+
+    @Override
+    public Day lastWeekday() {
+        final Month copy = (Month) this.copy();
+        return new LastWeekdayOfMonth(IteratorUtils.getFirst(copy));
     }
 
     @Override
@@ -176,9 +177,9 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval) {
+    public Day everyDay(IntFunction<Month> from, int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryDay(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryDay(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -200,9 +201,9 @@ public class EveryMonth implements Month, Serializable {
     }
 
     @Override
-    public Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval) {
+    public Week everyWeek(IntFunction<Month> from, int interval) {
         final Month copy = (Month) this.copy();
-        return new EveryWeek(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryWeek(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -213,17 +214,16 @@ public class EveryMonth implements Month, Serializable {
     @Override
     public String toCronString() {
         int fromMonth = getFromMonth();
-        int toMonth = getToMonth();
-        String str;
-        if (fromMonth == 1 && toMonth == 12) {
+        String str = "";
+        boolean slashed = interval > 1;
+        if (fromMonth == 1) {
             str = "*";
-        } else if (fromMonth != 1 && toMonth == 12) {
-            str = String.valueOf(fromMonth);
-        } else {
-            str = String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
-                    AbbreviationUtils.getMonthName(toMonth));
+        } else if (fromMonth > 1) {
+            str = getBuilder().isUseMonthAsNumber() ? String.format("%s-%s", fromMonth, 12)
+                    : String.format("%s-%s", AbbreviationUtils.getMonthName(fromMonth),
+                            AbbreviationUtils.getMonthName(12));
         }
-        return interval > 1 ? str + "/" + interval : str;
+        return slashed ? str + "/" + interval : str;
     }
 
     @Override

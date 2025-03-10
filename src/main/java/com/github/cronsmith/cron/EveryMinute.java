@@ -1,6 +1,5 @@
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.function.Supplier;
@@ -14,34 +13,26 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryMinute implements Minute, Serializable {
+public class EveryMinute implements Minute, IntervalChronoUnit {
 
     private static final long serialVersionUID = -7939881133025374416L;
     private Hour hour;
     private LocalDateTime minute;
     private final IntFunction<Hour> from;
-    private final IntFunction<Hour> to;
-    private final DateTimeSupplier supplier;
     private final int interval;
     private boolean self;
     private boolean forward;
 
-    EveryMinute(Hour hour, IntFunction<Hour> from, IntFunction<Hour> to, int interval) {
-        if (interval <= 0) {
+    EveryMinute(Hour hour, IntFunction<Hour> from, int interval) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         this.hour = hour;
         this.from = from;
-        this.to = to;
-        this.supplier = getSupplier();
-        this.minute = supplier.get();
         this.interval = interval;
+        this.minute = hour.getTime().withMinute(getFromMinute() + (interval - 1));
         this.self = true;
         this.forward = true;
-    }
-
-    private DateTimeSupplier getSupplier() {
-        return () -> hour.getTime().withMinute(getFromMinute()).withSecond(0);
     }
 
     private int getFromMinute() {
@@ -50,19 +41,18 @@ public class EveryMinute implements Minute, Serializable {
         return fromMinute;
     }
 
-    private int getToMinute() {
-        int toMinute = to.apply(hour);
-        ChronoField.MINUTE_OF_HOUR.checkValidValue(toMinute);
-        return toMinute;
+    @Override
+    public int getFrom() {
+        return getFromMinute();
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = (self || minute.getMinute() + interval <= getToMinute());
+        boolean next = (self || minute.getMinute() + interval <= 59);
         if (!next) {
             if (hour.hasNext()) {
                 hour = hour.next();
-                minute = supplier.get();
+                minute = hour.getTime().withMinute(getFromMinute() + (interval - 1));
                 forward = false;
                 next = true;
             }
@@ -140,9 +130,9 @@ public class EveryMinute implements Minute, Serializable {
     }
 
     @Override
-    public Second everySecond(IntFunction<Minute> from, IntFunction<Minute> to, int interval) {
+    public Second everySecond(IntFunction<Minute> from, int interval) {
         final Minute copy = (Minute) this.copy();
-        return new EverySecond(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EverySecond(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
@@ -151,20 +141,22 @@ public class EveryMinute implements Minute, Serializable {
     }
 
     @Override
+    public int getInterval() {
+        return interval;
+    }
+
+    @Override
     public String toCronString() {
         int fromMinute = getFromMinute();
-        int toMinute = getToMinute();
-        String str;
-        boolean slashed = false;
-        if (fromMinute == 0 && toMinute == 59) {
+        String str = "";
+        boolean slashed = interval > 1;
+        if (fromMinute == 0) {
             str = "*";
-        } else if (fromMinute > 0 && toMinute == 59) {
+        } else if (fromMinute > 0) {
             str = String.valueOf(fromMinute);
             slashed = true;
-        } else {
-            str = fromMinute + "-" + toMinute;
         }
-        return interval > 1 ? str + "/" + interval : slashed ? str + "/1" : str;
+        return slashed ? str + "/" + interval : str;
     }
 
     @Override

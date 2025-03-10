@@ -15,6 +15,10 @@ public interface TheDayOfWeekInMonth extends DayOfWeek {
 
     TheDayOfWeekInMonth and(int weekOfMonth, int dayOfWeek);
 
+    default TheDayOfWeekInMonth andLast(java.time.DayOfWeek dayOfWeek) {
+        return andLast(dayOfWeek.getValue());
+    }
+
     TheDayOfWeekInMonth andLast(int dayOfWeek);
 
     default TheDayOfWeekInMonth andLastSun() {

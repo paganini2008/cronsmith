@@ -25,6 +25,11 @@ import com.github.cronsmith.scheduler.PeriodicalExecutor;
 @SuppressWarnings("unchecked")
 public interface CronExpression extends CronStringBuilder, Serializable {
 
+    /**
+     * Get related ZoneId
+     * 
+     * @return
+     */
     default ZoneId getZoneId() {
         return getBuilder().getZoneId();
     }
@@ -33,6 +38,13 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return getParent(CronBuilder.class);
     }
 
+    /**
+     * Find Parent CronExpression
+     * 
+     * @param <T>
+     * @param type
+     * @return
+     */
     default <T extends CronExpression> T getParent(Class<T> type) {
         T parent = (T) this;
         while ((parent = (T) parent.getParent()) != null) {
@@ -73,10 +85,14 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return SerializationUtils.copy(this);
     }
 
+    /**
+     * Consume CronExpression but not affect ifself
+     * 
+     * @param consumer
+     * @param n
+     * @return
+     */
     default CronExpression consume(final Consumer<LocalDateTime> consumer, final int n) {
-        if (!(this instanceof Iterator)) {
-            throw new UnsupportedOperationException();
-        }
         LocalDateTime dateTime;
         int i = 0;
         for (CronExpression cronExpression : IteratorUtils
@@ -91,6 +107,26 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return this;
     }
 
+    default LocalDateTime getNextFiredDateTime() {
+        return getNextFiredDateTime(getBuilder().getStartTime());
+    }
+
+    /**
+     * Consume ifself and get next fired date-time
+     * 
+     * @param future
+     * @return
+     */
+    default LocalDateTime getNextFiredDateTime(LocalDateTime future) {
+        Iterator<CronExpression> iterator = (Iterator<CronExpression>) this.sync();
+        LocalDateTime ldt;
+        do {
+            CronExpression nextCron = IteratorUtils.getFirst(iterator);
+            ldt = nextCron != null ? nextCron.getTime() : null;
+        } while (ldt != null && future != null && ldt.isBefore(future));
+        return ldt;
+    }
+
     /**
      * Being scheduled with ScheduledExecutorService
      * 
@@ -101,6 +137,12 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return scheduler(new DefaultPeriodicalExecutor(executorService));
     }
 
+    /**
+     * Being scheduled with PeriodicalExecutor
+     * 
+     * @param periodicalExecutor
+     * @return
+     */
     default CronScheduler scheduler(PeriodicalExecutor periodicalExecutor) {
         return new CronSchedulerImpl(this, periodicalExecutor);
     }

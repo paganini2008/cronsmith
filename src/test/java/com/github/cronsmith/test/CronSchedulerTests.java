@@ -49,7 +49,7 @@ public class CronSchedulerTests {
 
     @Test
     public void testScheduler2() {
-        int N = 10; // Run 10 times
+        int N = 10; // Run 10 times with every 5 seconds
         final CountDownLatch latch = new CountDownLatch(N);
         final AtomicInteger counter = new AtomicInteger();
         CronFuture future = new CronBuilder().everySecond(5).scheduler(scheduledExecutorService)

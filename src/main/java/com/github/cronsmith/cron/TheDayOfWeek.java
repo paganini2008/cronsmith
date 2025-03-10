@@ -10,17 +10,21 @@ package com.github.cronsmith.cron;
  */
 public interface TheDayOfWeek extends DayOfWeek {
 
-    TheDayOfWeek andDay(int day);
+    TheDayOfWeek andDay(int dayOfWeek);
 
-    default TheDayOfWeek toDay(int day) {
-        return toDay(day, 1);
+    default TheDayOfWeek toDay(int dayOfWeek) {
+        return toDay(dayOfWeek, 1);
     }
 
-    TheDayOfWeek toDay(int day, int interval);
-
-    default TheDayOfWeek toTues() {
-        return toDay(2);
+    default TheDayOfWeek toDay(java.time.DayOfWeek dayOfWeek) {
+        return toDay(dayOfWeek, 1);
     }
+
+    default TheDayOfWeek toDay(java.time.DayOfWeek dayOfWeek, int interval) {
+        return toDay(dayOfWeek.getValue(), interval);
+    }
+
+    TheDayOfWeek toDay(int dayOfWeek, int interval);
 
     default TheDayOfWeek toWed() {
         return toDay(3);
@@ -40,10 +44,6 @@ public interface TheDayOfWeek extends DayOfWeek {
 
     default TheDayOfWeek toSun() {
         return toDay(7);
-    }
-
-    default TheDayOfWeek andMon() {
-        return andDay(1);
     }
 
     default TheDayOfWeek andTues() {

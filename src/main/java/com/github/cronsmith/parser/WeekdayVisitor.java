@@ -59,7 +59,6 @@ public class WeekdayVisitor implements TagVisitor {
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof TheDay) {
-                    Month month = (Month) cronExpression.getParent();
                     return ((TheDay) cronExpression).andLatestWeekday(dayOfMonth);
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).latestWeekday(dayOfMonth);

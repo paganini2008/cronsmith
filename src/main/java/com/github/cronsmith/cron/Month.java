@@ -37,14 +37,10 @@ public interface Month extends Iterator<Month>, CronExpression {
     }
 
     default Day everyDay(int from, int interval) {
-        return everyDay(m -> from, m -> m.getLastDay(), interval);
+        return everyDay(m -> from, interval);
     }
 
-    default Day everyDay(int from, int to, int interval) {
-        return everyDay(m -> from, m -> to, interval);
-    }
-
-    Day everyDay(IntFunction<Month> from, IntFunction<Month> to, int interval);
+    Day everyDay(IntFunction<Month> from, int interval);
 
     TheDay day(int dayOfMonth);
 
@@ -54,11 +50,9 @@ public interface Month extends Iterator<Month>, CronExpression {
         return lastDay(0);
     }
 
-    default Day lastWeekday() {
-        return latestWeekday(getLastDay());
-    }
+    Day lastWeekday();
 
-    Day latestWeekday(int dayOfMonth);
+    TheDay latestWeekday(int dayOfMonth);
 
     TheWeek week(int weekOfMonth);
 
@@ -79,15 +73,13 @@ public interface Month extends Iterator<Month>, CronExpression {
     }
 
     default Week everyWeek(int interval) {
-        return everyWeek(m -> 1, m -> {
-            return m.getWeekCountOfMonth();
-        }, interval);
+        return everyWeek(1, interval);
     }
 
-    default Week everyWeek(int from, int to, int interval) {
-        return everyWeek(m -> from, m -> to, interval);
+    default Week everyWeek(int from, int interval) {
+        return everyWeek(m -> from, interval);
     }
 
-    Week everyWeek(IntFunction<Month> from, IntFunction<Month> to, int interval);
+    Week everyWeek(IntFunction<Month> from, int interval);
 
 }

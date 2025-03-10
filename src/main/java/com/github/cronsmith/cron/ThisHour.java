@@ -1,12 +1,10 @@
 
 package com.github.cronsmith.cron;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
@@ -19,53 +17,46 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisHour implements TheHour, Serializable {
+public class ThisHour implements TheHour {
 
     private static final long serialVersionUID = 8124589572544886753L;
-    private final TreeMap<Integer, DateTimeSupplier> siblings = new TreeMap<>();
+    private final List<TagIterator> iterators = new ArrayList<>();
     private Day day;
     private int index;
     private LocalDateTime hour;
-    private int lastHourFlag;
-    private final List<Range<Integer>> ranges = new ArrayList<Range<Integer>>();
+    private int startHourFlag;
 
     ThisHour(Day day, int hour) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
         this.day = day;
-        DateTimeSupplier supplier = () -> day.getTime().withHour(hour);
-        this.siblings.put(hour, supplier);
-        this.hour = supplier.get();
-        this.lastHourFlag = hour;
-        this.ranges.add(new Range<Integer>(hour));
+        this.iterators.add(new SingleValueIterator(d -> hour));
+        this.hour = day.getTime().withHour(hour);
+        this.startHourFlag = hour;
     }
 
     @Override
     public ThisHour andHour(int hour) {
-        this.ranges.add(new Range<Integer>(hour));
-        return doAndHour(hour);
-    }
-
-    private ThisHour doAndHour(int hour) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
-        DateTimeSupplier supplier = () -> day.getTime().withHour(hour);
-        siblings.put(hour, supplier);
-        this.lastHourFlag = hour;
+        this.iterators.add(new SingleValueIterator(d -> hour));
+        this.startHourFlag = hour;
         return this;
     }
 
     @Override
     public TheHour toHour(int hour, int interval) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
-        if (interval < 0) {
+        if (interval < 1) {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
-        if (lastHourFlag >= hour) {
-            throw new IllegalArgumentException(lastHourFlag + ">=" + hour);
+        if (startHourFlag >= hour) {
+            throw new IllegalArgumentException(startHourFlag + ">=" + hour);
         }
-        for (int i = lastHourFlag + interval; i <= hour; i += interval) {
-            doAndHour(i);
-        }
-        this.ranges.get(this.ranges.size() - 1).setTo(hour).setInterval(interval);
+        final int fromHour = startHourFlag;
+        ValueRangeIterator rangeIterator =
+                new ValueRangeIterator(m -> fromHour, m -> hour, interval);
+        this.iterators.removeIf(iter -> iter.toString().equals(String.valueOf(fromHour)));
+        this.iterators.add(rangeIterator);
+        startHourFlag = hour;
         return this;
     }
 
@@ -87,7 +78,6 @@ public class ThisHour implements TheHour, Serializable {
                     break;
                 }
             }
-            index = 0;
         }
         return this;
     }
@@ -119,28 +109,33 @@ public class ThisHour implements TheHour, Serializable {
     }
 
     @Override
-    public Minute everyMinute(IntFunction<Hour> from, IntFunction<Hour> to, int interval) {
+    public Minute everyMinute(IntFunction<Hour> from, int interval) {
         final Hour copy = (Hour) this.copy();
-        return new EveryMinute(IteratorUtils.getFirst(copy), from, to, interval);
+        return new EveryMinute(IteratorUtils.getFirst(copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = index < siblings.size();
+        boolean next = index < iterators.size();
         if (!next) {
             if (day.hasNext()) {
                 day = day.next();
                 index = 0;
+                iterators.forEach(i -> i.reset());
                 next = true;
             }
         }
-        return next;
+        return next && iterators.get(index).hasNext();
     }
 
     @Override
     public Hour next() {
-        DateTimeSupplier supplier = IteratorUtils.get(siblings.values().iterator(), index++);
-        hour = supplier.get();
+        TagIterator iterator = iterators.get(index);
+        hour = iterator.next();
+        if (!iterator.hasNext()) {
+            index++;
+            iterator.reset();
+        }
         hour = hour.withYear(day.getYear()).withMonth(day.getMonth()).withDayOfMonth(day.getDay());
         return this;
     }
@@ -152,12 +147,121 @@ public class ThisHour implements TheHour, Serializable {
 
     @Override
     public String toCronString() {
-        return ranges.stream().map(Range::toString).collect(Collectors.joining(","));
+        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
     }
 
     @Override
     public String toString() {
         return CRON.toCronString(this);
+    }
+
+    private class SingleValueIterator implements TagIterator {
+
+        private static final long serialVersionUID = -1561112766226184869L;
+        private final IntFunction<Day> ifun;
+        private final int value;
+
+        SingleValueIterator(IntFunction<Day> ifun) {
+            this.ifun = ifun;
+            this.value = ifun.apply(day);
+            this.self = true;
+        }
+
+        private boolean self;
+
+        @Override
+        public void reset() {
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self;
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            }
+            int hour = ifun.apply(day);
+            return day.getTime().withHour(hour);
+        }
+
+        @Override
+        public String getTag() {
+            return String.valueOf(value);
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
+    }
+
+    private class ValueRangeIterator implements TagIterator {
+
+        private static final long serialVersionUID = -2056254572492151394L;
+
+        ValueRangeIterator(IntFunction<Day> from, IntFunction<Day> to, int interval) {
+            this.from = from;
+            this.to = to;
+            this.fromScalar = from.apply(day);
+            this.toScalar = to.apply(day);
+            this.interval = interval;
+            reset();
+        }
+
+        private final IntFunction<Day> from;
+        private final IntFunction<Day> to;
+        protected final int fromScalar;
+        protected final int toScalar;
+        protected final int interval;
+        private boolean self;
+
+        private LocalDateTime ldt;
+
+        @Override
+        public void reset() {
+            int from = this.from.apply(day);
+            this.ldt = day.getTime().withHour(from);
+            this.self = true;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return self || ldt.getHour() + interval <= to.apply(day);
+        }
+
+        @Override
+        public LocalDateTime next() {
+            if (self) {
+                self = false;
+            } else {
+                ldt = ldt.plusHours(interval);
+            }
+            return ldt;
+        }
+
+        @Override
+        public String getTag() {
+            boolean slashed = interval > 1;
+            String str;
+            if (fromScalar >= 0 && toScalar == 23) {
+                str = String.valueOf(fromScalar);
+                slashed = true;
+            } else {
+                str = fromScalar + "-" + toScalar;
+            }
+            return slashed ? str + "/" + interval : str;
+        }
+
+        @Override
+        public String toString() {
+            return getTag();
+        }
+
     }
 
 }

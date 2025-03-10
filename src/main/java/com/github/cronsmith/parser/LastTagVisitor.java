@@ -71,7 +71,7 @@ public class LastTagVisitor implements TagVisitor {
                 } else if (cronExpression instanceof Month) {
                     return ((Month) cronExpression).lastWeekday();
                 }
-            } else if (text.matches("L\\-\\d{1,}")) {
+            } else if (text.matches("L\\-(\\d{1,})")) {
                 int n = Integer.parseInt(text.substring(text.indexOf("-") + 1));
                 if (cronExpression instanceof TheDay) {
                     return ((TheDay) cronExpression).andLastDay(n);

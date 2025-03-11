@@ -4,11 +4,11 @@
 [![Cron](https://img.shields.io/badge/Cron-Supported-blue.svg)](https://en.wikipedia.org/wiki/Cron)
 [![Spring Quartz](https://img.shields.io/badge/Spring%20Quartz-Compatible-brightgreen.svg)](https://spring.io/projects/spring-quartz)
 
+### Are cron expressions sometimes difficult to understand? Let's try a different approach to creating scheduled tasks.
 
+**Cronsmith** is a powerful and versatile Java utility library designed for handling cron expressions in an intuitive, object-oriented manner. It offers a highly flexible and comprehensive API for generating, parsing, and scheduling cron-based tasks with ease.
 
-**Cronsmith** is a powerful and versatile Java utility library designed for handling cron expressions in an intuitive, object-oriented manner. It offers a highly flexible and user-friendly API for generating, parsing, and scheduling cron-based tasks with ease.
-
-Built for seamless integration, Cronsmith provides full support for both Spring and Quartz cron expressions, ensuring compatibility with widely used scheduling frameworks. Moreover, it extends traditional cron syntax by introducing advanced patterns—such as multiple numbers combined with 'L' (last) and 'W' (weekday)—which were previously unsupported, offering greater precision and flexibility in scheduling.
+Built for seamless integration, **Cronsmith** provides full support for both Spring and Quartz cron expressions, ensuring compatibility with widely used scheduling frameworks. Moreover, it extends traditional cron syntax by introducing advanced patterns—such as multiple numbers combined with 'L' (last) and 'W' (weekday)—which were previously unsupported, offering greater precision and flexibility in scheduling.
 
 
 ## Features

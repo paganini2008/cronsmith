@@ -481,7 +481,7 @@ To use **Cronsmith** in your Java project, add the following dependency to your 
 <dependency>
     <groupId>com.github.paganini2008</groupId>
     <artifactId>cronsmith</artifactId>
-    <version>1.0.0-beta</version>
+    <version>1.0.0-RC1</version>
 </dependency>
 ```
 
@@ -489,7 +489,7 @@ If using Gradle:
 
 ```gradle
 dependencies {
-    implementation 'com.github.paganini2008:cronsmith:1.0.0'
+    implementation 'com.github.paganini2008:cronsmith:1.0.0-RC1'
 }
 ```
 

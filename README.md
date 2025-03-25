@@ -506,4 +506,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Download
 
-[Click here to download the latest release](https://github.com/yourusername/cronsmith/releases)
+[Click here to download the latest release](https://github.com/paganini2008/cronsmith)

@@ -15,7 +15,7 @@ public class ClockTests {
     @Test
     public void testTask() {
         Clock clock = new Clock();
-        clock.getTaskManager().saveTask(new TestTask(), "Tomcat");
+        clock.schedule(new TestTask(), "Tomcat");
         clock.start();
 
         try {

@@ -123,7 +123,7 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         do {
             CronExpression nextCron = IteratorUtils.getFirst(iterator);
             ldt = nextCron != null ? nextCron.getTime() : null;
-        } while (ldt != null && future != null && ldt.isBefore(future));
+        } while (ldt != null && future != null && (ldt.isEqual(future) || ldt.isBefore(future)));
         return ldt;
     }
 

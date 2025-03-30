@@ -9,14 +9,14 @@ package com.github.cronsmith.scheduler;
  */
 public interface TaskListener {
 
-    default void onTaskScheduled(Task task) {};
+    default void onTaskScheduled(TaskDetail taskDetail) {};
 
-    default void onTaskBegin(Task task) {}
+    default void onTaskBegin(TaskDetail taskDetail) {}
 
-    default void onTaskEnd(Task task, Throwable e) {}
+    default void onTaskEnd(TaskDetail taskDetail, Throwable e) {}
 
-    default void onTaskCanceled(Task task) {}
+    default void onTaskCanceled(TaskDetail taskDetail) {}
 
-    default void onTaskFinished(Task task) {};
+    default void onTaskFinished(TaskDetail taskDetail) {};
 
 }

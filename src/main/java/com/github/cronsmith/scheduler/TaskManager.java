@@ -1,6 +1,6 @@
 package com.github.cronsmith.scheduler;
 
-import java.time.temporal.TemporalUnit;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -14,17 +14,21 @@ public interface TaskManager {
 
     void saveTask(Task task, String initialParameter);
 
-    void removeTask(Task task);
+    void removeTask(TaskId taskId);
 
-    Task getTask(TaskId taskId);
+    TaskDetail getTaskDetail(TaskId taskId);
 
     boolean hasTask(TaskId taskId);
 
     String getInitialParameter(TaskId taskId);
 
+    TaskStatus getTaskStatus(TaskId taskId);
+
     int getTaskCount();
 
-    List<TaskId> getLatestTaskWillRunWithin(long period, TemporalUnit timeUnit);
+    List<TaskId> getLatestTaskWillRunWithin(LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    void updateTaskWithNextFiredDateTime(TaskId taskId, LocalDateTime previousFiredDateTime);
 
     void pauseTask(TaskId taskId);
 
@@ -32,5 +36,5 @@ public interface TaskManager {
 
     void setTaskStatus(TaskId taskId, TaskStatus status);
 
-    TaskStatus getTaskStatus(TaskId taskId);
+
 }

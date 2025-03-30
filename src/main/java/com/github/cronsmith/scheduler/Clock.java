@@ -45,10 +45,6 @@ public class Clock implements Runnable {
     private List<TaskListener> taskListeners = new ArrayList<>();
     private ErrorHandler errorHandler;
 
-    public TaskManager getTaskManager() {
-        return taskManager;
-    }
-
     public void setTaskManager(TaskManager taskManager) {
         this.taskManager = taskManager;
     }
@@ -81,6 +77,12 @@ public class Clock implements Runnable {
         this.errorHandler = errorHandler;
     }
 
+    public void schedule(Task task, String initialParameter) {
+        taskManager.saveTask(task, initialParameter);
+        taskManager.updateTaskWithNextFiredDateTime(task.getTaskId(),
+                LocalDateTime.now(zoneId).withNano(0));
+    }
+
     public void start() {
         CronScheduler cronScheduler = new CronBuilder().setZoneId(zoneId).everySecond()
                 .scheduler(schedulerExecutor).setDebuged(false);
@@ -88,27 +90,27 @@ public class Clock implements Runnable {
         consumerFuture = cronScheduler.runTask(this, cancellation);
     }
 
-    private void pollPendingTask() {
+    private synchronized void pollPendingTask() {
         LocalDateTime now = LocalDateTime.now(zoneId).withNano(0);
-        List<TaskId> taskIds = taskManager.getLatestTaskWillRunWithin(1L, ChronoUnit.MINUTES);
-        taskIds.stream().filter(tid -> taskManager.getTaskStatus(tid) == TaskStatus.STANDBY)
-                .map(tid -> taskManager.getTask(tid)).forEach(task -> {
-                    LocalDateTime ldt = task.getCronExpression().getNextFiredDateTime(now);
-                    if (ldt != null) {
-                        boolean status = taskQueue.addTask(ldt, task.getTaskId());
-                        if (status) {
-                            taskManager.setTaskStatus(task.getTaskId(), TaskStatus.SCHEDULED);
-                            taskListeners.forEach(l -> {
-                                l.onTaskScheduled(task);
-                            });
-                        }
-                    } else {
-                        taskManager.setTaskStatus(task.getTaskId(), TaskStatus.FINISHED);
-                        taskListeners.forEach(l -> {
-                            l.onTaskFinished(task);
-                        });
-                    }
+        LocalDateTime future = now.plus(5L, ChronoUnit.MINUTES);
+        List<TaskId> taskIds = taskManager.getLatestTaskWillRunWithin(now, future);
+        for (TaskId taskId : taskIds) {
+            TaskDetail taskDetail = taskManager.getTaskDetail(taskId);
+            if (taskDetail != null && taskDetail.getNextFiredDateTime() != null) {
+                boolean status = taskQueue.addTask(taskDetail.getNextFiredDateTime(), taskId);
+                if (status) {
+                    taskManager.setTaskStatus(taskId, TaskStatus.SCHEDULED);
+                    taskListeners.forEach(l -> {
+                        l.onTaskScheduled(taskDetail);
+                    });
+                }
+            } else {
+                taskManager.setTaskStatus(taskId, TaskStatus.FINISHED);
+                taskListeners.forEach(l -> {
+                    l.onTaskFinished(taskDetail);
                 });
+            }
+        }
     }
 
     public void close() {
@@ -128,15 +130,16 @@ public class Clock implements Runnable {
 
     @Override
     public void run() {
-        LocalDateTime now = LocalDateTime.now(zoneId).withNano(0);
+        final LocalDateTime now = LocalDateTime.now(zoneId).withNano(0);
         List<TaskId> taskIds = taskQueue.getTaskIds(now);
         if (taskIds != null && taskIds.size() > 0) {
             taskIds.forEach(tid -> {
-                Task task = taskManager.getTask(tid);
-                if (task != null) {
+                TaskDetail taskDetail = taskManager.getTaskDetail(tid);
+                if (taskDetail != null) {
+                    taskManager.updateTaskWithNextFiredDateTime(tid, now);
                     taskManager.setTaskStatus(tid, TaskStatus.RUNNING);
                     TaskProxy taskProxy =
-                            new TaskProxy(task, workerExecutor, taskListeners, errorHandler);
+                            new TaskProxy(taskDetail, workerExecutor, taskListeners, errorHandler);
                     Throwable reason = null;
                     int n = 0;
                     do {
@@ -148,7 +151,7 @@ public class Clock implements Runnable {
                             e.printStackTrace();
                             reason = e;
                         }
-                    } while (n++ < task.getMaxRetryCount() && reason != null);
+                    } while (n++ < taskDetail.getTask().getMaxRetryCount() && reason != null);
                     taskManager.setTaskStatus(tid, TaskStatus.STANDBY);
                 }
             });

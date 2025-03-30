@@ -20,17 +20,17 @@ public class TaskProxy implements InvocationHandler {
 
 
     private Method callbackMethod;
-    private final Task actualObject;
+    private final TaskDetail taskDetail;
     private final Object proxyObject;
     private final ExecutorService executorService;
     private final List<TaskListener> taskListeners;
     private final ErrorHandler errorHandler;
 
-    TaskProxy(Task actualObject, ExecutorService executorService, List<TaskListener> taskListeners,
-            ErrorHandler errorHandler) {
-        this.actualObject = actualObject;
+    TaskProxy(TaskDetail taskDetail, ExecutorService executorService,
+            List<TaskListener> taskListeners, ErrorHandler errorHandler) {
+        this.taskDetail = taskDetail;
         try {
-            this.callbackMethod = actualObject.getClass().getDeclaredMethod("handleResult",
+            this.callbackMethod = taskDetail.getTask().getClass().getDeclaredMethod("handleResult",
                     Object.class, Throwable.class);
         } catch (Exception e) {
             this.callbackMethod = null;
@@ -51,16 +51,17 @@ public class TaskProxy implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if ("execute".equals(method.getName())) {
             taskListeners.forEach(l -> {
-                l.onTaskBegin(actualObject);
+                l.onTaskBegin(taskDetail);
             });
             Future<Object> future = executorService.submit(() -> {
-                return method.invoke(actualObject, args);
+                return method.invoke(taskDetail.getTask(), args);
             });
             Object returnValue = null;
             Throwable thrown = null;
             try {
-                if (actualObject.getTimeout() > 0) {
-                    returnValue = future.get(actualObject.getTimeout(), TimeUnit.MILLISECONDS);
+                if (taskDetail.getTask().getTimeout() > 0) {
+                    returnValue =
+                            future.get(taskDetail.getTask().getTimeout(), TimeUnit.MILLISECONDS);
                 } else {
                     returnValue = future.get();
                 }
@@ -73,20 +74,20 @@ public class TaskProxy implements InvocationHandler {
             }
             return returnValue;
         }
-        return method.invoke(actualObject, args);
+        return method.invoke(taskDetail.getTask(), args);
     }
 
     private void handleReturnValue(Object returnValue, Throwable thrown) {
         executorService.execute(() -> {
             try {
                 if (callbackMethod != null) {
-                    callbackMethod.invoke(actualObject, returnValue, thrown);
+                    callbackMethod.invoke(taskDetail.getTask(), returnValue, thrown);
                 }
             } catch (Throwable e) {
                 errorHandler.onHandleResult(e);
             } finally {
                 taskListeners.forEach(l -> {
-                    l.onTaskEnd(actualObject, thrown);
+                    l.onTaskEnd(taskDetail, thrown);
                 });
             }
         });

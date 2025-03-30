@@ -21,9 +21,11 @@ public interface CronScheduler {
     }
 
     default CronFuture runTask(final Runnable task, final LocalDateTime until) {
-        return runTask(task, (t, reason) -> {
-            return until.isBefore(LocalDateTime.now());
-        });
+        return runTask(task, (t, reason) -> until.isBefore(LocalDateTime.now()));
+    }
+
+    default CronFuture runTaskForEver(final Runnable task) {
+        return runTask(task, (t, reason) -> false);
     }
 
     CronFuture runTask(Runnable task, Cancellation cancellation);

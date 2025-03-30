@@ -54,6 +54,7 @@ public class CronSchedulerImpl implements CronScheduler {
             futures.put(task, future);
             return future;
         }
+        System.out.println("futures.size(): " + futures.size());
         return null;
     }
 

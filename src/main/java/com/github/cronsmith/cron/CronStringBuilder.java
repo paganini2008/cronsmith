@@ -5,7 +5,7 @@ package com.github.cronsmith.cron;
  * 
  * @Description: CronStringBuilder
  * @Author: Fred Feng
- * @Date: 02/02/2025
+ * @Date: 22/02/2025
  * @Version 1.0.0
  */
 public interface CronStringBuilder {

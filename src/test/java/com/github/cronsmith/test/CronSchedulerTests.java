@@ -30,7 +30,7 @@ public class CronSchedulerTests {
 
     @Test
     public void testScheduler1() {
-        int N = 10; // Run 10 times
+        int N = Integer.MAX_VALUE; // Run 10 times
         final CountDownLatch latch = new CountDownLatch(N);
         final AtomicInteger counter = new AtomicInteger();
         CronFuture future = new CronBuilder().everySecond(1).scheduler(scheduledExecutorService)

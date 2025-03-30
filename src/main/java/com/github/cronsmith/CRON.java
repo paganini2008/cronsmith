@@ -2,6 +2,13 @@
 package com.github.cronsmith;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.UUID;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -125,10 +132,51 @@ public abstract class CRON {
         return cron.toString();
     }
 
+    public static String saveAsTmpFile(CronExpression cronExpression) throws IOException {
+        String tmpPath = System.getProperty("java.io.tmpdir");
+        String slash = File.separator;
+        if (!tmpPath.endsWith(slash)) {
+            tmpPath = tmpPath + slash;
+        }
+        String filePath = tmpPath + UUID.randomUUID().toString();
+        saveAsFile(cronExpression, filePath);
+        return filePath;
+    }
 
+    public static void saveAsFile(CronExpression cronExpression, String filePath)
+            throws IOException {
+        try (OutputStream outputStream = Files.newOutputStream(new File(filePath).toPath())) {
+            saveAs(cronExpression, outputStream);
+        }
+    }
+
+    public static void saveAs(CronExpression cronExpression, OutputStream outputStream)
+            throws IOException {
+        byte[] bytes = SerializationUtils.serialize(cronExpression);
+        outputStream.write(bytes);
+        outputStream.flush();
+    }
 
     public static byte[] toByteArray(CronExpression cronExpression) {
         return SerializationUtils.serialize(cronExpression);
+    }
+
+    public static CronExpression loadFromFile(String filePath) throws IOException {
+        try (InputStream inputStream = Files.newInputStream(new File(filePath).toPath())) {
+            return load(inputStream);
+        }
+    }
+
+    public static CronExpression load(InputStream inputStream) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                baos.write(buffer, 0, len);
+            }
+            byte[] data = baos.toByteArray();
+            return SerializationUtils.deserialize(data);
+        }
     }
 
     public static CronExpression load(byte[] bytes) {

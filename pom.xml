@@ -5,7 +5,7 @@
   <groupId>com.github.paganini2008</groupId>  
   <artifactId>cronsmith</artifactId>  
   <packaging>jar</packaging>  
-  <version>1.0.0</version>  
+  <version>1.0.0-RC1</version>  
   <name>cronsmith</name>  
   <url>https://github.com/paganini2008/cronsmith</url>  
   <description>A tiny and powerful cron expression generator, parser and task scheduling tools</description>  
@@ -54,6 +54,7 @@
           <target>${java.version}</target> 
         </configuration> 
       </plugin>  
+      <!--
       <plugin> 
         <groupId>org.apache.maven.plugins</groupId>  
         <artifactId>maven-source-plugin</artifactId>  
@@ -69,6 +70,7 @@
           </execution> 
         </executions> 
       </plugin>  
+      -->
       <plugin> 
         <groupId>org.antlr</groupId>  
         <artifactId>antlr4-maven-plugin</artifactId>  

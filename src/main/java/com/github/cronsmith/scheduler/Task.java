@@ -1,0 +1,36 @@
+package com.github.cronsmith.scheduler;
+
+import com.github.cronsmith.cron.CronExpression;
+
+/**
+ * 
+ * @Description: Task
+ * @Author: Fred Feng
+ * @Date: 30/03/2025
+ * @Version 1.0.0
+ */
+public interface Task {
+
+    default TaskId getTaskId() {
+        return TaskId.of(getClass().getSimpleName());
+    }
+
+    default String getDescription() {
+        return "";
+    }
+
+    CronExpression getCronExpression();
+
+    Object execute(String initialParameter);
+
+    default long getTimeout() {
+        return -1L;
+    }
+
+    default int getMaxRetryCount() {
+        return -1;
+    }
+
+    default void handleResult(Object result, Throwable reason) {}
+
+}

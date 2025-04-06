@@ -9,6 +9,6 @@ package com.github.cronsmith.scheduler;
  */
 public enum TaskStatus {
 
-    STANDBY, SCHEDULED, RUNNING, PAUSED, FINISHED;
+    NONE, STANDBY, SCHEDULED, RUNNING, PAUSED, FINISHED, CANCELED;
 
 }

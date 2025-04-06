@@ -1,7 +1,7 @@
 package com.github.cronsmith.test;
 
 import org.junit.Test;
-import com.github.cronsmith.scheduler.Clock;
+import com.github.cronsmith.scheduler.ClockWheel;
 
 /**
  * 
@@ -10,20 +10,20 @@ import com.github.cronsmith.scheduler.Clock;
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public class ClockTests {
+public class ClockWheelTests {
 
     @Test
     public void testTask() {
-        Clock clock = new Clock();
-        clock.schedule(new TestTask(), "Tomcat");
-        clock.start();
+        ClockWheel clockWheel = new ClockWheel();
+        clockWheel.schedule(new TestTask(), "Tomcat");
+        clockWheel.start();
 
         try {
             Thread.sleep(30000L);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        clock.close();
+        clockWheel.close();
     }
 
 }

@@ -21,4 +21,9 @@ public interface TaskDetail {
 
     LocalDateTime getPrevousFiredDateTime();
 
+    default boolean isUnavailable() {
+        return getTaskStatus() == TaskStatus.FINISHED || getTaskStatus() == TaskStatus.CANCELED
+                || getTaskStatus() == TaskStatus.PAUSED;
+    }
+
 }

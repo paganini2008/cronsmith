@@ -1,21 +1,21 @@
 package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * 
- * @Description: PendingTaskQueue
+ * @Description: UpcomingTaskQueue
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public interface PendingTaskQueue {
+public interface UpcomingTaskQueue {
 
     boolean addTask(LocalDateTime ldt, TaskId taskId);
 
     int length();
 
-    List<TaskId> getTaskIds(LocalDateTime ldt);
+    Collection<TaskId> matchTaskIds(LocalDateTime ldt);
 
 }

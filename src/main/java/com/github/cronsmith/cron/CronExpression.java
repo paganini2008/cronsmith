@@ -4,7 +4,9 @@ package com.github.cronsmith.cron;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import com.github.cronsmith.IteratorUtils;
@@ -92,7 +94,7 @@ public interface CronExpression extends CronStringBuilder, Serializable {
      * @param n
      * @return
      */
-    default CronExpression consume(final Consumer<LocalDateTime> consumer, final int n) {
+    default CronExpression consume(Consumer<LocalDateTime> consumer, int n) {
         LocalDateTime dateTime;
         int i = 0;
         for (CronExpression cronExpression : IteratorUtils
@@ -105,6 +107,22 @@ public interface CronExpression extends CronStringBuilder, Serializable {
             }
         }
         return this;
+    }
+
+    default List<LocalDateTime> list(LocalDateTime from, LocalDateTime to) {
+        List<LocalDateTime> dataList = new ArrayList<>();
+        LocalDateTime dateTime;
+        for (CronExpression cronExpression : IteratorUtils
+                .forEach((Iterator<CronExpression>) copy())) {
+            dateTime = cronExpression.getTime();
+            if ((dateTime.isEqual(from) || dateTime.isAfter(from)) && dateTime.isBefore(to)) {
+                dataList.add(dateTime);
+            }
+            if (dateTime.isAfter(from) && dateTime.isAfter(to)) {
+                break;
+            }
+        }
+        return dataList;
     }
 
     default LocalDateTime getNextFiredDateTime() {

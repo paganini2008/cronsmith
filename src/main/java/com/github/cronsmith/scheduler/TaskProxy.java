@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TaskProxy implements InvocationHandler {
 
-
     private Method callbackMethod;
     private final TaskDetail taskDetail;
     private final Object proxyObject;

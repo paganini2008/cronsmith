@@ -1,10 +1,12 @@
 package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import com.github.cronsmith.cron.CronExpression;
 
 /**
  * 
@@ -75,14 +77,28 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public void saveTask(Task task, String initialParameter) {
+    public TaskDetail saveTask(Task task, String initialParameter) {
+        task.getCronExpression().sync();
         taskStore.put(task.getTaskId(),
                 new SimpleTaskDetail(task, initialParameter, TaskStatus.STANDBY));
+        return taskStore.get(task.getTaskId());
     }
 
     @Override
-    public void removeTask(TaskId taskId) {
-        taskStore.remove(taskId);
+    public List<LocalDateTime> findNextFiredDateTimes(TaskId taskId,
+            final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
+        SimpleTaskDetail taskDetail = taskStore.get(taskId);
+        if (taskDetail.isUnavailable()) {
+            return Collections.emptyList();
+        }
+        CronExpression cronExpression = taskDetail.getTask().getCronExpression();
+        List<LocalDateTime> results = cronExpression.list(startDateTime, endDateTime);
+        return results;
+    }
+
+    @Override
+    public TaskDetail removeTask(TaskId taskId) {
+        return taskStore.remove(taskId);
     }
 
     @Override
@@ -98,16 +114,6 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public boolean hasTask(TaskId taskId) {
         return taskStore.containsKey(taskId);
-    }
-
-    @Override
-    public void pauseTask(TaskId taskId) {
-        setTaskStatus(taskId, TaskStatus.PAUSED);
-    }
-
-    @Override
-    public void resumeTask(TaskId taskId) {
-        setTaskStatus(taskId, TaskStatus.STANDBY);
     }
 
     @Override
@@ -128,33 +134,30 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<TaskId> getLatestTaskWillRunWithin(LocalDateTime startDateTime,
+    public List<TaskId> findUpcomingTasksBetween(LocalDateTime startDateTime,
             LocalDateTime endDateTime) {
         return taskStore.entrySet().stream().filter(e -> {
             if (e.getValue().getTaskStatus() != TaskStatus.STANDBY) {
                 return false;
             }
             LocalDateTime nextFiredTime = e.getValue().getNextFiredDateTime();
-            return (nextFiredTime.isEqual(startDateTime) || nextFiredTime.isAfter(startDateTime))
+            return (nextFiredTime.isAfter(startDateTime) || nextFiredTime.isEqual(startDateTime))
                     && (nextFiredTime.isBefore(endDateTime));
         }).map(e -> e.getKey()).collect(Collectors.toList());
     }
 
     @Override
-    public void updateTaskWithNextFiredDateTime(TaskId taskId,
+    public LocalDateTime computeNextFiredDateTime(TaskId taskId,
             LocalDateTime previousFiredDateTime) {
         if (taskStore.containsKey(taskId)) {
             SimpleTaskDetail taskDetail = taskStore.get(taskId);
-            if (taskDetail.getNextFiredDateTime() == null
-                    || taskDetail.getNextFiredDateTime().isEqual(previousFiredDateTime)
-                    || taskDetail.getNextFiredDateTime().isBefore(previousFiredDateTime)) {
-                LocalDateTime nextFiredDateTime = taskDetail.getTask().getCronExpression()
-                        .getNextFiredDateTime(previousFiredDateTime);
-                taskDetail.setPrevousFiredDateTime(taskDetail.getNextFiredDateTime());
-                taskDetail.setNextFiredDateTime(nextFiredDateTime);
-                System.out.println("updateTaskWithNextFiredDateTime: " + taskDetail);
-            }
+            LocalDateTime nextFiredDateTime = taskDetail.getTask().getCronExpression()
+                    .getNextFiredDateTime(previousFiredDateTime);
+            taskDetail.setPrevousFiredDateTime(taskDetail.getNextFiredDateTime());
+            taskDetail.setNextFiredDateTime(nextFiredDateTime);
+            return nextFiredDateTime;
         }
+        return null;
     }
 
 }

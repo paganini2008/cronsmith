@@ -12,9 +12,9 @@ import java.util.List;
  */
 public interface TaskManager {
 
-    void saveTask(Task task, String initialParameter);
+    TaskDetail saveTask(Task task, String initialParameter);
 
-    void removeTask(TaskId taskId);
+    TaskDetail removeTask(TaskId taskId);
 
     TaskDetail getTaskDetail(TaskId taskId);
 
@@ -26,13 +26,12 @@ public interface TaskManager {
 
     int getTaskCount();
 
-    List<TaskId> getLatestTaskWillRunWithin(LocalDateTime startDateTime, LocalDateTime endDateTime);
+    List<LocalDateTime> findNextFiredDateTimes(TaskId taskId, LocalDateTime startDateTime,
+            LocalDateTime endDateTime);
 
-    void updateTaskWithNextFiredDateTime(TaskId taskId, LocalDateTime previousFiredDateTime);
+    List<TaskId> findUpcomingTasksBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
 
-    void pauseTask(TaskId taskId);
-
-    void resumeTask(TaskId taskId);
+    LocalDateTime computeNextFiredDateTime(TaskId taskId, LocalDateTime previousFiredDateTime);
 
     void setTaskStatus(TaskId taskId, TaskStatus status);
 

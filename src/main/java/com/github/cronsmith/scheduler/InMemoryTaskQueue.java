@@ -1,9 +1,8 @@
 package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public class InMemoryTaskQueue implements PendingTaskQueue {
+public class InMemoryTaskQueue implements UpcomingTaskQueue {
 
     private final Map<LocalDateTime, Set<TaskId>> taskIds = new ConcurrentHashMap<>();
 
@@ -31,9 +30,9 @@ public class InMemoryTaskQueue implements PendingTaskQueue {
     }
 
     @Override
-    public List<TaskId> getTaskIds(LocalDateTime ldt) {
+    public Collection<TaskId> matchTaskIds(LocalDateTime ldt) {
         Set<TaskId> set = taskIds.remove(ldt);
-        return set != null ? new ArrayList<TaskId>(set) : Collections.emptyList();
+        return set != null ? Collections.unmodifiableCollection(set) : Collections.emptyList();
     }
 
     @Override

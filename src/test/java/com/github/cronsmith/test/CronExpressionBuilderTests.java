@@ -3,9 +3,14 @@ package com.github.cronsmith.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.concurrent.TimeUnit;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 
@@ -131,6 +136,36 @@ public class CronExpressionBuilderTests {
         System.out.println(cronExpression.toString());
         assertEquals("0,15,30,45/1 */10 0-12/3 ? MAR,JUL,SEP SAT#1,THU#2,5L 2025,2026,2030/2",
                 cronExpression.toString());
+    }
+
+    @Test
+    public void testO() {
+        CronExpression cronExpression = CRON.atFuture(LocalDate.of(2025, 12, 1));
+        System.out.println(cronExpression.toString());
+        assertEquals("0 0 0 1 DEC ? 2025", cronExpression.toString());
+    }
+
+    @Test
+    public void testP() {
+        CronExpression cronExpression = CRON.atFuture(LocalDateTime.of(2025, 12, 1, 12, 15, 0));
+        System.out.println(cronExpression.toString());
+        assertEquals("0 15 12 1 DEC ? 2025", cronExpression.toString());
+    }
+
+    @Test
+    public void testQ() {
+        CronExpression cronExpression = CRON.setInterval(LocalTime.now());
+        System.out.println(cronExpression.toString());
+    }
+
+    @Test
+    public void testR() {
+        CronExpression cronExpression = CRON.setInterval(5, TimeUnit.MINUTES);
+        System.out.println(cronExpression.toString());
+        cronExpression.sync().consume(ldt -> {
+            System.out.println(ldt);
+        }, 10);
+        assertEquals("0 */5 * * * ?", cronExpression.toString());
     }
 
 }

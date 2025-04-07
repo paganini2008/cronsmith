@@ -8,7 +8,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -17,6 +22,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.Trees;
 import com.github.cronsmith.antlr.CronExpressionLexer;
 import com.github.cronsmith.antlr.CronExpressionParser;
+import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
 import com.github.cronsmith.cron.DayOfWeek;
@@ -36,6 +42,54 @@ import com.github.cronsmith.parser.CronExpressionContext;
  * @Version 1.0.0
  */
 public abstract class CRON {
+
+    public static CronExpression atFuture(LocalDate ld) {
+        if (ld.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Past date: " + ld);
+        }
+        return atFuture(ld.atStartOfDay());
+    }
+
+    public static CronExpression atFuture(LocalDateTime ldt) {
+        if (ldt.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Past datetime: " + ldt);
+        }
+        return new CronBuilder().month(ldt.getYear(), ldt.getMonthValue()).day(ldt.getDayOfMonth())
+                .at(ldt.getHour(), ldt.getMinute(), ldt.getSecond());
+    }
+
+    public static CronExpression setInterval(LocalTime lt) {
+        return new CronBuilder().everyDay().at(lt.getHour(), lt.getMinute(), lt.getSecond());
+    }
+
+    public static CronExpression setInterval(int interval, TimeUnit timeUnit) {
+        return setInterval(interval, interval, timeUnit);
+    }
+
+    public static CronExpression setInterval(long initialDelay, int interval, TimeUnit timeUnit) {
+        if (initialDelay < 0 || interval <= 0) {
+            throw new IllegalArgumentException("Invalid parameter 'initialDelay' or 'interval'");
+        }
+        if (timeUnit == null) {
+            throw new IllegalArgumentException("Null timeUnit");
+        }
+        LocalDateTime ldt = initialDelay > 0 ? LocalDateTime.now()
+                .plus(TimeUnit.MILLISECONDS.convert(initialDelay, timeUnit), ChronoUnit.MILLIS)
+                : LocalDateTime.now();
+        CronBuilder builder = new CronBuilder().setStartTime(ldt);
+        switch (timeUnit) {
+            case SECONDS:
+                return builder.everySecond(interval);
+            case MINUTES:
+                return builder.everyMinute(interval);
+            case HOURS:
+                return builder.everyHour(interval);
+            case DAYS:
+                return builder.everyDay(interval);
+            default:
+                throw new UnsupportedOperationException("timeUnit: " + timeUnit.name());
+        }
+    }
 
     public static CronExpression parse(String cronExpression) {
         CharStream input = CharStreams.fromString(cronExpression);

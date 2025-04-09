@@ -46,7 +46,7 @@ public class CamelCasedHashMap extends HashMap<String, Object> {
         return str.toString().toLowerCase();
     }
 
-    private boolean isUnderscoreRequired(final char before, final char current) {
+    private boolean isUnderscoreRequired(char before, char current) {
         return Character.isLowerCase(before) && Character.isUpperCase(current);
     }
 

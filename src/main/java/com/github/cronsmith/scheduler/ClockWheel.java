@@ -69,8 +69,6 @@ public class ClockWheel {
         this.errorHandler = errorHandler;
     }
 
-
-
     public void schedule(ITask task, String initialParameter) {
         taskManager.saveTask(task, initialParameter);
         preloadUpcomingTasks(task.getTaskId());

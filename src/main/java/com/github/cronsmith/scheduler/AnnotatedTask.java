@@ -20,7 +20,7 @@ public class AnnotatedTask implements ITask {
 
     @Override
     public CronExpression getCronExpression() {
-        byte[] bytes = (byte[]) info.get("cron");
+        byte[] bytes = (byte[]) info.get("cronExpression");
         return null;
     }
 

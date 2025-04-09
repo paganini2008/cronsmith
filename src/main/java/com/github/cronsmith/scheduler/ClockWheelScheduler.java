@@ -13,18 +13,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 
- * @Description: ClockWheel
+ * @Description: ClockWheelScheduler
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public class ClockWheel {
+public class ClockWheelScheduler {
 
-    public ClockWheel() {
+    public ClockWheelScheduler() {
         this(new DefaultExecutorServiceFactory());
     }
 
-    public ClockWheel(ExecutorServiceFactory executorServiceFactory) {
+    public ClockWheelScheduler(ExecutorServiceFactory executorServiceFactory) {
         this.schedulerThreads = executorServiceFactory.getSchedulerThreads();
         this.workerThreads = executorServiceFactory.getWorkerThreads();
         this.executorServiceFactory = executorServiceFactory;

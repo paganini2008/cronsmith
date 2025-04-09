@@ -1,20 +1,20 @@
 package com.github.cronsmith.test;
 
 import org.junit.Test;
-import com.github.cronsmith.scheduler.ClockWheel;
+import com.github.cronsmith.scheduler.ClockWheelScheduler;
 
 /**
  * 
- * @Description: ClockTests
+ * @Description: ClockWheelMemeoryStoreTests
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public class ClockWheelTests {
+public class ClockWheelMemeoryStoreTests {
 
     @Test
     public void testTask() {
-        ClockWheel clockWheel = new ClockWheel();
+        ClockWheelScheduler clockWheel = new ClockWheelScheduler();
         clockWheel.schedule(new TestTask(), "Tomcat");
         clockWheel.start();
 

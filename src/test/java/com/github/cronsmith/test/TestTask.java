@@ -10,7 +10,7 @@ public class TestTask implements ITask {
 
     @Override
     public CronExpression getCronExpression() {
-        return new CronBuilder().everySecond(1);
+        return new CronBuilder().everySecond(3);
     }
 
     @Override

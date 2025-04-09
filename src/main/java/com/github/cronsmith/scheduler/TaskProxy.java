@@ -35,15 +35,15 @@ public class TaskProxy implements InvocationHandler {
             this.callbackMethod = null;
         }
         this.proxyObject = Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
-                new Class<?>[] {Task.class}, this);
+                new Class<?>[] {ITask.class}, this);
         this.executorService =
                 executorService != null ? executorService : ForkJoinPool.commonPool();
         this.taskListeners = taskListeners;
         this.errorHandler = errorHandler;
     }
 
-    public Task getProxyObject() {
-        return (Task) proxyObject;
+    public ITask getProxyObject() {
+        return (ITask) proxyObject;
     }
 
     @Override

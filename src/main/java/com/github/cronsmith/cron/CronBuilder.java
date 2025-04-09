@@ -30,6 +30,7 @@ public final class CronBuilder implements CronExpression, Serializable {
     private LocalDateTime startTime;
     private boolean useMonthAsNumber;
     private boolean useDayOfWeekAsNumber;
+    private boolean useNaturalScale;
 
     public CronBuilder setZoneId(ZoneId zoneId) {
         this.zoneId = zoneId;
@@ -56,6 +57,15 @@ public final class CronBuilder implements CronExpression, Serializable {
 
     public CronBuilder setUseDayOfWeekAsNumber(boolean useDayOfWeekAsNumber) {
         this.useDayOfWeekAsNumber = useDayOfWeekAsNumber;
+        return this;
+    }
+
+    public boolean isUseNaturalScale() {
+        return useNaturalScale;
+    }
+
+    public CronBuilder setUseNaturalScale(boolean useNaturalScale) {
+        this.useNaturalScale = useNaturalScale;
         return this;
     }
 

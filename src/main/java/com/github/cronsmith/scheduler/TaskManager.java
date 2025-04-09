@@ -12,28 +12,39 @@ import java.util.List;
  */
 public interface TaskManager {
 
-    TaskDetail saveTask(Task task, String initialParameter);
+    TaskDetail saveTask(ITask task, String initialParameter) throws CronTaskException;
 
-    TaskDetail removeTask(TaskId taskId);
+    TaskDetail removeTask(TaskId taskId) throws CronTaskException;
 
-    TaskDetail getTaskDetail(TaskId taskId);
+    TaskDetail getTaskDetail(TaskId taskId) throws CronTaskException;
 
-    boolean hasTask(TaskId taskId);
+    boolean hasTask(TaskId taskId) throws CronTaskException;
 
-    String getInitialParameter(TaskId taskId);
+    default String getInitialParameter(TaskId taskId) throws CronTaskException {
+        TaskDetail taskDetail = getTaskDetail(taskId);
+        return taskDetail != null ? taskDetail.getInitialParameter() : null;
+    }
 
-    TaskStatus getTaskStatus(TaskId taskId);
+    default TaskStatus getTaskStatus(TaskId taskId) throws CronTaskException {
+        TaskDetail taskDetail = getTaskDetail(taskId);
+        return taskDetail != null ? taskDetail.getTaskStatus() : null;
+    }
 
-    int getTaskCount();
+    int getTaskCount(String group, String name) throws CronTaskException;
+
+    List<TaskInfoVo> findTaskInfos(String group, String name, int limit, int offset)
+            throws CronTaskException;
 
     List<LocalDateTime> findNextFiredDateTimes(TaskId taskId, LocalDateTime startDateTime,
-            LocalDateTime endDateTime);
+            LocalDateTime endDateTime) throws CronTaskException;
 
-    List<TaskId> findUpcomingTasksBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
+    List<TaskId> findUpcomingTasksBetween(LocalDateTime startDateTime, LocalDateTime endDateTime)
+            throws CronTaskException;
 
-    LocalDateTime computeNextFiredDateTime(TaskId taskId, LocalDateTime previousFiredDateTime);
+    LocalDateTime computeNextFiredDateTime(TaskId taskId, LocalDateTime previousFiredDateTime)
+            throws CronTaskException;
 
-    void setTaskStatus(TaskId taskId, TaskStatus status);
+    void setTaskStatus(TaskId taskId, TaskStatus status) throws CronTaskException;
 
 
 }

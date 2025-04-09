@@ -4,9 +4,9 @@ import java.util.Date;
 import java.util.UUID;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.scheduler.Task;
+import com.github.cronsmith.scheduler.ITask;
 
-public class TestTask implements Task {
+public class TestTask implements ITask {
 
     @Override
     public CronExpression getCronExpression() {
@@ -27,7 +27,5 @@ public class TestTask implements Task {
             reason.printStackTrace();
         }
     }
-
-
 
 }

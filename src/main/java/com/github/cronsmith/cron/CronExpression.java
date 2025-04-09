@@ -87,6 +87,14 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return SerializationUtils.copy(this);
     }
 
+    default byte[] serialize() {
+        return SerializationUtils.serialize(this);
+    }
+
+    static CronExpression deserialize(byte[] bytes) {
+        return SerializationUtils.deserialize(bytes);
+    }
+
     /**
      * Consume CronExpression but not affect ifself
      * 

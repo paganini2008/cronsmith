@@ -69,32 +69,34 @@ public class ClockWheel {
         this.errorHandler = errorHandler;
     }
 
-    public void schedule(Task task, String initialParameter) {
+
+
+    public void schedule(ITask task, String initialParameter) {
         taskManager.saveTask(task, initialParameter);
         preloadUpcomingTasks(task.getTaskId());
     }
 
-    public void pause(Task task) {
+    public void pause(ITask task) {
         TaskStatus taskStatus = taskManager.getTaskStatus(task.getTaskId());
         if (taskStatus == TaskStatus.SCHEDULED || taskStatus == TaskStatus.STANDBY) {
             taskManager.setTaskStatus(task.getTaskId(), TaskStatus.PAUSED);
         }
     }
 
-    public void resume(Task task) {
+    public void resume(ITask task) {
         if (taskManager.getTaskStatus(task.getTaskId()) == TaskStatus.PAUSED) {
             preloadUpcomingTasks(task.getTaskId());
         }
     }
 
-    public void cancel(Task task) {
+    public void cancel(ITask task) {
         TaskStatus taskStatus = taskManager.getTaskStatus(task.getTaskId());
         if (taskStatus == TaskStatus.SCHEDULED || taskStatus == TaskStatus.STANDBY) {
             taskManager.setTaskStatus(task.getTaskId(), TaskStatus.CANCELED);
         }
     }
 
-    public void remove(Task task) {
+    public void remove(ITask task) {
         if (taskManager.getTaskStatus(task.getTaskId()) == TaskStatus.CANCELED) {
             taskManager.removeTask(task.getTaskId());
         }
@@ -158,6 +160,7 @@ public class ClockWheel {
             Collection<TaskId> taskIds = taskQueue.matchTaskIds(getNow());
             if (taskIds != null && taskIds.size() > 0) {
                 taskIds.forEach(taskId -> {
+
                     workerThreads.execute(() -> preloadUpcomingTasks(taskId));
                     TaskDetail taskDetail = taskManager.getTaskDetail(taskId);
                     if (taskDetail != null && !taskDetail.isUnavailable()) {

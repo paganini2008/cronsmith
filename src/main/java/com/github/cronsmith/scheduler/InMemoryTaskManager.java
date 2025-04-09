@@ -17,23 +17,25 @@ import com.github.cronsmith.cron.CronExpression;
  */
 public class InMemoryTaskManager implements TaskManager {
 
-    private final Map<TaskId, SimpleTaskDetail> taskStore = new ConcurrentHashMap<>();
+    private final Map<TaskId, InMemoryTaskDetail> taskStore = new ConcurrentHashMap<>();
 
-    private static class SimpleTaskDetail implements TaskDetail {
+    private static class InMemoryTaskDetail implements TaskDetail {
 
-        private final Task task;
+        private final ITask task;
         private final String initialParameter;
         private TaskStatus taskStatus;
-        private LocalDateTime prevousFiredDateTime;
+        private LocalDateTime previousFiredDateTime;
         private LocalDateTime nextFiredDateTime;
+        private LocalDateTime lastModified;
 
-        SimpleTaskDetail(Task task, String initialParameter, TaskStatus taskStatus) {
+        InMemoryTaskDetail(ITask task, String initialParameter, TaskStatus taskStatus) {
             this.task = task;
             this.initialParameter = initialParameter;
             this.taskStatus = taskStatus;
+            this.lastModified = LocalDateTime.now();
         }
 
-        public Task getTask() {
+        public ITask getTask() {
             return task;
         }
 
@@ -47,10 +49,12 @@ public class InMemoryTaskManager implements TaskManager {
 
         public void setTaskStatus(TaskStatus taskStatus) {
             this.taskStatus = taskStatus;
+            this.lastModified = LocalDateTime.now();
         }
 
-        public void setPrevousFiredDateTime(LocalDateTime prevousFiredDateTime) {
-            this.prevousFiredDateTime = prevousFiredDateTime;
+        public void setPreviousFiredDateTime(LocalDateTime previousFiredDateTime) {
+            this.previousFiredDateTime = previousFiredDateTime;
+            this.lastModified = LocalDateTime.now();
         }
 
         public LocalDateTime getNextFiredDateTime() {
@@ -59,17 +63,26 @@ public class InMemoryTaskManager implements TaskManager {
 
         public void setNextFiredDateTime(LocalDateTime nextFiredDateTime) {
             this.nextFiredDateTime = nextFiredDateTime;
+            this.lastModified = LocalDateTime.now();
         }
 
-        public LocalDateTime getPrevousFiredDateTime() {
-            return prevousFiredDateTime;
+        public LocalDateTime getPreviousFiredDateTime() {
+            return previousFiredDateTime;
+        }
+
+        public LocalDateTime getLastModified() {
+            return lastModified;
+        }
+
+        public void setLastModified(LocalDateTime lastModified) {
+            this.lastModified = lastModified;
         }
 
         @Override
         public String toString() {
             StringBuilder str = new StringBuilder();
             str.append("Task Id: ").append(task.getTaskId()).append(", Task Status: ")
-                    .append(taskStatus).append(", Prevous Fired: ").append(prevousFiredDateTime)
+                    .append(taskStatus).append(", Previous Fired: ").append(previousFiredDateTime)
                     .append(", Next Fired: ").append(nextFiredDateTime);
             return str.toString();
         }
@@ -77,17 +90,17 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public TaskDetail saveTask(Task task, String initialParameter) {
+    public TaskDetail saveTask(ITask task, String initialParameter) {
         task.getCronExpression().sync();
         taskStore.put(task.getTaskId(),
-                new SimpleTaskDetail(task, initialParameter, TaskStatus.STANDBY));
+                new InMemoryTaskDetail(task, initialParameter, TaskStatus.STANDBY));
         return taskStore.get(task.getTaskId());
     }
 
     @Override
-    public List<LocalDateTime> findNextFiredDateTimes(TaskId taskId,
-            final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
-        SimpleTaskDetail taskDetail = taskStore.get(taskId);
+    public List<LocalDateTime> findNextFiredDateTimes(TaskId taskId, LocalDateTime startDateTime,
+            LocalDateTime endDateTime) {
+        InMemoryTaskDetail taskDetail = taskStore.get(taskId);
         if (taskDetail.isUnavailable()) {
             return Collections.emptyList();
         }
@@ -107,8 +120,35 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public int getTaskCount() {
-        return taskStore.size();
+    public int getTaskCount(String group, String name) {
+        return (int) taskStore.keySet().stream()
+                .filter(tid -> StringUtils.isBlank(group) || tid.getGroup().equals(group))
+                .filter(tid -> StringUtils.isBlank(name) || tid.getName().equals(name)).count();
+
+    }
+
+    @Override
+    public List<TaskInfoVo> findTaskInfos(String group, String name, int limit, int offset) {
+        return taskStore.entrySet().stream()
+                .filter(e -> StringUtils.isBlank(group) || e.getKey().getGroup().equals(group))
+                .filter(e -> StringUtils.isBlank(name) || e.getKey().getName().equals(name))
+                .skip(offset).limit(limit).map(e -> convert2Vo(e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private TaskInfoVo convert2Vo(TaskDetail taskDetail) {
+        TaskInfoVo vo = new TaskInfoVo();
+        vo.setTaskGroup(taskDetail.getTask().getTaskId().getGroup());
+        vo.setTaskName(taskDetail.getTask().getTaskId().getName());
+        vo.setTaskClass(taskDetail.getTask().getClass().getName());
+        vo.setDescription(taskDetail.getTask().getDescription());
+        vo.setCron(taskDetail.getTask().getCronExpression().toString());
+        vo.setTimeout(taskDetail.getTask().getTimeout());
+        vo.setMaxRetryCount(taskDetail.getTask().getMaxRetryCount());
+        vo.setNextFiredDateTime(taskDetail.getNextFiredDateTime());
+        vo.setPrevFiredDateTime(taskDetail.getPreviousFiredDateTime());
+        vo.setTaskStatus(taskDetail.getTaskStatus().name());
+        return vo;
     }
 
     @Override
@@ -150,10 +190,10 @@ public class InMemoryTaskManager implements TaskManager {
     public LocalDateTime computeNextFiredDateTime(TaskId taskId,
             LocalDateTime previousFiredDateTime) {
         if (taskStore.containsKey(taskId)) {
-            SimpleTaskDetail taskDetail = taskStore.get(taskId);
+            InMemoryTaskDetail taskDetail = taskStore.get(taskId);
             LocalDateTime nextFiredDateTime = taskDetail.getTask().getCronExpression()
                     .getNextFiredDateTime(previousFiredDateTime);
-            taskDetail.setPrevousFiredDateTime(taskDetail.getNextFiredDateTime());
+            taskDetail.setPreviousFiredDateTime(taskDetail.getNextFiredDateTime());
             taskDetail.setNextFiredDateTime(nextFiredDateTime);
             return nextFiredDateTime;
         }

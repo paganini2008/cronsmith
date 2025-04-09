@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  */
 public interface TaskDetail {
 
-    Task getTask();
+    ITask getTask();
 
     String getInitialParameter();
 
@@ -19,7 +19,7 @@ public interface TaskDetail {
 
     LocalDateTime getNextFiredDateTime();
 
-    LocalDateTime getPrevousFiredDateTime();
+    LocalDateTime getPreviousFiredDateTime();
 
     default boolean isUnavailable() {
         return getTaskStatus() == TaskStatus.FINISHED || getTaskStatus() == TaskStatus.CANCELED

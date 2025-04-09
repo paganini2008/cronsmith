@@ -5,12 +5,12 @@ import java.util.Map;
 
 /**
  * 
- * @Description: LangUtils
+ * @Description: BeanUtils
  * @Author: Fred Feng
  * @Date: 08/04/2025
  * @Version 1.0.0
  */
-public abstract class LangUtils {
+public abstract class BeanUtils {
 
     public static void populateBean(TaskInfoVo vo, Map<String, Object> kwargs) {
         Field[] fields = TaskInfoVo.class.getDeclaredFields();

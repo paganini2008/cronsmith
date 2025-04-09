@@ -35,7 +35,7 @@ public class ClockWheelScheduler {
     private final ExecutorServiceFactory executorServiceFactory;
     private TaskManager taskManager = new InMemoryTaskManager();
     private UpcomingTaskQueue taskQueue = new InMemoryTaskQueue();
-    private ZoneId zoneId = ZoneId.systemDefault();
+    private ZoneId zoneId = ZoneId.of("UTC");
     private List<TaskListener> taskListeners = new ArrayList<>();
     private ErrorHandler errorHandler;
     private final AtomicBoolean started = new AtomicBoolean();

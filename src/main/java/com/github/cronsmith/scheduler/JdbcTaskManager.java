@@ -279,7 +279,7 @@ public class JdbcTaskManager implements TaskManager {
             try (ResultSet rs = psm.executeQuery()) {
                 while (rs.next()) {
                     TaskInfoVo vo = new TaskInfoVo();
-                    LangUtils.populateBean(vo, toMap(rs));
+                    BeanUtils.populateBean(vo, toMap(rs));
                     voList.add(vo);
                 }
             }

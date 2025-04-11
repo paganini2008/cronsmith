@@ -69,32 +69,32 @@ public class ClockWheelScheduler {
         this.errorHandler = errorHandler;
     }
 
-    public void schedule(ITask task, String initialParameter) {
+    public void schedule(Task task, String initialParameter) {
         taskManager.saveTask(task, initialParameter);
         preloadUpcomingTasks(task.getTaskId());
     }
 
-    public void pause(ITask task) {
+    public void pause(Task task) {
         TaskStatus taskStatus = taskManager.getTaskStatus(task.getTaskId());
         if (taskStatus == TaskStatus.SCHEDULED || taskStatus == TaskStatus.STANDBY) {
             taskManager.setTaskStatus(task.getTaskId(), TaskStatus.PAUSED);
         }
     }
 
-    public void resume(ITask task) {
+    public void resume(Task task) {
         if (taskManager.getTaskStatus(task.getTaskId()) == TaskStatus.PAUSED) {
             preloadUpcomingTasks(task.getTaskId());
         }
     }
 
-    public void cancel(ITask task) {
+    public void cancel(Task task) {
         TaskStatus taskStatus = taskManager.getTaskStatus(task.getTaskId());
         if (taskStatus == TaskStatus.SCHEDULED || taskStatus == TaskStatus.STANDBY) {
             taskManager.setTaskStatus(task.getTaskId(), TaskStatus.CANCELED);
         }
     }
 
-    public void remove(ITask task) {
+    public void remove(Task task) {
         if (taskManager.getTaskStatus(task.getTaskId()) == TaskStatus.CANCELED) {
             taskManager.removeTask(task.getTaskId());
         }

@@ -1,37 +1,36 @@
 package com.github.cronsmith.scheduler;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.concurrent.TimeUnit;
+import com.github.cronsmith.cron.CronExpression;
 
 /**
  * 
  * @Description: Task
  * @Author: Fred Feng
- * @Date: 07/04/2025
+ * @Date: 30/03/2025
  * @Version 1.0.0
  */
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface Task {
+public interface Task {
 
-    String name() default "";
+    default TaskId getTaskId() {
+        return TaskId.of(getClass().getSimpleName());
+    }
 
-    String group() default "default";
+    default String getDescription() {
+        return "";
+    }
 
-    String description() default "";
+    CronExpression getCronExpression();
 
-    String cron();
+    default long getTimeout() {
+        return -1L;
+    }
 
-    long timeout() default -1L;
+    default int getMaxRetryCount() {
+        return -1;
+    }
 
-    TimeUnit timeUnit() default TimeUnit.SECONDS;
+    Object execute(String initialParameter);
 
-    int maxRetryCount() default -1;
-
+    default void handleResult(Object result, Throwable reason) {}
 
 }

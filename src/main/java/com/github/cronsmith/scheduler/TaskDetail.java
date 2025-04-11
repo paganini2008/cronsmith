@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  */
 public interface TaskDetail {
 
-    ITask getTask();
+    Task getTask();
 
     String getInitialParameter();
 

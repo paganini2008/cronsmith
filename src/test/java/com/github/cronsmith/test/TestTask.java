@@ -4,13 +4,13 @@ import java.util.Date;
 import java.util.UUID;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.scheduler.ITask;
+import com.github.cronsmith.scheduler.Task;
 
-public class TestTask implements ITask {
+public class TestTask implements Task {
 
     @Override
     public CronExpression getCronExpression() {
-        return new CronBuilder().everySecond(3);
+        return new CronBuilder().everySecond(1);
     }
 
     @Override

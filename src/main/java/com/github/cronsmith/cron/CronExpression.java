@@ -19,6 +19,64 @@ import com.github.cronsmith.scheduler.PeriodicalExecutor;
 /**
  * 
  * CronExpression represents the entire syntax tree structure.
+ * <table cellspacing="8">
+ * <tr>
+ * <th align="left">Field Name</th>
+ * <th align="left">&nbsp;</th>
+ * <th align="left">Allowed Values</th>
+ * <th align="left">&nbsp;</th>
+ * <th align="left">Allowed Special Characters</th>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Seconds</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>0-59</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * /</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Minutes</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>0-59</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * /</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Hours</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>0-23</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * /</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Day-of-month</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>1-31</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * ? / L W</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Month</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>0-11 or JAN-DEC</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * /</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Day-of-Week</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>1-7 or SUN-SAT</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * ? / L #</code></td>
+ * </tr>
+ * <tr>
+ * <td align="left"><code>Year (Optional)</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>empty, 1970-2199</code></td>
+ * <td align="left">&nbsp;</th>
+ * <td align="left"><code>, - * /</code></td>
+ * </tr>
+ * </table>
  * 
  * @Author: Fred Feng
  * @Date: 26/02/2025

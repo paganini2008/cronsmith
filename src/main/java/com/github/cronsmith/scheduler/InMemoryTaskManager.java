@@ -21,21 +21,21 @@ public class InMemoryTaskManager implements TaskManager {
 
     private static class InMemoryTaskDetail implements TaskDetail {
 
-        private final ITask task;
+        private final Task task;
         private final String initialParameter;
         private TaskStatus taskStatus;
         private LocalDateTime previousFiredDateTime;
         private LocalDateTime nextFiredDateTime;
         private LocalDateTime lastModified;
 
-        InMemoryTaskDetail(ITask task, String initialParameter, TaskStatus taskStatus) {
+        InMemoryTaskDetail(Task task, String initialParameter, TaskStatus taskStatus) {
             this.task = task;
             this.initialParameter = initialParameter;
             this.taskStatus = taskStatus;
             this.lastModified = LocalDateTime.now();
         }
 
-        public ITask getTask() {
+        public Task getTask() {
             return task;
         }
 
@@ -90,7 +90,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public TaskDetail saveTask(ITask task, String initialParameter) {
+    public TaskDetail saveTask(Task task, String initialParameter) {
         task.getCronExpression().sync();
         taskStore.put(task.getTaskId(),
                 new InMemoryTaskDetail(task, initialParameter, TaskStatus.STANDBY));

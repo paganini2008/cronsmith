@@ -48,30 +48,29 @@ public class JdbcTaskManager implements TaskManager {
             String.format("select %s from cron_task_detail where 1=1", SELECT_COLUMNS);
 
     private final DataSource dataSource;
-    private final Map<TaskId, ITask> taskObjectCache = new ConcurrentHashMap<>();
+    private final Map<TaskId, Task> taskObjectCache = new ConcurrentHashMap<>();
 
     public JdbcTaskManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    protected ITask retrieveTaskObject(TaskId taskId, String taskClassName) {
-        ITask task = taskObjectCache.get(taskId);
+    protected Task retrieveTaskObject(TaskId taskId, Map<String, Object> info) {
+        Task task = taskObjectCache.get(taskId);
         if (task == null) {
-            taskObjectCache.putIfAbsent(taskId, createTaskObject(taskClassName));
+            taskObjectCache.putIfAbsent(taskId, createTaskObject(info));
             task = taskObjectCache.get(taskId);
         }
         return task;
     }
 
-    protected ITask createTaskObject(String taskClassName) {
+    protected Task createTaskObject(Map<String, Object> info) {
+        final String taskClassName = (String) info.get("taskClass");
         Class<?> taskClass;
         try {
-            taskClass = Class.forName(taskClassName);
-        } catch (ClassNotFoundException e) {
-            throw new CronTaskException(e.getMessage(), e);
-        }
-        try {
-            return (ITask) taskClass.newInstance();
+            taskClass = Class.forName(taskClassName, false,
+                    Thread.currentThread().getContextClassLoader());
+            return taskClass.isAssignableFrom(CustomTask.class) ? new CustomTask(info)
+                    : (Task) taskClass.newInstance();
         } catch (Exception e) {
             throw new CronTaskException(e.getMessage(), e);
         }
@@ -86,11 +85,10 @@ public class JdbcTaskManager implements TaskManager {
         }
 
         @Override
-        public ITask getTask() {
+        public Task getTask() {
             String taskName = (String) info.get("taskName");
             String taskGroup = (String) info.get("taskGroup");
-            String taskClass = (String) info.get("taskClass");
-            return retrieveTaskObject(TaskId.of(taskGroup, taskName), taskClass);
+            return retrieveTaskObject(TaskId.of(taskGroup, taskName), info);
         }
 
         @Override
@@ -121,7 +119,7 @@ public class JdbcTaskManager implements TaskManager {
     }
 
     @Override
-    public TaskDetail saveTask(ITask task, String initialParameter) throws CronTaskException {
+    public TaskDetail saveTask(Task task, String initialParameter) throws CronTaskException {
         if (hasTask(task.getTaskId())) {
             return getTaskDetail(task.getTaskId());
         }

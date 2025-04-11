@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface TaskManager {
 
-    TaskDetail saveTask(ITask task, String initialParameter) throws CronTaskException;
+    TaskDetail saveTask(Task task, String initialParameter) throws CronTaskException;
 
     TaskDetail removeTask(TaskId taskId) throws CronTaskException;
 

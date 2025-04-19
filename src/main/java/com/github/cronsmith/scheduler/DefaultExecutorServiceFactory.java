@@ -13,16 +13,25 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class DefaultExecutorServiceFactory implements ExecutorServiceFactory {
 
-    private final static int cores = Runtime.getRuntime().availableProcessors();
+
+    public DefaultExecutorServiceFactory() {
+        this(Runtime.getRuntime().availableProcessors());
+    }
+
+    public DefaultExecutorServiceFactory(int nThreads) {
+        this.nThreads = nThreads;
+    }
+
+    private final int nThreads;
 
     @Override
     public ScheduledExecutorService getSchedulerThreads() {
-        return Executors.newScheduledThreadPool(cores);
+        return Executors.newScheduledThreadPool(nThreads);
     }
 
     @Override
     public ExecutorService getWorkerThreads() {
-        return Executors.newFixedThreadPool(cores * 2);
+        return Executors.newFixedThreadPool(nThreads * 2);
     }
 
     @Override

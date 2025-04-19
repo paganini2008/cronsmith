@@ -1,5 +1,7 @@
 package com.github.cronsmith.scheduler;
 
+import java.time.LocalDateTime;
+
 /**
  * 
  * @Description: DebugErrorHandler
@@ -10,12 +12,17 @@ package com.github.cronsmith.scheduler;
 public class DebugErrorHandler implements ErrorHandler {
 
     @Override
-    public void onHandleTask(Throwable e) {
+    public void onHandleScheduler(Throwable e) {
         e.printStackTrace();
     }
 
     @Override
-    public void onHandleResult(Throwable e) {
+    public void onHandleTask(LocalDateTime datetime, Throwable e) {
+        e.printStackTrace();
+    }
+
+    @Override
+    public void onHandleTaskResult(LocalDateTime datetime, Throwable e) {
         e.printStackTrace();
     }
 

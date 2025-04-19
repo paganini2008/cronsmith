@@ -20,7 +20,7 @@ public final class CronBuilder implements CronExpression, Serializable {
     private static final long serialVersionUID = -400537561864611508L;
 
     public CronBuilder() {
-        this.zoneId = ZoneId.systemDefault();
+        this.zoneId = ZoneId.of("UTC");
         this.startTime = LocalDateTime.now(zoneId).withNano(0);
         this.useMonthAsNumber = false;
         this.useDayOfWeekAsNumber = false;

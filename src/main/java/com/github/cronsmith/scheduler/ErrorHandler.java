@@ -1,5 +1,7 @@
 package com.github.cronsmith.scheduler;
 
+import java.time.LocalDateTime;
+
 /**
  * 
  * @Description: ErrorHandler
@@ -9,8 +11,10 @@ package com.github.cronsmith.scheduler;
  */
 public interface ErrorHandler {
 
-    default void onHandleTask(Throwable e) {}
+    default void onHandleScheduler(Throwable e) {}
 
-    default void onHandleResult(Throwable e) {}
+    default void onHandleTask(LocalDateTime datetime, Throwable e) {}
+
+    default void onHandleTaskResult(LocalDateTime datetime, Throwable e) {}
 
 }

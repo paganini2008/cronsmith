@@ -181,7 +181,8 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         for (CronExpression cronExpression : IteratorUtils
                 .forEach((Iterator<CronExpression>) copy())) {
             dateTime = cronExpression.getTime();
-            if ((dateTime.isEqual(from) || dateTime.isAfter(from)) && dateTime.isBefore(to)) {
+            if ((dateTime.isEqual(from) || dateTime.isAfter(from))
+                    && (dateTime.isBefore(to) || dateTime.isEqual(to))) {
                 dataList.add(dateTime);
             }
             if (dateTime.isAfter(from) && dateTime.isAfter(to)) {

@@ -49,7 +49,7 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
     private final TagVisitor tagVisitor;
     private CronExpression cronExpression;
 
-    private ZoneId zoneId = ZoneId.systemDefault();
+    private ZoneId zoneId = ZoneId.of("UTC");
 
     public ZoneId getZoneId() {
         return zoneId;

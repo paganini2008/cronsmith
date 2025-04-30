@@ -1,6 +1,6 @@
 package com.github.cronsmith.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 /**
  * 
@@ -13,8 +13,8 @@ public interface ErrorHandler {
 
     default void onHandleScheduler(Throwable e) {}
 
-    default void onHandleTask(LocalDateTime datetime, Throwable e) {}
+    default void onHandleTask(ZonedDateTime datetime, Throwable e) {}
 
-    default void onHandleTaskResult(LocalDateTime datetime, Throwable e) {}
+    default void onHandleTaskResult(ZonedDateTime datetime, Throwable e) {}
 
 }

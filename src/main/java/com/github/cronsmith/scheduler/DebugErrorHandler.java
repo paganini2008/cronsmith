@@ -1,6 +1,6 @@
 package com.github.cronsmith.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 /**
  * 
@@ -17,12 +17,12 @@ public class DebugErrorHandler implements ErrorHandler {
     }
 
     @Override
-    public void onHandleTask(LocalDateTime datetime, Throwable e) {
+    public void onHandleTask(ZonedDateTime datetime, Throwable e) {
         e.printStackTrace();
     }
 
     @Override
-    public void onHandleTaskResult(LocalDateTime datetime, Throwable e) {
+    public void onHandleTaskResult(ZonedDateTime datetime, Throwable e) {
         e.printStackTrace();
     }
 

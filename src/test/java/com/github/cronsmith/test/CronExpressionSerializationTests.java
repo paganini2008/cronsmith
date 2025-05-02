@@ -63,4 +63,15 @@ public class CronExpressionSerializationTests {
         System.out.println(ldt);
         assertTrue(list.get(0).equals(ldt));
     }
+
+    @Test
+    public void testCopy3() {
+        CronExpression cronExpression = new CronBuilder().everyMinute(3);
+        LocalDateTime ldt = cronExpression.sync().getNextFiredDateTime();
+        System.out.println(ldt);
+        System.out.println("=========================================");
+        cronExpression.consume(l -> {
+            System.out.println("Copy3: " + l);
+        }, 10);
+    }
 }

@@ -17,7 +17,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisHour implements TheHour {
+public class ThisHour implements TheHour, PendingValueHolder {
 
     private static final long serialVersionUID = 8124589572544886753L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -25,6 +25,13 @@ public class ThisHour implements TheHour {
     private int index;
     private LocalDateTime hour;
     private int startHourFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisHour(Day day, int hour) {
         ChronoField.HOUR_OF_DAY.checkValidValue(hour);
@@ -71,6 +78,14 @@ public class ThisHour implements TheHour {
                 || (hour.toLocalDate().compareTo(target.toLocalDate()) == 0
                         && hour.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindDay(day.getTime(), target)) {
+                // Let the enclosing day catch up in one hop and restart this day's value
+                // list, otherwise catching up costs one iteration per hour elapsed.
+                day.sync(SyncSupport.startOfDay(target));
+                SyncSupport.takeOver(day);
+                index = 0;
+                iterators.forEach(TagIterator::reset);
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -78,6 +93,7 @@ public class ThisHour implements TheHour {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -116,6 +132,9 @@ public class ThisHour implements TheHour {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (day.hasNext()) {
@@ -130,6 +149,10 @@ public class ThisHour implements TheHour {
 
     @Override
     public Hour next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         hour = iterator.next();
         if (!iterator.hasNext()) {
@@ -264,4 +287,9 @@ public class ThisHour implements TheHour {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

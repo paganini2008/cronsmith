@@ -107,9 +107,14 @@ public class AsteriskTagVisitor implements TagVisitor {
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
         if ("*".equals(text) && (filter == null || filter.contains("*"))) {
-            if (context.getCronExpression() != null) {
-                return ((Week) context.getCronExpression()).everyDay();
-            } else {
+            CronExpression cronExpression = context.getCronExpression();
+            if (cronExpression instanceof Week) {
+                return ((Week) cronExpression).everyDay();
+            } else if (cronExpression instanceof Month) {
+                // Fields are visited month first, so '*' in the day-of-week position normally
+                // arrives with the month, not a week, as the expression built so far.
+                return ((Month) cronExpression).everyWeek().everyDay();
+            } else if (cronExpression == null) {
                 return new CronBuilder().setZoneId(context.getZoneId()).everyWeek().everyDay();
             }
         } else if (nextVisitor != null) {

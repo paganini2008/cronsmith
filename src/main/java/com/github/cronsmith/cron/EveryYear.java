@@ -26,7 +26,7 @@ public class EveryYear implements Year {
         this.builder = builder;
         this.from = from;
         this.interval = interval;
-        this.year = builder.getTime().withYear(getFromYear() + (interval - 1));
+        this.year = builder.getTime().withYear(getFromYear());
         this.self = true;
 
     }
@@ -132,9 +132,15 @@ public class EveryYear implements Year {
     }
 
     @Override
+    public Day lastDay() {
+        final Year copy = (Year) this.copy();
+        return new ThisDayOfYear(IteratorUtils.getFirst(copy, copy));
+    }
+
+    @Override
     public Week lastWeek() {
         final Year copy = (Year) this.copy();
-        return new LastWeekOfYear(IteratorUtils.getFirst(copy));
+        return new LastWeekOfYear(IteratorUtils.getFirst(copy, copy));
     }
 
     @Override

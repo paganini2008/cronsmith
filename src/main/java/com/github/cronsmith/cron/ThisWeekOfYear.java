@@ -16,7 +16,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisWeekOfYear implements TheWeek {
+public class ThisWeekOfYear implements TheWeek, PendingValueHolder {
 
     private static final long serialVersionUID = -3294283555586718358L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -24,6 +24,13 @@ public class ThisWeekOfYear implements TheWeek {
     private int index;
     private LocalDateTime week;
     private int startWeekFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisWeekOfYear(Year year, int weekOfYear) {
         ChronoField.ALIGNED_WEEK_OF_YEAR.checkValidValue(weekOfYear);
@@ -96,6 +103,7 @@ public class ThisWeekOfYear implements TheWeek {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -122,18 +130,21 @@ public class ThisWeekOfYear implements TheWeek {
 
     @Override
     public TheDayOfWeek day(int dayOfWeek) {
-        final Week copy = (Week) this;
-        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), dayOfWeek);
+        final Week copy = (Week) this.copy();
+        return new ThisDayOfWeek(IteratorUtils.getFirst(copy, copy), dayOfWeek);
     }
 
     @Override
     public Day everyDay(IntFunction<Week> from, int interval) {
-        final Week copy = (Week) this;
-        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, interval);
+        final Week copy = (Week) this.copy();
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy, copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (year.hasNext()) {
@@ -148,13 +159,17 @@ public class ThisWeekOfYear implements TheWeek {
 
     @Override
     public Week next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         week = iterator.next();
         if (!iterator.hasNext()) {
             index++;
             iterator.reset();
         }
-        week.withYear(year.getYear());
+        week = week.withYear(year.getYear());
         return this;
     }
 
@@ -311,4 +326,9 @@ public class ThisWeekOfYear implements TheWeek {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

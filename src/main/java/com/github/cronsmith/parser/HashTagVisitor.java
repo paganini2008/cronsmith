@@ -78,7 +78,7 @@ public class HashTagVisitor implements TagVisitor {
             int dayOfWeek;
             boolean useNumber = true;
             try {
-                dayOfWeek = Integer.parseInt(args[0]);
+                dayOfWeek = context.toDayOfWeek(Integer.parseInt(args[0]));
             } catch (RuntimeException e) {
                 dayOfWeek = AbbreviationUtils.getDayOfWeekValue(args[0]);
                 useNumber = false;

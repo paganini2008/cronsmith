@@ -145,12 +145,17 @@ public interface CronExpression extends CronStringBuilder, Serializable {
         return SerializationUtils.copy(this);
     }
 
+    /**
+     * A snapshot of this expression, including where it currently stands, for storing away and
+     * restoring later. Goes through the same versioned format as
+     * {@link com.github.cronsmith.CRON#toByteArray(CronExpression)}.
+     */
     default byte[] serialize() {
-        return SerializationUtils.serialize(this);
+        return com.github.cronsmith.CRON.toByteArray(this);
     }
 
     static CronExpression deserialize(byte[] bytes) {
-        return SerializationUtils.deserialize(bytes);
+        return com.github.cronsmith.CRON.load(bytes);
     }
 
     /**
@@ -203,7 +208,13 @@ public interface CronExpression extends CronStringBuilder, Serializable {
      * @return
      */
     default LocalDateTime getNextFiredDateTime(LocalDateTime future) {
-        Iterator<CronExpression> iterator = (Iterator<CronExpression>) this.sync();
+        LocalDateTime startTime = getBuilder().getStartTime();
+        // Synchronize straight to whichever of the two lies later. Syncing to the start time and
+        // then stepping up to 'future' one occurrence at a time costs an iteration per occurrence
+        // in between, which is unusable for, say, a per-second expression started a year ago.
+        LocalDateTime syncPoint =
+                (future != null && future.isAfter(startTime)) ? future : startTime;
+        Iterator<CronExpression> iterator = (Iterator<CronExpression>) this.sync(syncPoint);
         LocalDateTime ldt;
         do {
             CronExpression nextCron = IteratorUtils.getFirst(iterator);

@@ -17,13 +17,20 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class LatestWeekdayOfMonth implements TheDay {
+public class LatestWeekdayOfMonth implements TheDay, PendingValueHolder {
 
     private static final long serialVersionUID = -1669405684277881421L;
     private final Set<TagIterator> iterators = new LinkedHashSet<>();
     private Month month;
     private int index;
     private LocalDateTime day;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     LatestWeekdayOfMonth(Month month, int dayOfMonth) {
         this.month = month;
@@ -33,6 +40,9 @@ public class LatestWeekdayOfMonth implements TheDay {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (month.hasNext()) {
@@ -47,6 +57,10 @@ public class LatestWeekdayOfMonth implements TheDay {
 
     @Override
     public Day next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = IteratorUtils.get(iterators.iterator(), index);
         day = iterator.next();
         if (!iterator.hasNext()) {
@@ -103,6 +117,7 @@ public class LatestWeekdayOfMonth implements TheDay {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -287,4 +302,9 @@ public class LatestWeekdayOfMonth implements TheDay {
         }
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

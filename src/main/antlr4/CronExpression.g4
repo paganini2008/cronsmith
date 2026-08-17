@@ -68,6 +68,7 @@ monthField
     | INT      
     | monthRangeWithStep
     | monthRange
+    | monthNameWithStep
     | monthName
     ;
     
@@ -83,6 +84,8 @@ dayOfWeekField
     | weekdayRangeWithStep
     | weekdayRange
     | dayOfWeekName '#' INT
+    | dayOfWeekNameLast
+    | dayOfWeekNameWithStep
     | dayOfWeekName
     | '?'
     ;
@@ -104,6 +107,10 @@ yearRange     : INT_YEAR '-' INT_YEAR ;
 
 weekdayRangeWithStep : dayOfWeekName '-' dayOfWeekName '/' INT ;
 monthRangeWithStep : monthName '-' monthName '/' INT ;
+
+dayOfWeekNameLast : dayOfWeekName 'L' ;
+dayOfWeekNameWithStep : dayOfWeekName '/' INT ;
+monthNameWithStep : monthName '/' INT ;
 
 
 weekdayRange  : dayOfWeekName ('-' dayOfWeekName)? (',' dayOfWeekName ('-' dayOfWeekName)? )* ;

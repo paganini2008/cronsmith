@@ -15,7 +15,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisDayOfYear implements TheDay {
+public class ThisDayOfYear implements TheDay, PendingValueHolder {
 
     private static final long serialVersionUID = -8235489088108418524L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -23,6 +23,24 @@ public class ThisDayOfYear implements TheDay {
     private int index;
     private LocalDateTime day;
     private int startDayFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
+
+    /**
+     * The last day of the year, recomputed year by year so a leap year keeps its 366th day rather
+     * than firing on 30 December.
+     */
+    ThisDayOfYear(Year year) {
+        this.year = year;
+        this.iterators.add(new LastDayIterator(0));
+        this.day = year.getTime().withDayOfYear(year.getLastDayOfYear());
+        this.startDayFlag = year.getLastDayOfYear();
+    }
 
     ThisDayOfYear(Year year, int dayOfYear) {
         ChronoField.DAY_OF_YEAR.checkValidValue(dayOfYear);
@@ -48,6 +66,7 @@ public class ThisDayOfYear implements TheDay {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -163,6 +182,9 @@ public class ThisDayOfYear implements TheDay {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (year.hasNext()) {
@@ -177,6 +199,10 @@ public class ThisDayOfYear implements TheDay {
 
     @Override
     public Day next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         day = iterator.next();
         if (!iterator.hasNext()) {
@@ -401,4 +427,9 @@ public class ThisDayOfYear implements TheDay {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

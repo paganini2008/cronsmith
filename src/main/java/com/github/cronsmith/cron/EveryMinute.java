@@ -13,7 +13,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryMinute implements Minute, IntervalChronoUnit {
+public class EveryMinute implements Minute, IntervalChronoUnit, PendingValueHolder {
 
     private static final long serialVersionUID = -7939881133025374416L;
     private Hour hour;
@@ -30,7 +30,7 @@ public class EveryMinute implements Minute, IntervalChronoUnit {
         this.hour = hour;
         this.from = from;
         this.interval = interval;
-        this.minute = hour.getTime().withMinute(getFromMinute() + (interval - 1));
+        this.minute = hour.getTime().withMinute(getFromMinute());
         this.self = true;
         this.forward = true;
     }
@@ -52,7 +52,7 @@ public class EveryMinute implements Minute, IntervalChronoUnit {
         if (!next) {
             if (hour.hasNext()) {
                 hour = hour.next();
-                minute = hour.getTime().withMinute(getFromMinute() + (interval - 1));
+                minute = hour.getTime().withMinute(getFromMinute());
                 forward = false;
                 next = true;
             }
@@ -111,6 +111,15 @@ public class EveryMinute implements Minute, IntervalChronoUnit {
                         || (minute.toLocalDate().compareTo(target.toLocalDate()) == 0
                                 && minute.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindHour(hour.getTime(), target)) {
+                // Let the enclosing hour catch up in one hop, otherwise a start time set
+                // years back would be reached one single minute at a time.
+                hour.sync(SyncSupport.startOfHour(target));
+                SyncSupport.takeOver(hour);
+                minute = hour.getTime().withMinute(getFromMinute());
+                self = false;
+                forward = false;
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -164,4 +173,9 @@ public class EveryMinute implements Minute, IntervalChronoUnit {
         return CRON.toCronString(this);
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.forward = true;
+    }
 }

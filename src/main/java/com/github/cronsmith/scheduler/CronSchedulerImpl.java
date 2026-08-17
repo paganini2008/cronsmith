@@ -1,6 +1,7 @@
 package com.github.cronsmith.scheduler;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +46,7 @@ public class CronSchedulerImpl implements CronScheduler {
         CronExpression copy = cronExpression.copy();
         LocalDateTime nextFiredDateTime = getNextFiredDateTime(copy);
         if (nextFiredDateTime != null) {
-            long betweenInMs = ChronoUnit.MILLIS.between(now, nextFiredDateTime);
+            long betweenInMs = delayInMillis(now, nextFiredDateTime);
             CronSchedulerEventTrigger eventTrigger = onEventTriggered(task);
             CronFuture future = new CronFutureImpl(
                     periodicalExecutor.schedule(new RunnableWrapper(task, copy, cancellation),
@@ -121,8 +122,16 @@ public class CronSchedulerImpl implements CronScheduler {
         }
     }
 
+    /**
+     * The first occurrence at or after now. Occurrences already in the past are never replayed: a
+     * schedule whose start time lies years back begins with its next due run, not with a backlog.
+     * <p>
+     * Catching up is delegated to {@code sync(..)} rather than walked one occurrence at a time,
+     * which is what keeps starting such a task instant instead of taking seconds of CPU.
+     */
     @SuppressWarnings("unchecked")
     private LocalDateTime getNextFiredDateTime(CronExpression cronExpression) {
+        cronExpression.sync(LocalDateTime.now(cronExpression.getZoneId()));
         Iterator<CronExpression> iterator = (Iterator<CronExpression>) cronExpression;
         LocalDateTime ldt;
         do {
@@ -130,6 +139,18 @@ public class CronSchedulerImpl implements CronScheduler {
             ldt = nextCron != null ? nextCron.getTime() : null;
         } while (ldt != null && ldt.isBefore(LocalDateTime.now(cronExpression.getZoneId())));
         return ldt;
+    }
+
+    /**
+     * How long to wait before the next run, measured as real elapsed time.
+     * <p>
+     * The two wall-clock readings have to be resolved against the zone first: on the night a
+     * daylight-saving switch happens an hour of wall clock is worth two hours of real time, or
+     * none at all, and subtracting the local times would put the task off by exactly that hour.
+     */
+    private long delayInMillis(LocalDateTime now, LocalDateTime nextFiredDateTime) {
+        ZoneId zoneId = cronExpression.getZoneId();
+        return ChronoUnit.MILLIS.between(now.atZone(zoneId), nextFiredDateTime.atZone(zoneId));
     }
 
     protected CronSchedulerEventTrigger onEventTriggered(Runnable task) {
@@ -147,7 +168,7 @@ public class CronSchedulerImpl implements CronScheduler {
                             futures.containsKey(task) ? futures.get(task).getNextFiredDateTime()
                                     : null);
                     finishedEvent.setReason(e);
-                    schedulerListeners.forEach(l -> l.onTaskScheduled(finishedEvent));
+                    schedulerListeners.forEach(l -> l.onTaskFinished(finishedEvent));
                     break;
                 case PAUSED:
                     schedulerListeners.forEach(
@@ -209,7 +230,7 @@ public class CronSchedulerImpl implements CronScheduler {
             LocalDateTime now = LocalDateTime.now(cronExpression.getZoneId());
             LocalDateTime nextFiredDateTime = getNextFiredDateTime(copy);
             if (nextFiredDateTime != null) {
-                long betweenInMs = ChronoUnit.MILLIS.between(now, nextFiredDateTime);
+                long betweenInMs = delayInMillis(now, nextFiredDateTime);
                 Future<?> future =
                         periodicalExecutor.schedule(this, betweenInMs, TimeUnit.MILLISECONDS);
                 cronFuture.update(future, nextFiredDateTime);

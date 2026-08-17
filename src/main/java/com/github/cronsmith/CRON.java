@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.antlr.v4.runtime.CharStream;
@@ -32,6 +34,7 @@ import com.github.cronsmith.cron.Month;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
 import com.github.cronsmith.parser.CronExpressionContext;
+import com.github.cronsmith.parser.CronParserException;
 
 /**
  * 
@@ -43,15 +46,23 @@ import com.github.cronsmith.parser.CronExpressionContext;
  */
 public abstract class CRON {
 
+    /**
+     * The default {@link CronBuilder} keeps its start time in UTC, so the "is it still in the
+     * future" check has to be made against the very same zone. Comparing with the system default
+     * zone would either reject valid dates or accept dates the builder later rejects, depending on
+     * which side of UTC the caller lives.
+     */
+    static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("UTC");
+
     public static CronExpression atFuture(LocalDate ld) {
-        if (ld.isBefore(LocalDate.now())) {
+        if (!ld.isAfter(LocalDate.now(DEFAULT_ZONE_ID))) {
             throw new IllegalArgumentException("Past date: " + ld);
         }
         return atFuture(ld.atStartOfDay());
     }
 
     public static CronExpression atFuture(LocalDateTime ldt) {
-        if (ldt.isBefore(LocalDateTime.now())) {
+        if (ldt.isBefore(LocalDateTime.now(DEFAULT_ZONE_ID).withNano(0))) {
             throw new IllegalArgumentException("Past datetime: " + ldt);
         }
         return new CronBuilder().month(ldt.getYear(), ldt.getMonthValue()).day(ldt.getDayOfMonth())
@@ -91,14 +102,64 @@ public abstract class CRON {
         }
     }
 
+    /** Number of fields in a Unix crontab line: minute, hour, day-of-month, month, day-of-week. */
+    private static final int UNIX_FIELD_COUNT = 5;
+
+    /**
+     * Parses a cron expression.
+     * <p>
+     * Six and seven field expressions are read the Quartz way, starting at seconds and numbering
+     * the day-of-week SUN=1 .. SAT=7. A five field expression is taken for a Unix crontab line: it
+     * starts at minutes and numbers the day-of-week MON=1 .. SAT=6, with Sunday written as either
+     * 0 or 7.
+     */
     public static CronExpression parse(String cronExpression) {
-        CharStream input = CharStreams.fromString(cronExpression);
+        if (cronExpression == null || cronExpression.trim().length() == 0) {
+            throw new CronParserException("Empty cron expression");
+        }
+        String text = cronExpression.trim();
+        String[] parts = text.split("\\s+");
+        boolean unix = parts.length == UNIX_FIELD_COUNT;
+        if (unix) {
+            text = fromCrontabLine(parts);
+        }
+        CharStream input = CharStreams.fromString(text);
         CronExpressionLexer lexer = new CronExpressionLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CronExpressionParser parser = new CronExpressionParser(tokens);
         ParseTree tree = parser.cron();
         CronExpressionContext context = new CronExpressionContext();
-        return context.visit(tree);
+        context.setUnixDayOfWeek(unix);
+        CronExpression parsed = context.visit(tree);
+        if (unix) {
+            // The two numbering conventions disagree about 7, so a crontab line is printed back
+            // with weekday names, which mean the same thing to every scheduler.
+            parsed.getBuilder().setUseDayOfWeekAsNumber(false);
+        }
+        return parsed;
+    }
+
+    /**
+     * Turns a crontab line into the six-field form: a leading seconds field, and a {@code ?} in
+     * whichever of the two day fields carries no restriction.
+     * <p>
+     * Crontab lets both day fields be restricted at once and then fires on either of them, which
+     * has no equivalent here, so that combination is reported instead of being silently narrowed.
+     */
+    private static String fromCrontabLine(String[] parts) {
+        String dayOfMonth = parts[2];
+        String dayOfWeek = parts[4];
+        if ("*".equals(dayOfWeek)) {
+            dayOfWeek = "?";
+        } else if ("*".equals(dayOfMonth)) {
+            dayOfMonth = "?";
+        } else {
+            throw new CronParserException(
+                    "Restricting both day-of-month and day-of-week is a crontab-only 'or' rule: "
+                            + String.join(" ", parts));
+        }
+        return "0 " + parts[0] + " " + parts[1] + " " + dayOfMonth + " " + parts[3] + " "
+                + dayOfWeek;
     }
 
     public static String printParseTree(String cronExpression) {
@@ -128,7 +189,50 @@ public abstract class CRON {
         return result;
     }
 
+    /**
+     * Prints the expression in the flavour of another scheduler.
+     *
+     * @throws UnsupportedOperationException when that flavour cannot express this schedule
+     */
+    public static String toCronString(CronExpression cronExpression, CronDialect dialect) {
+        return dialect.render(toCronFields(cronExpression));
+    }
+
+    /** Shorthand for {@link CronDialect#QUARTZ}. */
+    public static String toQuartzString(CronExpression cronExpression) {
+        return toCronString(cronExpression, CronDialect.QUARTZ);
+    }
+
+    /** Shorthand for {@link CronDialect#SPRING}. */
+    public static String toSpringString(CronExpression cronExpression) {
+        return toCronString(cronExpression, CronDialect.SPRING);
+    }
+
+    /** Shorthand for {@link CronDialect#AWS}. */
+    public static String toAwsString(CronExpression cronExpression) {
+        return toCronString(cronExpression, CronDialect.AWS);
+    }
+
+    /** Shorthand for {@link CronDialect#UNIX}. */
+    public static String toUnixString(CronExpression cronExpression) {
+        return toCronString(cronExpression, CronDialect.UNIX);
+    }
+
     public static String toCronString(CronExpression cronExpression) {
+        return CronDialect.CRONSMITH.render(toCronFields(cronExpression));
+    }
+
+    /**
+     * Renders the expression field by field, in the canonical order second, minute, hour,
+     * day-of-month, month, day-of-week, year.
+     * <p>
+     * The array always has {@link CronDialect#FIELD_COUNT} entries; the last one is {@code null}
+     * when the schedule places no restriction on the year. Working from the fields is what lets a
+     * dialect drop, reorder or add one without taking a finished expression apart again.
+     *
+     * @throws UnsupportedOperationException when part of the schedule has no cron field to live in
+     */
+    public static String[] toCronFields(CronExpression cronExpression) {
         CronExpression copy = cronExpression.copy();
         if (copy instanceof Year) {
             copy = ((Year) copy).Jan().day(1).at(0, 0, 0);
@@ -144,46 +248,54 @@ public abstract class CRON {
             copy = ((Minute) copy).second(0);
         }
 
-        final StringBuilder cron = new StringBuilder();
+        final String[] fields = new String[CronDialect.FIELD_COUNT];
         CronExpression second = copy;
         CronExpression minute = second.getParent();
         CronExpression hour = minute.getParent();
-        cron.append(second.toCronString()).append(" ").append(minute.toCronString()).append(" ")
-                .append(hour.toCronString()).append(" ");
+        fields[CronDialect.SECOND] = render(second);
+        fields[CronDialect.MINUTE] = render(minute);
+        fields[CronDialect.HOUR] = render(hour);
 
         CronExpression day = hour.getParent();
-        boolean hasDayOfWeek = false;
-        if (day instanceof DayOfWeek) {
-            hasDayOfWeek = true;
-        }
-        if (hasDayOfWeek) {
-            cron.append("?").append(" ");
-        } else {
-            cron.append(day.toCronString()).append(" ");
-        }
+        boolean hasDayOfWeek = day instanceof DayOfWeek;
+        fields[CronDialect.DAY_OF_MONTH] = hasDayOfWeek ? "?" : render(day);
 
         CronExpression month;
         if (hasDayOfWeek && day.getParent() instanceof Week) {
-            month = day.getParent().getParent();
+            // The week sits between the day-of-week and the month without a cron field of its own,
+            // so it is only checked, never printed.
+            CronExpression week = day.getParent();
+            checkRenderable(week);
+            month = week.getParent();
         } else {
             month = day.getParent();
         }
-
-        cron.append(month.toCronString()).append(" ");
-
-        if (hasDayOfWeek) {
-            cron.append(day.toCronString());
-        } else {
-            cron.append("?");
-        }
+        fields[CronDialect.MONTH] = render(month);
+        fields[CronDialect.DAY_OF_WEEK] = hasDayOfWeek ? render(day) : "?";
 
         CronExpression year = month.getParent();
         if (year instanceof Year) {
-            if (!"*".equals(year.toCronString())) {
-                cron.append(" ").append(year.toCronString());
-            }
+            String yearPart = render(year);
+            fields[CronDialect.YEAR] = "*".equals(yearPart) ? null : yearPart;
         }
-        return cron.toString();
+        return fields;
+    }
+
+    /**
+     * Renders one field of the expression. Not every expression maps onto cron syntax - a day of
+     * the year or a week of the year has no cron field to live in - and such a node is reported
+     * rather than silently printed in the wrong place.
+     */
+    private static String render(CronExpression node) {
+        checkRenderable(node);
+        return node.toCronString();
+    }
+
+    private static void checkRenderable(CronExpression node) {
+        if (!node.supportCronString()) {
+            throw new UnsupportedOperationException(node.getClass().getSimpleName()
+                    + " cannot be represented as a cron expression");
+        }
     }
 
     public static String saveAsTmpFile(CronExpression cronExpression) throws IOException {
@@ -206,13 +318,20 @@ public abstract class CRON {
 
     public static void saveAs(CronExpression cronExpression, OutputStream outputStream)
             throws IOException {
-        byte[] bytes = SerializationUtils.serialize(cronExpression);
-        outputStream.write(bytes);
+        outputStream.write(toByteArray(cronExpression));
         outputStream.flush();
     }
 
+    /**
+     * Serializes the expression, including where it currently stands, into a snapshot that can be
+     * stored and restored later - a BLOB column, typically.
+     * <p>
+     * The bytes carry a small header naming the snapshot format, so a snapshot written by an
+     * incompatible build is rejected outright by {@link #load(byte[])} instead of being read back
+     * as a half-populated object that only fails once the schedule is iterated.
+     */
     public static byte[] toByteArray(CronExpression cronExpression) {
-        return SerializationUtils.serialize(cronExpression);
+        return withHeader(SerializationUtils.serialize(cronExpression));
     }
 
     public static CronExpression loadFromFile(String filePath) throws IOException {
@@ -228,13 +347,56 @@ public abstract class CRON {
             while ((len = inputStream.read(buffer)) != -1) {
                 baos.write(buffer, 0, len);
             }
-            byte[] data = baos.toByteArray();
-            return SerializationUtils.deserialize(data);
+            return load(baos.toByteArray());
         }
     }
 
+    /**
+     * Restores a snapshot written by {@link #toByteArray(CronExpression)}.
+     *
+     * @throws SerializationException when the bytes are not a cronsmith snapshot, or were written
+     *         in a format this build cannot read
+     */
     public static CronExpression load(byte[] bytes) {
-        return SerializationUtils.deserialize(bytes);
+        return SerializationUtils.deserialize(stripHeader(bytes));
+    }
+
+    /*
+     * Snapshot format: a four byte marker, then the format version, then the serialized expression.
+     * The version is bumped whenever the stored shape changes, which is what turns "silently reads
+     * back wrong" into "refuses to read".
+     */
+    private static final byte[] SNAPSHOT_MAGIC = {'C', 'R', 'S', 'M'};
+    private static final int SNAPSHOT_HEADER_LENGTH = SNAPSHOT_MAGIC.length + 2;
+
+    /** Version of the snapshot format this build writes and reads. */
+    public static final int SNAPSHOT_VERSION = 1;
+
+    private static byte[] withHeader(byte[] payload) {
+        byte[] snapshot = new byte[SNAPSHOT_HEADER_LENGTH + payload.length];
+        System.arraycopy(SNAPSHOT_MAGIC, 0, snapshot, 0, SNAPSHOT_MAGIC.length);
+        snapshot[SNAPSHOT_MAGIC.length] = (byte) (SNAPSHOT_VERSION >>> 8);
+        snapshot[SNAPSHOT_MAGIC.length + 1] = (byte) SNAPSHOT_VERSION;
+        System.arraycopy(payload, 0, snapshot, SNAPSHOT_HEADER_LENGTH, payload.length);
+        return snapshot;
+    }
+
+    private static byte[] stripHeader(byte[] snapshot) {
+        if (snapshot == null || snapshot.length < SNAPSHOT_HEADER_LENGTH) {
+            throw new SerializationException("Not a cronsmith snapshot: too short");
+        }
+        for (int i = 0; i < SNAPSHOT_MAGIC.length; i++) {
+            if (snapshot[i] != SNAPSHOT_MAGIC[i]) {
+                throw new SerializationException("Not a cronsmith snapshot: bad marker");
+            }
+        }
+        int version = ((snapshot[SNAPSHOT_MAGIC.length] & 0xFF) << 8)
+                | (snapshot[SNAPSHOT_MAGIC.length + 1] & 0xFF);
+        if (version != SNAPSHOT_VERSION) {
+            throw new SerializationException("Snapshot was written in format v" + version
+                    + ", this build reads v" + SNAPSHOT_VERSION + "; rebuild it from its definition");
+        }
+        return Arrays.copyOfRange(snapshot, SNAPSHOT_HEADER_LENGTH, snapshot.length);
     }
 
 }

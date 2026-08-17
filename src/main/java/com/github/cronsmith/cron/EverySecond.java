@@ -12,7 +12,7 @@ import com.github.cronsmith.CRON;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EverySecond implements Second, IntervalChronoUnit {
+public class EverySecond implements Second, IntervalChronoUnit, PendingValueHolder {
 
     private static final long serialVersionUID = -2606684197757806223L;
     private Minute minute;
@@ -29,7 +29,7 @@ public class EverySecond implements Second, IntervalChronoUnit {
         this.minute = minute;
         this.from = from;
         this.interval = interval;
-        this.second = minute.getTime().withSecond(getFromSecond() + (interval - 1));
+        this.second = minute.getTime().withSecond(getFromSecond());
         this.self = true;
         this.forward = true;
     }
@@ -51,7 +51,7 @@ public class EverySecond implements Second, IntervalChronoUnit {
         if (!next) {
             if (minute.hasNext()) {
                 minute = minute.next();
-                second = minute.getTime().withSecond(getFromSecond() + (interval - 1));
+                second = minute.getTime().withSecond(getFromSecond());
                 forward = false;
                 next = true;
             }
@@ -85,6 +85,15 @@ public class EverySecond implements Second, IntervalChronoUnit {
                         || (second.toLocalDate().compareTo(target.toLocalDate()) == 0
                                 && second.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindMinute(minute.getTime(), target)) {
+                // Let the enclosing minute catch up in one hop, otherwise a start time set
+                // years back would be reached one single second at a time.
+                minute.sync(SyncSupport.startOfMinute(target));
+                SyncSupport.takeOver(minute);
+                second = minute.getTime().withSecond(getFromSecond());
+                self = false;
+                forward = false;
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -156,4 +165,9 @@ public class EverySecond implements Second, IntervalChronoUnit {
         return CRON.toCronString(this);
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.forward = true;
+    }
 }

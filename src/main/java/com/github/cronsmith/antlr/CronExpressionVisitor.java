@@ -139,6 +139,24 @@ public interface CronExpressionVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMonthRangeWithStep(CronExpressionParser.MonthRangeWithStepContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfWeekNameLast}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDayOfWeekNameLast(CronExpressionParser.DayOfWeekNameLastContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#dayOfWeekNameWithStep}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDayOfWeekNameWithStep(CronExpressionParser.DayOfWeekNameWithStepContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CronExpressionParser#monthNameWithStep}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMonthNameWithStep(CronExpressionParser.MonthNameWithStepContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CronExpressionParser#weekdayRange}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

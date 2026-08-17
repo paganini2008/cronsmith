@@ -16,7 +16,7 @@ import com.github.cronsmith.CRON;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisSecond implements TheSecond {
+public class ThisSecond implements TheSecond, PendingValueHolder {
 
     private static final long serialVersionUID = 6264419114715870528L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -24,6 +24,13 @@ public class ThisSecond implements TheSecond {
     private int index;
     private LocalDateTime second;
     private int startSecondFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisSecond(Minute minute, int second) {
         ChronoField.SECOND_OF_MINUTE.checkValidValue(second);
@@ -71,6 +78,14 @@ public class ThisSecond implements TheSecond {
                         || (second.toLocalDate().compareTo(target.toLocalDate()) == 0
                                 && second.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindMinute(minute.getTime(), target)) {
+                // Let the enclosing minute catch up in one hop and restart this minute's
+                // value list, otherwise catching up costs one iteration per second elapsed.
+                minute.sync(SyncSupport.startOfMinute(target));
+                SyncSupport.takeOver(minute);
+                index = 0;
+                iterators.forEach(TagIterator::reset);
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -78,6 +93,7 @@ public class ThisSecond implements TheSecond {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -114,6 +130,9 @@ public class ThisSecond implements TheSecond {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (minute.hasNext()) {
@@ -128,6 +147,10 @@ public class ThisSecond implements TheSecond {
 
     @Override
     public Second next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         second = iterator.next();
         if (!iterator.hasNext()) {
@@ -264,4 +287,9 @@ public class ThisSecond implements TheSecond {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

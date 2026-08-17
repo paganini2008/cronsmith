@@ -93,7 +93,7 @@ public class ThisYear implements TheYear {
     @Override
     public Month everyMonth(IntFunction<Year> from, int interval) {
         final Year copy = (Year) this.copy();
-        return new EveryMonth(IteratorUtils.getFirst(copy), from, interval);
+        return new EveryMonth(IteratorUtils.getFirst(copy, copy), from, interval);
     }
 
     @Override
@@ -120,25 +120,36 @@ public class ThisYear implements TheYear {
     @Override
     public TheDay day(int day) {
         final Year copy = (Year) this.copy();
-        return new ThisDayOfYear(IteratorUtils.getFirst(copy), day);
+        return new ThisDayOfYear(IteratorUtils.getFirst(copy, copy), day);
     }
 
     @Override
     public TheWeek week(int week) {
         final Year copy = (Year) this.copy();
-        return new ThisWeekOfYear(IteratorUtils.getFirst(copy), week);
+        return new ThisWeekOfYear(IteratorUtils.getFirst(copy, copy), week);
     }
 
+    /**
+     * The copy is advanced onto its first year before the month is attached; a year list that has
+     * already been walked to its end simply keeps the year it stands on rather than handing out a
+     * null parent.
+     */
     @Override
     public TheMonth month(int month) {
         final Year copy = (Year) this.copy();
-        return new ThisMonth(IteratorUtils.getFirst(copy), month);
+        return new ThisMonth(IteratorUtils.getFirst(copy, copy), month);
+    }
+
+    @Override
+    public Day lastDay() {
+        final Year copy = (Year) this.copy();
+        return new ThisDayOfYear(IteratorUtils.getFirst(copy, copy));
     }
 
     @Override
     public Week lastWeek() {
         final Year copy = (Year) this.copy();
-        return new LastWeekOfYear(IteratorUtils.getFirst(copy));
+        return new LastWeekOfYear(IteratorUtils.getFirst(copy, copy));
     }
 
     @Override

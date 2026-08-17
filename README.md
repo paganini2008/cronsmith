@@ -1,504 +1,454 @@
 # Cronsmith - The Ultimate Cron Expression Generator & Parser
 
-[![Java](https://img.shields.io/badge/Java-Compatible-orange.svg)](https://www.java.com)
+[![Java](https://img.shields.io/badge/Java-1.8%2B-orange.svg)](https://www.java.com)
 [![Cron](https://img.shields.io/badge/Cron-Supported-blue.svg)](https://en.wikipedia.org/wiki/Cron)
-[![Spring Quartz](https://img.shields.io/badge/Spring%20Quartz-Compatible-brightgreen.svg)](https://spring.io/projects/spring-quartz)
+[![Quartz](https://img.shields.io/badge/Quartz-Compatible-brightgreen.svg)](https://www.quartz-scheduler.org/)
+[![Spring](https://img.shields.io/badge/Spring%20Scheduling-Compatible-brightgreen.svg)](https://spring.io/)
+[![AWS](https://img.shields.io/badge/AWS%20EventBridge-Compatible-brightgreen.svg)](https://docs.aws.amazon.com/eventbridge/)
+[![crontab](https://img.shields.io/badge/Unix%20crontab-Compatible-brightgreen.svg)](https://man7.org/linux/man-pages/man5/crontab.5.html)
 
 ### Are cron expressions sometimes difficult to understand? Let's try a different approach to creating scheduled tasks.
 
-**Cronsmith** is a powerful and versatile Java utility library designed for handling complex cron expressions in an intuitive, object-oriented manner. It offers a highly flexible and comprehensive API for generating, parsing, and scheduling cron-based tasks with ease.
+**Cronsmith** is a Java library for building, parsing and running cron schedules through a fluent,
+object-oriented API instead of hand-written strings. You describe *when* something should happen in
+plain method calls, and Cronsmith gives you back a cron expression, the list of date-times it fires
+at, or a running task.
 
-Built for seamless integration, **Cronsmith** provides full support for both Spring and Quartz cron expressions, ensuring compatibility with widely used scheduling frameworks. Moreover, it extends traditional cron syntax by introducing advanced patterns — such as multiple numbers combined with 'L' (last) and 'W' (weekday)—which were previously unsupported, offering greater precision and flexibility in scheduling.
+It speaks the cron dialects you already deploy against — **Quartz**, **Spring Scheduling**,
+**AWS EventBridge** and **Unix crontab** — and it extends the classic syntax with multi-value forms
+of `L` and `#` that none of them offer on their own.
 
+```java
+// "the last Friday of every month at 18:00"
+CronExpression cron = new CronBuilder().everyMonth().lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).at(18, 0);
+
+cron.toString();               // 0 0 18 ? * FRIL
+CRON.toAwsString(cron);        // 0 18 ? * FRIL *
+cron.getNextFiredDateTime();   // the next last-Friday-of-the-month, 18:00
+```
+
+---
+
+## Table of contents
+
+- [Features](#features)
+  - [1. Object-oriented builder](#1-object-oriented-cronexpression-builder)
+  - [2. Parsing and reverse engineering](#2-parsing-and-reverse-engineering)
+  - [3. Cross-scheduler output](#3-cross-scheduler-output)
+  - [4. Built-in scheduler](#4-built-in-scheduler)
+  - [5. Beyond standard cron](#5-beyond-standard-cron)
+- [Cron syntax reference](#cron-syntax-reference)
+- [Best practices](#best-practices)
+- [Worked examples](#worked-examples)
+- [Installation](#installation)
+- [License](#license)
+
+---
 
 ## Features
 
 ### 1. Object-Oriented <code>CronExpression</code> Builder
 
-**Cronsmith** allows developers to construct complex cron expressions in an intuitive, object-oriented manner. This approach enables easy customization and avoids the need for manual string construction.
-
-#### Example:
+Build complex schedules by describing them, not by assembling strings.
 
 ```java
-@Test
-    public void testA() {
-        CronExpression cronExpression = new CronBuilder().everySecond(5);
-        System.out.println(cronExpression.toString());
-        assertEquals("*/5 * * * * ?", cronExpression.toString());
-    }
+new CronBuilder().everySecond(5);
+// */5 * * * * ?
 
-    @Test
-    public void testB() {
-        CronExpression cronExpression = new CronBuilder().everyMinute(5).second(5).andSecond(10)
-                .toSecond(30).andSecond(32).toSecond(59, 2);
-        System.out.println(cronExpression.toString());
-        assertEquals("5,10-30,32/2 */5 * * * ?", cronExpression.toString());
-    }
+new CronBuilder().everyMinute(5).second(5).andSecond(10).toSecond(30).andSecond(32).toSecond(59, 2);
+// 5,10-30,32/2 */5 * * * ?
 
-    @Test
-    public void testC() {
-        CronExpression cronExpression = new CronBuilder().everyMonth().day(10).andDay(15).andDay(16)
-                .andLastDay().everyHour(2).everyMinute(5);
-        System.out.println(cronExpression.toString());
-        assertEquals("0 */5 */2 10,15,16,L * ?", cronExpression.toString());
-    }
+new CronBuilder().everyMonth().day(10).andDay(15).andDay(16).andLastDay().everyHour(2).everyMinute(5);
+// 0 */5 */2 10,15,16,L * ?
 
-    @Test
-    public void testD() {
-        CronExpression cronExpression = new CronBuilder().everyMonth(3).day(10).andLastWeekday()
-                .hour(12).minute(1).toMinute(15, 1);
-        System.out.println(cronExpression.toString());
-        assertEquals("0 1-15 12 10,LW */3 ?", cronExpression.toString());
-    }
+new CronBuilder().everyMonth(3).day(10).andLastWeekday().hour(12).minute(1).toMinute(15, 1);
+// 0 1-15 12 10,LW */3 ?
 
-    @Test
-    public void testE() {
-        CronExpression cronExpression =
-                new CronBuilder().everyMonth().everyWeek().Mon().toFri().at(15, 10);
-        System.out.println(cronExpression.toString());
-        assertEquals("0 10 15 ? * MON-FRI", cronExpression.toString());
-    }
+new CronBuilder().everyMonth().everyWeek().Mon().toFri().at(15, 10);
+// 0 10 15 ? * MON-FRI
 
-    @Test
-    public void testF() {
-        CronExpression cronExpression = new CronBuilder().everyMonth().dayOfWeek(3, 6).everyHour(2);
-        System.out.println(cronExpression.toString());
-        assertTrue(cronExpression.toString().equals("0 0 */2 ? * SAT#3"));
-    }
+new CronBuilder().everyMonth().dayOfWeek(3, DayOfWeek.SATURDAY).everyHour(2);
+// 0 0 */2 ? * SAT#3
 
-    @Test
-    public void testG() {
-        CronExpression cronExpression =
-                new CronBuilder().year(2025).Mar().toSept().everyWeek().everyWeekday().at(9, 10);
-        System.out.println(cronExpression.toString());
-        assertTrue(cronExpression.toString().equals("0 10 9 ? MAR-SEP MON-FRI 2025"));
-    }
+new CronBuilder().everyMonth().lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).at(18, 0);
+// 0 0 18 ? * FRIL
 
-    @Test
-    public void testH() {
-        CronExpression cronExpression =
-                new CronBuilder().year(2025).toYear(2028).everyMonth(2).lastDay().hour(12);
-        System.out.println(cronExpression.toString());
-        assertEquals("0 0 12 L */2 ? 2025-2028", cronExpression.toString());
-    }
+new CronBuilder().everyMonth().lastDay(3).at(23, 30);
+// 0 30 23 L-3 * ?
 
-    @Test
-    public void testI() {
-        CronExpression cronExpression = new CronBuilder().everyYear().June().andJuly().andAug()
-                .latestWeekday(15).hour(10).toHour(18, 2);
-        System.out.println(cronExpression.toString());
-        assertEquals("0 0 10-18/2 15W JUN,JUL,AUG ?", cronExpression.toString());
-    }
+new CronBuilder().everyMonth().latestWeekday(15).at(9, 0);
+// 0 0 9 15W * ?
 
-    @Test
-    public void testJ() {
-        CronExpression cronExpression = new CronBuilder().everyYear(2).Mar().andApr().andMay()
-                .toDec().everyWeek(2).Tues().toFri().hour(10).andHour(12).toHour(22).everyMinute()
-                .second(10).andSecond(20).andSecond(30);
-        System.out.println(cronExpression.toString());
-        assertEquals("10,20,30 * 10,12-22 ? MAR,APR,MAY-DEC TUE-FRI 2025/2",
-                cronExpression.toString());
-    }
-
-    @Test
-    public void testK() {
-        CronExpression cronExpression = new CronBuilder().year(2025).toYear(2030).andYear(2035)
-                .toEnd(2).everyMonth(2, 2).dayOfWeek(2, DayOfWeek.TUESDAY)
-                .and(3, DayOfWeek.WEDNESDAY).andLastFri().hour(2).andHour(3).andHour(4)
-                .toHour(17, 2).minute(0).toMinute(12, 3).andMinute(15).toMinute(40, 2).andMinute(46)
-                .andMinute(48).andMinute(50).everySecond(5);
-        System.out.println(cronExpression.toString());
-        assertEquals(
-                "*/5 0-12/3,15-40/2,46,48,50 2,3,4-17/2 ? FEB-DEC/2 TUE#2,WED#3,5L 2025-2030,2035/2",
-                cronExpression.toString());
-    }
-
-    @Test
-    public void testL() {
-        CronExpression cronExpression = new CronBuilder().everyYear(2025, 4).everyMonth(5, 1)
-                .day(10).andDay(15).andDay(20).andLastDay(2).hour(10).toHour(15, 1).at(10, 0)
-                .andSecond(15).andSecond(30).andSecond(45);
-        System.out.println(cronExpression.toString());
-        assertEquals("0,15,30,45 10 10-15 10,15,20,L-2 MAY-DEC ? 2025/4",
-                cronExpression.toString());
-    }
-
-    @Test
-    public void testM() {
-        CronExpression cronExpression = new CronBuilder().year().andYear(2026).andYear(2030)
-                .toEnd(2).Mar().andJuly().andSept().dayOfWeek(1, DayOfWeek.SATURDAY)
-                .and(2, DayOfWeek.THURSDAY).andLast(DayOfWeek.FRIDAY).hour(0).toHour(12, 3)
-                .everyMinute(10).second(0).andSecond(15).andSecond(30).andSecond(45).toSecond(59);
-        System.out.println(cronExpression.toString());
-        assertEquals("0,15,30,45/1 */10 0-12/3 ? MAR,JUL,SEP SAT#1,THU#2,5L 2025,2026,2030/2",
-                cronExpression.toString());
-    }
+new CronBuilder().year().Mar().toSept().everyWeek().everyWeekday().at(9, 10);
+// 0 10 9 ? MAR-SEP MON-FRI <year>      (year() is the year the builder starts in)
 ```
 
-### 2. Cron Expression String Parsing and Reverse Engineering to <code>CronExpression</code>
-
-**Cronsmith** includes a powerful parser built with ANTLR, allowing you to parse an existing cron expression string and convert it back into a structured `CronExpression` object.
-
-#### Example:
+Every expression is also an `Iterator`, so you can look at the schedule instead of trusting it:
 
 ```java
-    @Test
-    public void testA() {
-        String cron = "0 0 12 * * ?";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testB() {
-        String cron = "0 15 10 ? * MON-FRI";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testC() {
-        String cron = "0 10,20,30 9-17 L * ?";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testD() {
-        String cron = "1,3,5,7,9 3-30/3 12-16 ? * TUE#1";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testE() {
-        String cron = "0 0 6 ? 1-5 MON,WED,FRI";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testF() {
-        String cron = "*/5 1 12,15,18-22 LW * ? 2025";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testG() {
-        String cron = "0 1 0-12,15,16-22/2 ? * 1-5 2025-2028";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testH() {
-        String cron = "0 1,5,7,13,29,45 12/2 5,10,27W,L-1 APR-NOV ?";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testI() {
-        String cron = "5/1 */5 12 ? 1-9 3#1,5#2,6L";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testJ() {
-        String cron = "*/5 1,3,5/1 12-16 1,3,20,LW MAR-SEP ? 2026/1";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testK() {
-        String cron = "5-30/7 0-12/3,15-45/2 2,3,4-17/2 ? JAN-JUL MON-THU/2 2025-2033";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testL() {
-        String cron = "0,15,30,45/1 */10 0-12/3 ? MAR,JUL,SEP SAT#1,THU#2,5L 2025,2026,2030/2";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
-
-    @Test
-    public void testM() {
-        String cron = "*/2 0 12 1,5,9,22,L */2 ? 2025/2";
-        CronExpression cronExpression = CRON.parse(cron);
-        System.out.println(cronExpression);
-        assertEquals(cron, cronExpression.toString());
-    }
+CronExpression cron = new CronBuilder()
+        .setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
+        .everyMonth().latestWeekday(15).at(9, 0);
+cron.consume(System.out::println, 5);
+// 2027-01-15T09:00
+// 2027-02-15T09:00
+// 2027-03-15T09:00
+// 2027-04-15T09:00
+// 2027-05-14T09:00   <- the 15th is a Saturday, so it moves to the nearest weekday
 ```
 
-Parse Tree: 
+`consume(..)` walks a copy and leaves the original untouched. `getNextFiredDateTime()` advances the
+expression itself and answers the first occurrence strictly after the reference time.
 
-``` shell
-cron
-    second
-        secondField
-            rangeWithStep
-                5
-                -
-                30
-                /
-                7
-    <missing SPACE>
-    minute
-        minuteField
-            rangeWithStep
-                0
-                -
-                12
-                /
-                3
-        ,
-        minuteField
-            rangeWithStep
-                15
-                -
-                45
-                /
-                2
-    <missing SPACE>
-    hour
-        hourField
-            2
-        ,
-        hourField
-            3
-        ,
-        hourField
-            rangeWithStep
-                4
-                -
-                17
-                /
-                2
-    <missing SPACE>
-    dayOfMonth
-        dayOfMonthField
-            ?
-    <missing SPACE>
-    month
-        monthField
-            monthRange
-                monthName
-                    JAN
-                -
-                monthName
-                    JUL
-    <missing SPACE>
-    dayOfWeek
-        dayOfWeekField
-            weekdayRangeWithStep
-                dayOfWeekName
-                    MON
-                -
-                dayOfWeekName
-                    THU
-                /
-                2
-    year
-        yearField
-            yearRange
-                2025
-                -
-                2030
-    <EOF>
-```
+### 2. Parsing and Reverse Engineering
 
-Retrieve next date and times from  <code>CronExpression</code>
+`CRON.parse(..)` turns a string back into a `CronExpression` you can inspect, iterate and re-render.
 
 ```java
-public static void main(String[] args) {
-   int N = 100; // Retrieve 100 items
-   String cron = "10 0 12 LW 1/2 ?";
-   CronExpression cronExpression = CRON.parse(cron);
-   System.out.println(cronExpression);
-   cronExpression.consume(l -> {
-       System.out.println(l);
-   }, N);
-}
-
-// Console:
-// 2025-05-30T12:00:10
-// 2025-07-31T12:00:10
-// 2025-09-30T12:00:10
-// 2025-11-28T12:00:10
-// 2026-01-30T12:00:10
-// 2026-03-31T12:00:10
-// 2026-05-29T12:00:10
-// 2026-07-31T12:00:10
-// 2026-09-30T12:00:10
-// 2026-11-30T12:00:10
-// 2027-01-29T12:00:10
-// 2027-03-31T12:00:10
-// 2027-05-31T12:00:10
-// 2027-07-30T12:00:10
-// 2027-09-30T12:00:10
-// 2027-11-30T12:00:10
-// 2028-01-31T12:00:10
-// 2028-03-31T12:00:10
-// 2028-05-31T12:00:10
-// ...
-
+CRON.parse("0 0 12 ? * FRIL");                    // 0 0 12 ? * FRIL
+CRON.parse("0 0 12 ? * TUE#2");                   // 0 0 12 ? * TUE#2
+CRON.parse("0 0 12 LW * ?");                      // 0 0 12 LW * ?
+CRON.parse("0 15 10 ? * MON-FRI 2027-2030");      // 0 15 10 ? * MON-FRI 2027-2030
 ```
 
+The field count decides how the string is read:
 
-
-### 3. Built-in Scheduler
-
-**Cronsmith** provides a built-in scheduler that allows you to execute tasks at specified intervals based on cron expressions. This feature makes it easy to schedule repetitive tasks efficiently.
-
-#### Example: Scheduling a Task Every 5 Seconds
+| Fields | Read as | Day-of-week numbering |
+|---|---|---|
+| 5 | Unix crontab (`min hour dom month dow`) | MON=1 … SAT=6, Sunday is 0 or 7 |
+| 6 | Quartz without a year (`sec min hour dom month dow`) | SUN=1 … SAT=7 |
+| 7 | Quartz with a year | SUN=1 … SAT=7 |
 
 ```java
-private ScheduledExecutorService scheduledExecutorService;
+CRON.parse("*/5 * * * *");        // 0 */5 * * * ?      a crontab line
+CRON.parse("0 9 * * 1-5");        // 0 0 9 ? * MON-FRI  crontab: 1 is Monday
+CRON.parse("0 0 12 ? * 1");       // 0 0 12 ? * SUN     Quartz:  1 is Sunday
+```
 
-@Before
-public void start() {
-    scheduledExecutorService =
-                Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-}
+### 3. Cross-Scheduler Output
 
-@Test
-public void testSchedulerAndRunTenTimes() {
-    int N = 10; // Run 10 times
-    final CountDownLatch latch = new CountDownLatch(N);
-    final AtomicInteger counter = new AtomicInteger();
-    
-    CronFuture future = new CronBuilder()
+One schedule, printed for whichever scheduler you are deploying to. Anything a target cannot express
+is reported rather than silently rewritten into something that fires at different times.
+
+```java
+CronExpression daily = new CronBuilder().everyDay().at(9, 30);
+
+CRON.toQuartzString(daily);   // 0 30 9 * * ?
+CRON.toSpringString(daily);   // 0 30 9 * * ?
+CRON.toAwsString(daily);      // 30 9 * * ? *
+CRON.toUnixString(daily);     // 30 9 * * *
+
+// or explicitly
+CRON.toCronString(daily, CronDialect.AWS);
+```
+
+| Schedule | Quartz | Spring | AWS EventBridge | Unix crontab |
+|---|---|---|---|---|
+| every day 09:30 | `0 30 9 * * ?` | `0 30 9 * * ?` | `30 9 * * ? *` | `30 9 * * *` |
+| weekdays 09:00 | `0 0 9 ? * MON-FRI` | `0 0 9 ? * MON-FRI` | `0 9 ? * MON-FRI *` | `0 9 * * MON-FRI` |
+| every 15 minutes | `0 */15 * * * ?` | `0 */15 * * * ?` | `*/15 * * * ? *` | `*/15 * * * *` |
+| every 15 seconds | `*/15 * * * * ?` | `*/15 * * * * ?` | no seconds field | no seconds field |
+| last day of month | `0 59 23 L * ?` | `0 59 23 L * ?` | `59 23 L * ? *` | no `L` |
+| 2nd Tuesday | `0 0 10 ? * TUE#2` | `0 0 10 ? * TUE#2` | `0 10 ? * TUE#2 *` | no `#` |
+| 3rd-from-last day | `0 0 0 L-3 * ?` | no `L-n` | no `L-n` | no `L` |
+| restricted to 2027-2029 | `… 2027-2029` | no year field | `… 2027-2029` | no year field |
+
+Day-of-week is always printed by name, because the numeric conventions disagree with one another —
+Quartz and AWS count `SUN=1`, Spring and crontab count `MON=1` — while `MON` means Monday everywhere.
+
+### 4. Built-in Scheduler
+
+```java
+ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+
+CronFuture future = new CronBuilder()
         .everySecond(5)
-        .scheduler(scheduledExecutorService)
+        .scheduler(executor)
         .setDebuged(false)
-        .runTask(() -> {
-            System.out.println("Run task_" + counter.incrementAndGet());
-            latch.countDown();
-        }, N);
-    
-    try {
-        latch.await();
-    } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+        .runTask(() -> System.out.println("tick"), 10);   // run ten times
+
+future.cancel(true);
+```
+
+The scheduler exposes the whole task life cycle:
+
+```java
+CronScheduler scheduler = new CronBuilder().everyMinute(5).scheduler(executor);
+
+scheduler.subscribe(new CronSchedulerListener() {
+    @Override
+    public void onTaskFinished(CronScheduledEvent event) {
+        System.out.println("next run: " + event.getNextFiredDateTime());
     }
-    
-    future.cancel(true);
-    assertTrue(future.isDone() && counter.get() == N);
-}
 
-@After
-public void release() {
-    scheduledExecutorService.shutdown();
+    @Override
+    public void onTaskFailed(CronScheduledEvent event) {
+        log.error("task failed", event.getReason());
+    }
+});
+
+CronFuture future = scheduler.runTaskForEver(job);
+scheduler.pauseTask(job);
+scheduler.resumeTask(job);
+scheduler.removeTask(job);
+```
+
+Other ways to bound a run:
+
+```java
+scheduler.runTask(job, 10);                                  // ten times
+scheduler.runTask(job, LocalDateTime.now().plusHours(2));     // until a point in time
+scheduler.runTask(job, (task, reason) -> reason != null);     // until it first fails
+scheduler.runTaskForEver(job);
+```
+
+### 5. Beyond Standard Cron
+
+Cronsmith accepts several things classic cron has no syntax for. These schedules iterate normally;
+they simply have no cron string, and asking for one raises an `UnsupportedOperationException`
+instead of returning something misleading.
+
+**Day of the year**
+
+```java
+new CronBuilder().setZoneId(ZoneId.of("UTC"))
+        .year(2027).day(208).andDay(330).toLastDay().at(12, 0)
+        .consume(System.out::println, 6);
+// 2027-07-27T12:00
+// 2027-11-26T12:00
+// 2027-11-27T12:00
+// 2027-11-28T12:00
+// 2027-11-29T12:00
+// 2027-11-30T12:00
+```
+
+**Week of the year**
+
+```java
+new CronBuilder().setZoneId(ZoneId.of("UTC"))
+        .everyYear().week(40).andWeek(45).Mon().toFri().at(12, 0)
+        .consume(System.out::println, 12);
+// 2027-10-04T12:00 .. 2027-10-08T12:00
+// 2027-11-08T12:00 .. 2027-11-12T12:00
+// 2028-10-02T12:00 ...
+```
+
+**Multi-value `L` and `#`**
+
+```java
+new CronBuilder().everyMonth()
+        .dayOfWeek(2, DayOfWeek.TUESDAY).and(3, DayOfWeek.WEDNESDAY).andLastFri().at(9, 0);
+// 0 0 9 ? * TUE#2,WED#3,FRIL
+
+new CronBuilder().everyMonth().week(1).andLastWeek().Mon().at(8, 0);
+// 0 0 8 ? * MON#1,MONL
+
+new CronBuilder().everyMonth().day(10).andDay(15).andLatestWeekday(25).andLastDay().at(0, 0);
+// 0 0 0 10,15,25W,L * ?
+```
+
+---
+
+## Cron syntax reference
+
+```
+ ┌───────────── second        0-59
+ │ ┌─────────── minute        0-59
+ │ │ ┌───────── hour          0-23
+ │ │ │ ┌─────── day-of-month  1-31, L, LW, L-n, nW, ?
+ │ │ │ │ ┌───── month         1-12 or JAN-DEC
+ │ │ │ │ │ ┌─── day-of-week   1-7 (SUN=1) or SUN-SAT, nL, n#m, ?
+ │ │ │ │ │ │ ┌─ year          optional, 1970-2099
+ │ │ │ │ │ │ │
+ * * * * * ? *
+```
+
+| Tag | Field | Meaning |
+|---|---|---|
+| `*` | any | every value |
+| `?` | day-of-month, day-of-week | no restriction; exactly one of the two day fields must carry it |
+| `a-b` | any | a range |
+| `a/n` | any | from `a`, every `n`th value — `*/15` in seconds fires at :00, :15, :30, :45 |
+| `a,b,c` | any | a list; entries may themselves be ranges or steps |
+| `L` | day-of-month | the last day of the month |
+| `L-n` | day-of-month | `n` days before the last day |
+| `LW` | day-of-month | the last weekday of the month |
+| `nW` | day-of-month | the weekday nearest the `n`th, without leaving the month |
+| `<dow>L` | day-of-week | the last `<dow>` of the month, e.g. `FRIL` |
+| `<dow>#n` | day-of-week | the `n`th `<dow>` of the month, e.g. `TUE#2`; months without an `n`th are skipped |
+
+`#` and `L` count **occurrences inside the month**, which is what Quartz, Spring and AWS all mean:
+`FRI#1` is the first Friday that falls in the month, and `FRI#5` only fires in months that have five
+Fridays.
+
+---
+
+## Best practices
+
+**Pin the start time when the result has to be reproducible.** A builder starts from *now* in UTC,
+so an expression carrying a year depends on when it was built. Tests and fixtures should say so:
+
+```java
+new CronBuilder().setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay()).year().toYear(2030);
+```
+
+**Set the zone the schedule is meant to be read in.** A cron expression is wall-clock time; the zone
+decides which instant "09:00" is. The default is UTC.
+
+```java
+new CronBuilder().setZoneId(ZoneId.of("Europe/Berlin")).everyDay().at(9, 0);
+```
+
+Across a daylight-saving switch the wall clock stays put — 09:00 is always 09:00 — while the real
+interval between two runs becomes 23 or 25 hours. The scheduler accounts for that, so a daily job
+does not drift by an hour twice a year.
+
+**Prefer weekday names to numbers.** `MON` is Monday in every scheduler; `1` is Sunday in Quartz and
+AWS but Monday in Spring and crontab. Cronsmith prints names by default — leave it that way unless
+you are matching an existing expression character for character.
+
+**Ask the target dialect before you deploy.** `CRON.toUnixString(..)` failing is a much better
+outcome than a crontab entry that silently drops the `L` you needed:
+
+```java
+try {
+    deploy(CRON.toUnixString(cron));
+} catch (UnsupportedOperationException e) {
+    // this schedule needs a Quartz-class scheduler
 }
 ```
 
-### 4. Advanced Part
+**Store the expression, not the next fire time.** `CronExpression` is `Serializable`, so a schedule
+survives a restart:
 
-**Can specify day of year**
-
-``` java
-public static void main(String[] args) {
-   int N = 1000;
-   DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-   new CronBuilder().setZoneId(ZoneId.of("UTC")).year(2025).day(208).andDay(330).toLastDay()
-                .at(12, 0).consume(ldt -> {
-                    System.out.println(ldt.format(dtf));
-                }, N);
-}
-// Console: 
-// 2025-07-27 12:00:00
-// 2025-11-26 12:00:00
-// 2025-11-27 12:00:00
-// 2025-11-28 12:00:00
-// 2025-11-29 12:00:00
-// 2025-11-30 12:00:00
-// 2025-12-01 12:00:00
-// 2025-12-02 12:00:00
-// 2025-12-03 12:00:00
-// 2025-12-04 12:00:00
-// 2025-12-05 12:00:00
-// 2025-12-06 12:00:00
-// ...
-
+```java
+byte[] snapshot = cron.serialize();
+CronExpression restored = CronExpression.deserialize(snapshot);
 ```
 
-**Can specify week of year**
+Catching up from a snapshot taken long ago is O(1) per level rather than one step per elapsed second,
+so restoring a per-second schedule from last year is still instantaneous.
 
-``` java
-public static void main(String[] args) {
-    int N = 1000;
-    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    new CronBuilder().setZoneId(ZoneId.of("UTC")).everyYear().week(40).andWeek(45).Mon().toFri()
-                .at(12, 0).consume(ldt -> {
-                    System.out.println(ldt.format(dtf));
-                }, N);
-}
-// Console: 
-// 2025-09-29 12:00:00
-// 2025-09-30 12:00:00
-// 2025-10-01 12:00:00
-// 2025-10-02 12:00:00
-// 2025-10-03 12:00:00
-// 2025-11-03 12:00:00
-// 2025-11-04 12:00:00
-// 2025-11-05 12:00:00
-// 2025-11-06 12:00:00
-// 2025-11-07 12:00:00
-// 2026-09-28 12:00:00
-// 2026-09-29 12:00:00
-// 2026-09-30 12:00:00
-// 2026-10-01 12:00:00
-// 2026-10-02 12:00:00
-// ...
+**Use `consume(..)` to review a schedule before trusting it**, especially for `L`, `W` and `#`, where
+month lengths and weekends change the answer:
+
+```java
+new CronBuilder().setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
+        .everyMonth().dayOfWeek(5, DayOfWeek.FRIDAY).at(12, 0)
+        .consume(System.out::println, 5);
+// 2027-01-29T12:00
+// 2027-04-30T12:00   <- February and March have no fifth Friday
+// 2027-07-30T12:00
+// 2027-10-29T12:00
+// 2027-12-31T12:00
 ```
 
+**Give the scheduler its own executor and shut it down.** Cronsmith schedules onto the
+`ScheduledExecutorService` you hand it and never creates threads behind your back.
 
+---
+
+## Worked examples
+
+**End-of-month billing, weekdays only**
+
+```java
+// 23:30 on the last weekday of every month
+CronExpression billing = new CronBuilder().everyMonth().lastWeekday().at(23, 30);
+// 0 30 23 LW * ?
+```
+
+**Payroll on the 15th and the last day, moved off weekends**
+
+```java
+CronExpression payroll = new CronBuilder().everyMonth()
+        .latestWeekday(15).andLastWeekday().at(6, 0);
+// 0 0 6 15W,LW * ?
+```
+
+**Weekly report every second Tuesday and the last Friday**
+
+```java
+CronExpression report = new CronBuilder().everyMonth()
+        .dayOfWeek(2, DayOfWeek.TUESDAY).andLastFri().at(17, 0);
+// 0 0 17 ? * TUE#2,FRIL
+```
+
+**Business hours health check, every 15 minutes**
+
+```java
+CronExpression healthCheck = new CronBuilder().everyMonth().everyWeek()
+        .Mon().toFri().hour(9).toHour(18).everyMinute(15);
+// 0 */15 9-18 ? * MON-FRI
+```
+
+**Quarterly job, first day of the quarter**
+
+```java
+CronExpression quarterly = new CronBuilder().everyMonth(3).day(1).at(2, 0);
+// 0 0 2 1 */3 ?
+```
+
+**A campaign bounded by a date range**
+
+```java
+CronExpression campaign = new CronBuilder()
+        .setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
+        .year(2027).toYear(2029)
+        .June().andJuly().andAug()
+        .everyWeek().Sat().andSun().at(10, 0);
+// 0 0 10 ? JUN,JUL,AUG SAT,SUN 2027-2029
+```
+
+**One-off run at a fixed moment**
+
+```java
+CronExpression once = CRON.atFuture(LocalDateTime.of(2027, 12, 1, 12, 15, 0));
+// 0 15 12 1 DEC ? 2027
+```
+
+**Fixed interval without writing cron at all**
+
+```java
+CRON.setInterval(5, TimeUnit.MINUTES);          // 0 */5 * * * ?
+CRON.setInterval(LocalTime.of(23, 45, 30));     // 30 45 23 * * ?
+```
+
+**Migrating an existing crontab line**
+
+```java
+CronExpression cron = CRON.parse("15 10 * * MON-FRI");   // 0 15 10 ? * MON-FRI
+CRON.toQuartzString(cron);                               // 0 15 10 ? * MON-FRI
+CRON.toAwsString(cron);                                  // 15 10 ? * MON-FRI *
+```
+
+---
 
 ## Installation
 
-Support Jdk1.8 or later
-
-To use **Cronsmith** in your Java project, add the following dependency to your `pom.xml` (if using Maven):
+Requires JDK 1.8 or later.
 
 ```xml
 <dependency>
     <groupId>com.github.paganini2008</groupId>
     <artifactId>cronsmith</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0-RC2</version>
 </dependency>
 ```
 
-If using Gradle:
-
 ```gradle
 dependencies {
-    implementation 'com.github.paganini2008:cronsmith:1.0.0-RC1'
+    implementation 'com.github.paganini2008:cronsmith:1.0.0-RC2'
 }
 ```
 
 ## Getting Started
 
 1. Add Cronsmith as a dependency in your project.
-2. Use `CronBuilder` to create complex cron expressions.
-3. Parse existing cron expressions using `CRON.parse()`.
-4. Schedule tasks using the built-in scheduler.
+2. Use `CronBuilder` to describe the schedule.
+3. Print it for your scheduler with `CRON.toQuartzString(..)`, `toSpringString(..)`,
+   `toAwsString(..)` or `toUnixString(..)`, or run it with the built-in scheduler.
+4. Read existing expressions — six/seven-field Quartz or five-field crontab — with `CRON.parse(..)`.
 
 ## License
 

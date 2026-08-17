@@ -67,7 +67,7 @@ public class CronScheduledEvent extends EventObject {
             if (nextFiredDateTime != null) {
                 str += ", NextFired: " + nextFiredDateTime;
             } else {
-                str += ", Ended: " + nextFiredDateTime == null;
+                str += ", Ended: true";
             }
         }
         return str;

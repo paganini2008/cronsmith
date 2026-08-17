@@ -1,6 +1,7 @@
 package com.github.cronsmith.parser;
 
 import java.time.ZoneId;
+import com.github.cronsmith.AbbreviationUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,9 +51,35 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
     private CronExpression cronExpression;
 
     private ZoneId zoneId = ZoneId.of("UTC");
+    private boolean unixDayOfWeek;
 
     public ZoneId getZoneId() {
         return zoneId;
+    }
+
+    /**
+     * Whether numbers in the day-of-week field follow Unix crontab (MON=1 .. SAT=6, Sunday being
+     * either 0 or 7) rather than Quartz (SUN=1 .. SAT=7). The two disagree about 7, so a five-field
+     * crontab line has to be read with this switched on.
+     */
+    public boolean isUnixDayOfWeek() {
+        return unixDayOfWeek;
+    }
+
+    public void setUnixDayOfWeek(boolean unixDayOfWeek) {
+        this.unixDayOfWeek = unixDayOfWeek;
+    }
+
+    /** Translates a day-of-week number of the configured convention into MON=1 .. SUN=7. */
+    public int toDayOfWeek(int number) {
+        if (!unixDayOfWeek) {
+            return AbbreviationUtils.fromCronDayOfWeek(number);
+        }
+        if (number < 0 || number > 7) {
+            throw new IllegalArgumentException("Invalid day-of-week: " + number);
+        }
+        int normalized = number % 7;
+        return normalized == 0 ? java.time.DayOfWeek.SUNDAY.getValue() : normalized;
     }
 
     public void setZoneId(ZoneId zoneId) {
@@ -61,6 +88,14 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
 
     @Override
     public CronExpression visitCron(CronContext ctx) {
+        // Anything the grammar could not make sense of leaves the corresponding sub-context
+        // null. Report that as a parser error instead of failing later with a NullPointerException.
+        requireField(ctx.second(), "second");
+        requireField(ctx.minute(), "minute");
+        requireField(ctx.hour(), "hour");
+        requireField(ctx.dayOfMonth(), "day-of-month");
+        requireField(ctx.month(), "month");
+        requireField(ctx.dayOfWeek(), "day-of-week");
         cronExpression = ctx.year() != null ? visit(ctx.year()) : null;
         cronExpression = visit(ctx.month());
         cronExpression = visit(ctx.dayOfWeek());
@@ -123,6 +158,12 @@ public class CronExpressionContext extends CronExpressionBaseVisitor<CronExpress
 
     public TagVisitor getTagVisitor() {
         return tagVisitor;
+    }
+
+    private static void requireField(Object field, String name) {
+        if (field == null) {
+            throw new CronParserException("Missing or malformed '" + name + "' field");
+        }
     }
 
 }

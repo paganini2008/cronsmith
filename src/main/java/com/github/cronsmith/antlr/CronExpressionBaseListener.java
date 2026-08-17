@@ -270,6 +270,42 @@ public class CronExpressionBaseListener implements CronExpressionListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDayOfWeekNameLast(CronExpressionParser.DayOfWeekNameLastContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDayOfWeekNameLast(CronExpressionParser.DayOfWeekNameLastContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDayOfWeekNameWithStep(CronExpressionParser.DayOfWeekNameWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDayOfWeekNameWithStep(CronExpressionParser.DayOfWeekNameWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterMonthNameWithStep(CronExpressionParser.MonthNameWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMonthNameWithStep(CronExpressionParser.MonthNameWithStepContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterWeekdayRange(CronExpressionParser.WeekdayRangeContext ctx) { }
 	/**
 	 * {@inheritDoc}

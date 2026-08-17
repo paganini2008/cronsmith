@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.IteratorUtils;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 
@@ -13,18 +15,37 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class LastWeekOfYear implements LastWeek {
+public class LastWeekOfYear implements LastWeek, WeekOrdinal {
 
-    private static final long serialVersionUID = 6390083273112427117L;
+    private static final long serialVersionUID = 6390083273112427118L;
     private Year year;
     private LocalDateTime week;
     private boolean self;
 
     LastWeekOfYear(Year year) {
         this.year = year;
-        this.week = year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
-                .with(WeekFields.ISO.dayOfWeek(), 1);
+        this.week = lastWeekOfDecember(year);
         this.self = true;
+    }
+
+    /**
+     * The last week of a year is the last week of its December. Anchoring on December rather than
+     * on ISO week 52/53 keeps it inside the year, and lets the day-of-week below it render as the
+     * ordinary {@code L} tag.
+     */
+    private static LocalDateTime lastWeekOfDecember(Year year) {
+        return WeekOfMonth.startOf(year.getTime().withMonth(12).withDayOfMonth(1),
+                WeekOfMonth.LAST);
+    }
+
+    @Override
+    public int currentOrdinal() {
+        return WeekOfMonth.LAST;
+    }
+
+    @Override
+    public List<Integer> ordinals() {
+        return Collections.singletonList(WeekOfMonth.LAST);
     }
 
     @Override
@@ -55,13 +76,13 @@ public class LastWeekOfYear implements LastWeek {
     @Override
     public TheDayOfWeek day(int day) {
         final Week copy = (Week) this.copy();
-        return new ThisDayOfWeek(IteratorUtils.getFirst(copy), day);
+        return new ThisDayOfWeek(IteratorUtils.getFirst(copy, copy), day);
     }
 
     @Override
     public Day everyDay(IntFunction<Week> from, int interval) {
         final Week copy = (Week) this.copy();
-        return new EveryDayOfWeek(IteratorUtils.getFirst(copy), from, interval);
+        return new EveryDayOfWeek(IteratorUtils.getFirst(copy, copy), from, interval);
     }
 
     @Override
@@ -75,8 +96,7 @@ public class LastWeekOfYear implements LastWeek {
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                week = year.getTime().with(WeekFields.ISO.weekOfYear(), year.getWeekCountOfYear())
-                        .with(WeekFields.ISO.dayOfWeek(), 1);
+                week = lastWeekOfDecember(year);
                 next = true;
             }
         }
@@ -98,7 +118,7 @@ public class LastWeekOfYear implements LastWeek {
 
     @Override
     public String toCronString() {
-        return "1L";
+        return "L";
     }
 
     @Override

@@ -63,7 +63,7 @@ public interface Month extends Iterator<Month>, CronExpression {
     TheDayOfWeekInMonth dayOfWeek(int weekOfMonth, int dayOfWeek);
 
     default TheDayOfWeekInMonth lastDayOfWeek(int dayOfWeek) {
-        return dayOfWeek(getWeekCountOfMonth(), dayOfWeek);
+        return dayOfWeek(WeekOfMonth.LAST, dayOfWeek);
     }
 
     Week lastWeek();

@@ -141,7 +141,8 @@ public class SlashTagVisitor implements TagVisitor {
             try {
                 from = Integer.parseInt(args[0]);
             } catch (RuntimeException e) {
-                from = 0;
+                // Day-of-month counts from 1, so '*' has to start there and not at 0.
+                from = 1;
                 every = true;
             }
             int interval = Integer.parseInt(args[1]);
@@ -214,7 +215,8 @@ public class SlashTagVisitor implements TagVisitor {
             boolean useNumber = true;
             boolean every = false;
             try {
-                from = Integer.parseInt(args[0]);
+                // Numbers in the day-of-week field follow cron numbering, SUN=1 .. SAT=7.
+                from = context.toDayOfWeek(Integer.parseInt(args[0]));
             } catch (RuntimeException e) {
                 if ("*".equals(args[0])) {
                     from = 1;
@@ -226,8 +228,8 @@ public class SlashTagVisitor implements TagVisitor {
             }
             int interval = Integer.parseInt(args[1]);
             CronExpression cronExpression = context.getCronExpression();
-            cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
             if (cronExpression != null) {
+                cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
                 if (cronExpression instanceof Month) {
                     return every ? ((Month) cronExpression).everyWeek().everyDay(from, interval)
                             : ((Month) cronExpression).everyWeek().day(from).toDay(7, interval);

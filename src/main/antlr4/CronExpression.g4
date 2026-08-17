@@ -5,7 +5,7 @@ package com.github.cronsmith.antlr;
 }
 
 cron
-    : second SPACE minute SPACE hour SPACE dayOfMonth SPACE month SPACE dayOfWeek SPACE? year? EOF
+    : second SPACE minute SPACE hour SPACE dayOfMonth SPACE month SPACE dayOfWeek (SPACE year)? SPACE? EOF
     ;
 
 
@@ -122,4 +122,4 @@ monthName        : 'JAN' | 'FEB' | 'MAR' | 'APR' | 'MAY' | 'JUN' | 'JUL' | 'AUG'
 INT_YEAR : [2][0-9][0-9][0-9] ;
 INT : [0-9]+ ;
 INT_L : [0-9]+ 'L' ;
-SPACE : [ \t]+ -> skip ;
+SPACE : [ \t]+ ;

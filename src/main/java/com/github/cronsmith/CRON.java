@@ -35,6 +35,7 @@ import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
 import com.github.cronsmith.parser.CronExpressionContext;
 import com.github.cronsmith.parser.CronParserException;
+import com.github.cronsmith.parser.CronSyntaxErrorListener;
 
 /**
  * 
@@ -125,8 +126,12 @@ public abstract class CRON {
         }
         CharStream input = CharStreams.fromString(text);
         CronExpressionLexer lexer = new CronExpressionLexer(input);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(CronSyntaxErrorListener.INSTANCE);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CronExpressionParser parser = new CronExpressionParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(CronSyntaxErrorListener.INSTANCE);
         ParseTree tree = parser.cron();
         CronExpressionContext context = new CronExpressionContext();
         context.setUnixDayOfWeek(unix);
@@ -165,8 +170,12 @@ public abstract class CRON {
     public static String printParseTree(String cronExpression) {
         CharStream input = CharStreams.fromString(cronExpression);
         CronExpressionLexer lexer = new CronExpressionLexer(input);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(CronSyntaxErrorListener.INSTANCE);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CronExpressionParser parser = new CronExpressionParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(CronSyntaxErrorListener.INSTANCE);
         ParseTree tree = parser.cron();
         printTree(tree, parser, 0);
         return cronExpression;

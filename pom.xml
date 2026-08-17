@@ -108,23 +108,21 @@
           </execution>
         </executions>
       </plugin>
-      <!--
-      <plugin> 
-        <groupId>org.apache.maven.plugins</groupId>  
-        <artifactId>maven-source-plugin</artifactId>  
-        <configuration> 
-          <attach>true</attach> 
-        </configuration>  
-        <executions> 
-          <execution> 
-            <phase>compile</phase>  
-            <goals> 
-              <goal>jar</goal> 
-            </goals> 
-          </execution> 
-        </executions> 
-      </plugin>  
-      -->
+      <!-- Attach the sources jar to every build so downstream IDEs can step into the code. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin> 
         <groupId>org.antlr</groupId>  
         <artifactId>antlr4-maven-plugin</artifactId>  
@@ -193,7 +191,9 @@
       <id>release-10</id>  
       <build> 
         <plugins> 
-          <!-- Source -->  
+          <!-- Source: kept for reference only; the sources jar is now attached by the
+               maven-source-plugin in the main build, so enabling it here would duplicate it. -->
+          <!--
           <plugin> 
             <groupId>org.apache.maven.plugins</groupId>  
             <artifactId>maven-source-plugin</artifactId>  
@@ -206,6 +206,7 @@
               </execution> 
             </executions> 
           </plugin>  
+          -->
           <!-- Javadoc -->  
           <plugin> 
             <groupId>org.apache.maven.plugins</groupId>  

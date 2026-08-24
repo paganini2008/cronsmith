@@ -27,10 +27,9 @@ import com.github.cronsmith.scheduler.CronScheduler;
 import com.github.cronsmith.scheduler.CronSchedulerImpl;
 import com.github.cronsmith.scheduler.CronSchedulerListener;
 import com.github.cronsmith.scheduler.DefaultPeriodicalExecutor;
-import com.github.cronsmith.scheduler.ExecutorUtils;
 import com.github.cronsmith.scheduler.PeriodicalExecutor;
-import com.github.cronsmith.scheduler.StringUtils;
-
+import com.github.cronsmith.utils.ExecutorUtils;
+import com.github.cronsmith.utils.StringUtils;
 /**
  *
  * Tests around running real tasks off a cron expression: repetition counts, the task life cycle

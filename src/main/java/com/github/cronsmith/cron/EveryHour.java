@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.function.Supplier;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 

@@ -1,12 +1,11 @@
 package com.github.cronsmith.cron;
 
 import java.time.LocalDateTime;
-import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
-
+import com.github.cronsmith.CRON;
+import com.github.cronsmith.utils.IteratorUtils;
 /**
  *
  * Every nth week of a month, counted as occurrences of a weekday rather than as calendar weeks.

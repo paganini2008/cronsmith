@@ -6,7 +6,7 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 

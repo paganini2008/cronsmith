@@ -30,7 +30,7 @@ import com.github.cronsmith.scheduler.CronScheduledEvent;
 import com.github.cronsmith.scheduler.CronScheduledEvent.EventType;
 import com.github.cronsmith.scheduler.CronSchedulerListener;
 import com.github.cronsmith.scheduler.DebugCronSchedulerListener;
-import com.github.cronsmith.scheduler.ExecutorUtils;
+import com.github.cronsmith.utils.ExecutorUtils;
 
 /**
  *

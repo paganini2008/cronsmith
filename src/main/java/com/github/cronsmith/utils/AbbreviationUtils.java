@@ -1,4 +1,4 @@
-package com.github.cronsmith;
+package com.github.cronsmith.utils;
 
 import java.time.DayOfWeek;
 import java.time.Month;

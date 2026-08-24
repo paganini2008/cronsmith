@@ -1,13 +1,12 @@
 package com.github.cronsmith.cron;
 
 import java.time.LocalDateTime;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
-import java.time.temporal.WeekFields;
-
+import com.github.cronsmith.utils.IteratorUtils;
 /**
  *
  * One or more numbered weeks of a month, the parent of a {@code #} day-of-week expression.

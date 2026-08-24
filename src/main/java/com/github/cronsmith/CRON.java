@@ -1,7 +1,6 @@
 
 package com.github.cronsmith;
 
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +35,8 @@ import com.github.cronsmith.cron.Year;
 import com.github.cronsmith.parser.CronExpressionContext;
 import com.github.cronsmith.parser.CronParserException;
 import com.github.cronsmith.parser.CronSyntaxErrorListener;
-
+import com.github.cronsmith.utils.SerializationException;
+import com.github.cronsmith.utils.SerializationUtils;
 /**
  * 
  * CRON is the entry class of cronsmith library. Start your work from here.

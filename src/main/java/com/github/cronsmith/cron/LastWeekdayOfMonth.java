@@ -2,7 +2,7 @@ package com.github.cronsmith.cron;
 
 import java.time.LocalDateTime;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 

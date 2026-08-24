@@ -2,15 +2,14 @@
 
 package com.github.cronsmith.antlr;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.*;
 import org.antlr.v4.runtime.tree.*;
-import java.util.List;
-import java.util.Iterator;
-import java.util.ArrayList;
-
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CronExpressionParser extends Parser {
 	static { RuntimeMetaData.checkVersion("4.9.3", RuntimeMetaData.VERSION); }

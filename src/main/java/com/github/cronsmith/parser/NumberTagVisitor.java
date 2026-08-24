@@ -1,6 +1,5 @@
 package com.github.cronsmith.parser;
 
-import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
@@ -16,7 +15,7 @@ import com.github.cronsmith.cron.TheSecond;
 import com.github.cronsmith.cron.TheYear;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
 /**
  * 
  * Number Match

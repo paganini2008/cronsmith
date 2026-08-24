@@ -13,11 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.SerializationException;
-import com.github.cronsmith.SerializationUtils;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
-
+import com.github.cronsmith.utils.SerializationException;
+import com.github.cronsmith.utils.SerializationUtils;
 /**
  *
  * A cron expression is serializable so it can be stored and picked up again later; these tests

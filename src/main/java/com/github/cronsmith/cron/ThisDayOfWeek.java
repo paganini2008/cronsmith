@@ -1,48 +1,59 @@
-
 package com.github.cronsmith.cron;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 /**
- * 
+ *
+ * One or more weekdays inside the week its parent currently stands on.
+ * <p>
+ * What a weekday resolves to depends on that parent: under a plain week it is every Monday, under a
+ * numbered week the nth Monday ({@code MON#2}), and under the last week the last Monday
+ * ({@code MONL}). Months without the requested occurrence - a fifth Friday, say - are skipped
+ * rather than silently rolled into the next month.
+ *
  * @Description: ThisDayOfWeek
  * @Author: Fred Feng
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisDayOfWeek implements TheDayOfWeek {
+public class ThisDayOfWeek implements TheDayOfWeek, PendingValueHolder {
 
-    private static final long serialVersionUID = -5353496894925284106L;
-    private final List<TagIterator> iterators = new ArrayList<>();
+    private static final long serialVersionUID = -5353496894925284107L;
+    private final List<DayOfWeekTag> tags = new ArrayList<>();
     private Week week;
+    private List<Integer> values;
+    private List<LocalDateTime> current;
     private int index;
     private LocalDateTime day;
+    private LocalDateTime pending;
+    private boolean self;
     private int startDayOfWeekFlag;
 
     ThisDayOfWeek(Week week, int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
         this.week = week;
-        this.iterators.add(new SingleValueIterator(m -> dayOfWeek));
-        this.day = week.getTime().with(WeekFields.ISO.weekOfMonth(), week.getWeek())
-                .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
+        this.tags.add(new DayOfWeekTag(dayOfWeek));
         this.startDayOfWeekFlag = dayOfWeek;
+        rewind();
     }
 
     @Override
     public TheDayOfWeek andDay(int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
-        this.iterators.add(new SingleValueIterator(m -> dayOfWeek));
+        this.tags.add(new DayOfWeekTag(dayOfWeek));
         this.startDayOfWeekFlag = dayOfWeek;
+        rewind();
         return this;
     }
 
@@ -56,12 +67,78 @@ public class ThisDayOfWeek implements TheDayOfWeek {
             throw new IllegalArgumentException("Invalid interval: " + interval);
         }
         final int fromDay = startDayOfWeekFlag;
-        ValueRangeIterator rangeIterator =
-                new ValueRangeIterator(m -> fromDay, m -> dayOfWeek, interval);
-        this.iterators.removeIf(iter -> iter.toString().equals(getDayOfWeekName(fromDay)));
-        this.iterators.add(rangeIterator);
+        this.tags.removeIf(tag -> tag.from == fromDay && tag.to == fromDay);
+        this.tags.add(new DayOfWeekTag(fromDay, dayOfWeek, interval));
         this.startDayOfWeekFlag = dayOfWeek;
+        rewind();
         return this;
+    }
+
+    /** Rebuilds the weekday list and puts the iteration back at its first occurrence. */
+    private void rewind() {
+        Set<Integer> distinct = new LinkedHashSet<>();
+        tags.forEach(tag -> tag.collectInto(distinct));
+        this.values = distinct.stream().sorted().collect(Collectors.toList());
+        this.day = null;
+        this.pending = null;
+        this.current = candidates();
+        this.index = 0;
+        this.day = findNext();
+        this.self = this.day != null;
+    }
+
+    /**
+     * The date a weekday resolves to inside the week the parent stands on, or {@code null} when
+     * that month holds no such occurrence.
+     */
+    private int currentOrdinal() {
+        return week instanceof WeekOrdinal ? ((WeekOrdinal) week).currentOrdinal()
+                : WeekOfMonth.LAST;
+    }
+
+    /** The dates the configured weekdays land on in the week the parent stands on. */
+    private List<LocalDateTime> candidates() {
+        List<LocalDateTime> list = new ArrayList<>();
+        if (!(week instanceof WeekOrdinal)) {
+            // A week of the year is an ISO calendar week, so each weekday simply sits inside it.
+            for (Integer value : values) {
+                list.add(week.getTime().with(WeekFields.ISO.dayOfWeek(), value));
+            }
+            return list;
+        }
+        int ordinal = currentOrdinal();
+        for (Integer value : values) {
+            if (ordinal == WeekOfMonth.EVERY) {
+                list.addAll(WeekOfMonth.allOccurrences(week.getTime(), value));
+            } else {
+                LocalDateTime occurrence =
+                        WeekOfMonth.occurrence(week.getTime(), ordinal, value);
+                if (occurrence != null) {
+                    list.add(occurrence);
+                }
+            }
+        }
+        Collections.sort(list);
+        return list;
+    }
+
+    /** Walks forward until the next existing occurrence, rolling into later weeks as needed. */
+    private LocalDateTime findNext() {
+        while (true) {
+            if (index < current.size()) {
+                LocalDateTime candidate = current.get(index++);
+                if (day == null || candidate.isAfter(day)) {
+                    return candidate;
+                }
+                continue;
+            }
+            if (!week.hasNext()) {
+                return null;
+            }
+            week = week.next();
+            current = candidates();
+            index = 0;
+        }
     }
 
     @Override
@@ -71,15 +148,14 @@ public class ThisDayOfWeek implements TheDayOfWeek {
 
     @Override
     public CronExpression sync(LocalDateTime target) {
-        Supplier<Boolean> supplier = () -> day.toLocalDate().compareTo(target.toLocalDate()) < 0;
-        if (supplier.get()) {
-            while (supplier.get()) {
-                if (hasNext()) {
-                    next();
-                } else {
-                    break;
-                }
-            }
+        boolean moved = false;
+        while (day != null && day.toLocalDate().isBefore(target.toLocalDate()) && hasNext()) {
+            next();
+            moved = true;
+        }
+        if (moved) {
+            // The value just reached still has to be handed out by the next step.
+            self = true;
         }
         return this;
     }
@@ -112,36 +188,38 @@ public class ThisDayOfWeek implements TheDayOfWeek {
     @Override
     public TheHour hour(int hour) {
         final Day copy = (Day) this.copy();
-        return new ThisHour(IteratorUtils.getFirst(copy), hour);
+        return new ThisHour(IteratorUtils.getFirst(copy, copy), hour);
     }
 
     @Override
     public Hour everyHour(IntFunction<Day> from, int interval) {
         final Day copy = (Day) this.copy();
-        return new EveryHour(IteratorUtils.getFirst(copy), from, interval);
+        return new EveryHour(IteratorUtils.getFirst(copy, copy), from, interval);
     }
 
     @Override
     public boolean hasNext() {
-        boolean next = index < iterators.size();
-        if (!next) {
-            if (week.hasNext()) {
-                week = week.next();
-                index = 0;
-                iterators.forEach(i -> i.reset());
-                next = true;
-            }
+        if (self) {
+            return true;
         }
-        return next && iterators.get(index).hasNext();
+        if (pending == null) {
+            pending = findNext();
+        }
+        return pending != null;
     }
 
     @Override
     public Day next() {
-        TagIterator iterator = iterators.get(index);
-        day = iterator.next();
-        if (!iterator.hasNext()) {
-            index++;
-            iterator.reset();
+        if (self) {
+            self = false;
+            return this;
+        }
+        if (pending == null) {
+            pending = findNext();
+        }
+        if (pending != null) {
+            day = pending;
+            pending = null;
         }
         return this;
     }
@@ -153,27 +231,7 @@ public class ThisDayOfWeek implements TheDayOfWeek {
 
     @Override
     public String toCronString() {
-        return iterators.stream().map(iter -> iter.toString()).collect(Collectors.joining(","));
-    }
-
-    private String getDayOfWeekName(int dayOfWeek) {
-        String repr = getBuilder().isUseDayOfWeekAsNumber() ? String.valueOf(dayOfWeek)
-                : AbbreviationUtils.getDayOfWeekName(dayOfWeek);
-        if (week instanceof LastWeek) {
-            return dayOfWeek + "L";
-        } else if (week instanceof TheWeek) {
-            return repr + "#" + week.getWeek();
-        } else if (week instanceof IntervalChronoUnit) {
-            int from = ((IntervalChronoUnit) week).getFrom();
-            int interval = ((IntervalChronoUnit) week).getInterval();
-            if (interval == 1) {
-                return repr;
-            }
-            return IntStream.range(from + (interval - 1), 5)
-                    .filter(i -> (i + interval) % interval == 0).mapToObj(i -> repr + "#" + i)
-                    .collect(Collectors.joining(","));
-        }
-        return repr;
+        return tags.stream().map(DayOfWeekTag::getTag).collect(Collectors.joining(","));
     }
 
     @Override
@@ -181,121 +239,74 @@ public class ThisDayOfWeek implements TheDayOfWeek {
         return CRON.toCronString(this);
     }
 
-    private class SingleValueIterator implements TagIterator {
-
-        private static final long serialVersionUID = -1561112766226184869L;
-        private final IntFunction<Week> ifun;
-        private final int value;
-
-        SingleValueIterator(IntFunction<Week> ifun) {
-            this.ifun = ifun;
-            this.value = ifun.apply(week);
-            this.self = true;
-        }
-
-        private boolean self;
-
-        @Override
-        public void reset() {
-            this.self = true;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return self;
-        }
-
-        @Override
-        public LocalDateTime next() {
-            if (self) {
-                self = false;
-            }
-            int dayOfWeek = ifun.apply(week);
-            return week.getTime().with(WeekFields.ISO.weekOfMonth(), week.getWeek())
-                    .with(WeekFields.ISO.dayOfWeek(), dayOfWeek);
-        }
-
-        @Override
-        public String getTag() {
-            return getDayOfWeekName(value);
-        }
-
-        @Override
-        public String toString() {
-            return getTag();
-        }
-
-    }
-
-    private class ValueRangeIterator implements TagIterator {
+    /** Renders one weekday, or one weekday range, the way the parent week requires. */
+    private class DayOfWeekTag implements Serializable {
 
         private static final long serialVersionUID = -2056254572492151394L;
+        private final int from;
+        private final int to;
+        private final int interval;
 
-        ValueRangeIterator(IntFunction<Week> from, IntFunction<Week> to, int interval) {
+        DayOfWeekTag(int dayOfWeek) {
+            this(dayOfWeek, dayOfWeek, 1);
+        }
+
+        DayOfWeekTag(int from, int to, int interval) {
             this.from = from;
             this.to = to;
-            this.fromScalar = from.apply(week);
-            this.toScalar = to.apply(week);
             this.interval = interval;
-            reset();
         }
 
-        private final IntFunction<Week> from;
-        private final IntFunction<Week> to;
-        protected final int fromScalar;
-        protected final int toScalar;
-        protected final int interval;
-        private boolean self;
-
-        private LocalDateTime ldt;
-
-        @Override
-        public void reset() {
-            int from = this.from.apply(week);
-            this.ldt = week.getTime().with(WeekFields.ISO.weekOfMonth(), week.getWeek())
-                    .with(WeekFields.ISO.dayOfWeek(), from);
-            this.self = true;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return self || ldt.getDayOfWeek().getValue() + interval <= to.apply(week);
-        }
-
-        @Override
-        public LocalDateTime next() {
-            if (self) {
-                self = false;
-            } else {
-                ldt = ldt.plusDays(interval);
+        void collectInto(Set<Integer> distinct) {
+            for (int i = from; i <= to; i += interval) {
+                distinct.add(i);
             }
-            return ldt;
         }
 
-        @Override
-        public String getTag() {
-            boolean numberFlag = getBuilder().isUseDayOfWeekAsNumber();
-            if (week instanceof LastWeek) {
-                return IntStream.range(fromScalar, toScalar)
-                        .filter(i -> (i - fromScalar) % interval == 0).mapToObj(i -> i + "L")
-                        .collect(Collectors.joining(","));
-            } else if (week instanceof TheWeek) {
-                return IntStream.range(fromScalar, toScalar)
-                        .filter(i -> (i - fromScalar) % interval == 0)
-                        .mapToObj(i -> numberFlag ? i + "#" + week.getWeek()
-                                : AbbreviationUtils.getDayOfWeekName(i) + "#" + week.getWeek())
-                        .collect(Collectors.joining(","));
+        String getTag() {
+            List<Integer> ordinals = ordinals();
+            if (ordinals.isEmpty() && from != to) {
+                // A plain range keeps the compact 'MON-FRI' form; an ordinal has to be repeated
+                // per weekday because cron offers no range form for '#' or 'L'.
+                String range = name(from) + "-" + name(to);
+                return interval > 1 ? range + "/" + interval : range;
             }
-            String str = (numberFlag ? fromScalar : AbbreviationUtils.getDayOfWeekName(fromScalar))
-                    + "-" + (numberFlag ? toScalar : AbbreviationUtils.getDayOfWeekName(toScalar));
-            return interval > 1 ? str + "/" + interval : str;
+            List<String> list = new ArrayList<>();
+            for (int i = from; i <= to; i += interval) {
+                if (ordinals.isEmpty()) {
+                    list.add(name(i));
+                } else {
+                    for (Integer ordinal : ordinals) {
+                        list.add(name(i) + suffix(ordinal));
+                    }
+                }
+            }
+            return String.join(",", list);
         }
 
-        @Override
-        public String toString() {
-            return getTag();
+        /** The ordinals to render, empty when the weekday needs no {@code #} or {@code L}. */
+        private List<Integer> ordinals() {
+            if (week instanceof WeekOrdinal && !((WeekOrdinal) week).isEveryOrdinal()) {
+                return ((WeekOrdinal) week).ordinals();
+            }
+            return Collections.emptyList();
+        }
+
+        private String suffix(int ordinal) {
+            return ordinal == WeekOfMonth.LAST ? "L" : "#" + ordinal;
+        }
+
+        private String name(int dayOfWeek) {
+            return getBuilder().isUseDayOfWeekAsNumber()
+                    ? String.valueOf(AbbreviationUtils.toCronDayOfWeek(dayOfWeek))
+                    : AbbreviationUtils.getDayOfWeekName(dayOfWeek);
         }
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.self = false;
+    }
 }

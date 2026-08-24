@@ -6,10 +6,9 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.function.Supplier;
-import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 /**
  * 
  * @Description: EveryMonth
@@ -17,7 +16,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryMonth implements Month, IntervalChronoUnit {
+public class EveryMonth implements Month, IntervalChronoUnit, PendingValueHolder {
 
     private static final long serialVersionUID = -7085376125910878673L;
     private Year year;
@@ -34,7 +33,7 @@ public class EveryMonth implements Month, IntervalChronoUnit {
         this.year = year;
         this.from = from;
         this.interval = interval;
-        this.month = year.getTime().withMonth(getFromMonth() + (interval - 1));
+        this.month = year.getTime().withMonth(getFromMonth());
         this.self = true;
         this.forward = true;
     }
@@ -51,7 +50,7 @@ public class EveryMonth implements Month, IntervalChronoUnit {
         if (!next) {
             if (year.hasNext()) {
                 year = year.next();
-                month = year.getTime().withMonth(getFromMonth() + (interval - 1));
+                month = year.getTime().withMonth(getFromMonth());
                 forward = false;
                 next = true;
             }
@@ -120,7 +119,9 @@ public class EveryMonth implements Month, IntervalChronoUnit {
     @Override
     public int getLatestWeekday(int dayOfMonth) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
-        LocalDateTime ldt = month.withDayOfMonth(dayOfMonth);
+        // A short month simply has no 31st, so '31W' falls back to its last day.
+        LocalDateTime ldt = month.withDayOfMonth(
+                Math.min(dayOfMonth, month.toLocalDate().lengthOfMonth()));
         LocalDateTime nextDay;
         if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
             nextDay = ldt.minusDays(1);
@@ -231,4 +232,9 @@ public class EveryMonth implements Month, IntervalChronoUnit {
         return CRON.toCronString(this);
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.forward = true;
+    }
 }

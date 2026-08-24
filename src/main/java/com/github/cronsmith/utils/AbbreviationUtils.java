@@ -1,7 +1,8 @@
-package com.github.cronsmith;
+package com.github.cronsmith.utils;
 
 import java.time.DayOfWeek;
 import java.time.Month;
+import java.time.temporal.ChronoField;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -63,6 +64,32 @@ public class AbbreviationUtils {
 
     public static String getMonthName(int month) {
         return monthNames.get(month);
+    }
+
+    /**
+     * Translates a {@link DayOfWeek} value (MON=1 .. SUN=7) into the numbering cron expressions
+     * use (SUN=1 .. SAT=7), which is what Quartz, AWS EventBridge and Unix crontab all read.
+     */
+    public static int toCronDayOfWeek(int dayOfWeek) {
+        ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
+        return dayOfWeek % 7 + 1;
+    }
+
+    /**
+     * The reverse of {@link #toCronDayOfWeek(int)}: SUN=1 .. SAT=7 becomes MON=1 .. SUN=7.
+     * <p>
+     * A leading 0 is read as Sunday for the benefit of people used to Unix crontab. Note that the
+     * two conventions disagree about 7 - Quartz reads it as Saturday, Unix as Sunday - and this
+     * library follows Quartz, which is the numbering its own seven-field format is modelled on.
+     */
+    public static int fromCronDayOfWeek(int cronDayOfWeek) {
+        if (cronDayOfWeek < 0 || cronDayOfWeek > 7) {
+            throw new IllegalArgumentException("Invalid day-of-week: " + cronDayOfWeek);
+        }
+        if (cronDayOfWeek <= 1) {
+            return DayOfWeek.SUNDAY.getValue();
+        }
+        return cronDayOfWeek - 1;
     }
 
 }

@@ -46,6 +46,10 @@ public interface TheDayOfWeek extends DayOfWeek {
         return toDay(7);
     }
 
+    default TheDayOfWeek andMon() {
+        return andDay(1);
+    }
+
     default TheDayOfWeek andTues() {
         return andDay(2);
     }

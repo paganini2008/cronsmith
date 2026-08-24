@@ -1,4 +1,4 @@
-package com.github.cronsmith.scheduler;
+package com.github.cronsmith.utils;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;

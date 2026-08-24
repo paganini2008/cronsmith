@@ -5,7 +5,7 @@ package com.github.cronsmith.antlr;
 }
 
 cron
-    : second SPACE minute SPACE hour SPACE dayOfMonth SPACE month SPACE dayOfWeek SPACE? year? EOF
+    : second SPACE minute SPACE hour SPACE dayOfMonth SPACE month SPACE dayOfWeek (SPACE year)? SPACE? EOF
     ;
 
 
@@ -68,6 +68,7 @@ monthField
     | INT      
     | monthRangeWithStep
     | monthRange
+    | monthNameWithStep
     | monthName
     ;
     
@@ -83,6 +84,8 @@ dayOfWeekField
     | weekdayRangeWithStep
     | weekdayRange
     | dayOfWeekName '#' INT
+    | dayOfWeekNameLast
+    | dayOfWeekNameWithStep
     | dayOfWeekName
     | '?'
     ;
@@ -105,6 +108,10 @@ yearRange     : INT_YEAR '-' INT_YEAR ;
 weekdayRangeWithStep : dayOfWeekName '-' dayOfWeekName '/' INT ;
 monthRangeWithStep : monthName '-' monthName '/' INT ;
 
+dayOfWeekNameLast : dayOfWeekName 'L' ;
+dayOfWeekNameWithStep : dayOfWeekName '/' INT ;
+monthNameWithStep : monthName '/' INT ;
+
 
 weekdayRange  : dayOfWeekName ('-' dayOfWeekName)? (',' dayOfWeekName ('-' dayOfWeekName)? )* ;
 monthRange  : monthName ('-' monthName)? (',' monthName ('-' monthName)? )* ;
@@ -115,4 +122,4 @@ monthName        : 'JAN' | 'FEB' | 'MAR' | 'APR' | 'MAY' | 'JUN' | 'JUL' | 'AUG'
 INT_YEAR : [2][0-9][0-9][0-9] ;
 INT : [0-9]+ ;
 INT_L : [0-9]+ 'L' ;
-SPACE : [ \t]+ -> skip ;
+SPACE : [ \t]+ ;

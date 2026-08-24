@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.function.Supplier;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 
@@ -13,7 +13,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryHour implements Hour, IntervalChronoUnit {
+public class EveryHour implements Hour, IntervalChronoUnit, PendingValueHolder {
 
     private static final long serialVersionUID = -5459905273757712271L;
     private Day day;
@@ -30,7 +30,7 @@ public class EveryHour implements Hour, IntervalChronoUnit {
         this.day = day;
         this.from = from;
         this.interval = interval;
-        this.hour = day.getTime().withHour(getFromHour() + (interval - 1));
+        this.hour = day.getTime().withHour(getFromHour());
         this.self = true;
         this.forward = true;
     }
@@ -47,7 +47,7 @@ public class EveryHour implements Hour, IntervalChronoUnit {
         if (!next) {
             if (day.hasNext()) {
                 day = day.next();
-                hour = day.getTime().withHour(getFromHour() + (interval - 1));
+                hour = day.getTime().withHour(getFromHour());
                 forward = false;
                 next = true;
             }
@@ -110,6 +110,15 @@ public class EveryHour implements Hour, IntervalChronoUnit {
                 || (hour.toLocalDate().compareTo(target.toLocalDate()) == 0
                         && hour.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindDay(day.getTime(), target)) {
+                // Let the enclosing day catch up in one hop, otherwise a start time set
+                // years back would be reached one single hour at a time.
+                day.sync(SyncSupport.startOfDay(target));
+                SyncSupport.takeOver(day);
+                hour = day.getTime().withHour(getFromHour());
+                self = false;
+                forward = false;
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -158,4 +167,9 @@ public class EveryHour implements Hour, IntervalChronoUnit {
         return CRON.toCronString(this);
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.forward = true;
+    }
 }

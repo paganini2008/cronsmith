@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 
@@ -17,7 +17,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisMinute implements TheMinute {
+public class ThisMinute implements TheMinute, PendingValueHolder {
 
     private static final long serialVersionUID = 7090607807516357598L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -25,6 +25,13 @@ public class ThisMinute implements TheMinute {
     private int index;
     private LocalDateTime minute;
     private int startMinuteFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisMinute(Hour hour, int minute) {
         ChronoField.MINUTE_OF_HOUR.checkValidValue(minute);
@@ -72,6 +79,14 @@ public class ThisMinute implements TheMinute {
                         || (minute.toLocalDate().compareTo(target.toLocalDate()) == 0
                                 && minute.toLocalTime().isBefore(target.toLocalTime()));
         if (supplier.get()) {
+            if (SyncSupport.behindHour(hour.getTime(), target)) {
+                // Let the enclosing hour catch up in one hop and restart this hour's value
+                // list, otherwise catching up costs one iteration per minute elapsed.
+                hour.sync(SyncSupport.startOfHour(target));
+                SyncSupport.takeOver(hour);
+                index = 0;
+                iterators.forEach(TagIterator::reset);
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -79,6 +94,7 @@ public class ThisMinute implements TheMinute {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -122,6 +138,9 @@ public class ThisMinute implements TheMinute {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (hour.hasNext()) {
@@ -136,6 +155,10 @@ public class ThisMinute implements TheMinute {
 
     @Override
     public Minute next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         minute = iterator.next();
         if (!iterator.hasNext()) {
@@ -272,4 +295,9 @@ public class ThisMinute implements TheMinute {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

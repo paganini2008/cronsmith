@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.util.function.Supplier;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 
@@ -13,7 +13,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class EveryDay implements Day, IntervalChronoUnit {
+public class EveryDay implements Day, IntervalChronoUnit, PendingValueHolder {
 
     private static final long serialVersionUID = -2114922383566430661L;
     private Month month;
@@ -30,7 +30,7 @@ public class EveryDay implements Day, IntervalChronoUnit {
         this.month = month;
         this.from = from;
         this.interval = interval;
-        this.day = month.getTime().withDayOfMonth(getFromDay() + (interval - 1));
+        this.day = month.getTime().withDayOfMonth(getFromDay());
         this.self = true;
         this.forward = true;
     }
@@ -53,7 +53,7 @@ public class EveryDay implements Day, IntervalChronoUnit {
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
-                day = month.getTime().withDayOfMonth(getFromDay() + (interval - 1));
+                day = month.getTime().withDayOfMonth(getFromDay());
                 forward = false;
                 next = true;
             }
@@ -109,6 +109,15 @@ public class EveryDay implements Day, IntervalChronoUnit {
     public CronExpression sync(LocalDateTime target) {
         Supplier<Boolean> supplier = () -> day.toLocalDate().isBefore(target.toLocalDate());
         if (supplier.get()) {
+            if (SyncSupport.behindMonth(month.getTime(), target)) {
+                // Let the enclosing month catch up in one hop, otherwise a start time set
+                // years back would be reached one single day at a time.
+                month.sync(SyncSupport.startOfMonth(target));
+                SyncSupport.takeOver(month);
+                day = month.getTime().withDayOfMonth(getFromDay());
+                self = false;
+                forward = false;
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -164,4 +173,9 @@ public class EveryDay implements Day, IntervalChronoUnit {
 
 
 
+
+    @Override
+    public void takePendingValue() {
+        this.forward = true;
+    }
 }

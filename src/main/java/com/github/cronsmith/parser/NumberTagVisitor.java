@@ -15,7 +15,7 @@ import com.github.cronsmith.cron.TheSecond;
 import com.github.cronsmith.cron.TheYear;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
 /**
  * 
  * Number Match
@@ -145,7 +145,8 @@ public class NumberTagVisitor implements TagVisitor {
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
         if (isInteger(text)) {
-            int dayOfWeek = Integer.parseInt(text);
+            // Numbers in the day-of-week field follow cron numbering, SUN=1 .. SAT=7.
+            int dayOfWeek = context.toDayOfWeek(Integer.parseInt(text));
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 if (cronExpression instanceof TheDayOfWeek) {

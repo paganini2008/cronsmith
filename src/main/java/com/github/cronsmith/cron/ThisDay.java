@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 
 /**
  * 
@@ -17,7 +17,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 26/02/2025
  * @Version 1.0.0
  */
-public class ThisDay implements TheDay {
+public class ThisDay implements TheDay, PendingValueHolder {
 
     private static final long serialVersionUID = -6007054113405112202L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -25,6 +25,13 @@ public class ThisDay implements TheDay {
     private int index;
     private LocalDateTime day;
     private int startDayFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisDay(Month month, int dayOfMonth) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
@@ -115,6 +122,14 @@ public class ThisDay implements TheDay {
     public CronExpression sync(LocalDateTime target) {
         Supplier<Boolean> supplier = () -> day.toLocalDate().compareTo(target.toLocalDate()) < 0;
         if (supplier.get()) {
+            if (SyncSupport.behindMonth(month.getTime(), target)) {
+                // Let the enclosing month catch up in one hop and restart this month's value
+                // list, otherwise catching up costs one iteration per day elapsed.
+                month.sync(SyncSupport.startOfMonth(target));
+                SyncSupport.takeOver(month);
+                index = 0;
+                iterators.forEach(TagIterator::reset);
+            }
             while (supplier.get()) {
                 if (hasNext()) {
                     next();
@@ -122,6 +137,7 @@ public class ThisDay implements TheDay {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -165,6 +181,9 @@ public class ThisDay implements TheDay {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (month.hasNext()) {
@@ -179,6 +198,10 @@ public class ThisDay implements TheDay {
 
     @Override
     public Day next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         day = iterator.next();
         if (!iterator.hasNext()) {
@@ -408,4 +431,9 @@ public class ThisDay implements TheDay {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

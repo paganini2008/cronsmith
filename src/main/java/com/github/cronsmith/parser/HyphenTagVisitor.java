@@ -1,6 +1,5 @@
 package com.github.cronsmith.parser;
 
-import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
@@ -16,7 +15,7 @@ import com.github.cronsmith.cron.TheSecond;
 import com.github.cronsmith.cron.TheYear;
 import com.github.cronsmith.cron.Week;
 import com.github.cronsmith.cron.Year;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
 /**
  * 
  * Match and parse hyphen tag '-'
@@ -252,6 +251,17 @@ public class HyphenTagVisitor implements TagVisitor {
                     useNumber = false;
                 }
             }
+            if (useNumber) {
+                // Numbers in the day-of-week field follow cron numbering, so the range has to be
+                // translated first; it only survives as a range when it stays contiguous.
+                java.util.List<Integer> expanded =
+                        cronNumbers(from, to, interval, context);
+                if (!isContiguous(expanded, interval)) {
+                    return visitDayOfWeekRange(expanded, useNumber, context);
+                }
+                from = expanded.get(0);
+                to = expanded.get(expanded.size() - 1);
+            }
             CronExpression cronExpression = context.getCronExpression();
             if (cronExpression != null) {
                 cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
@@ -308,4 +318,51 @@ public class HyphenTagVisitor implements TagVisitor {
         return 4;
     }
 
+
+    /**
+     * Expands a numeric day-of-week range written in cron numbering into the weekdays it covers.
+     * A range such as {@code 1-5} (SUN-THU) wraps around the end of the week once translated, so
+     * it is listed day by day rather than kept as a range.
+     */
+    private static java.util.List<Integer> cronNumbers(int from, int to, int interval,
+            CronExpressionContext context) {
+        java.util.List<Integer> list = new java.util.ArrayList<>();
+        for (int i = from; i <= to; i += interval) {
+            list.add(context.toDayOfWeek(i));
+        }
+        return list;
+    }
+
+    /** Whether the translated weekdays still form an evenly spaced, ascending run. */
+    private static boolean isContiguous(java.util.List<Integer> values, int interval) {
+        for (int i = 1; i < values.size(); i++) {
+            if (values.get(i) - values.get(i - 1) != interval) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Adds every weekday of an already expanded range to the expression being built. */
+    private static CronExpression visitDayOfWeekRange(java.util.List<Integer> daysOfWeek,
+            boolean useNumber, CronExpressionContext context) {
+        CronExpression cronExpression = context.getCronExpression();
+        for (Integer dayOfWeek : daysOfWeek) {
+            if (cronExpression == null) {
+                cronExpression = new CronBuilder().setZoneId(context.getZoneId())
+                        .setUseDayOfWeekAsNumber(useNumber).everyWeek().day(dayOfWeek);
+            } else if (cronExpression instanceof TheDayOfWeek) {
+                cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
+                cronExpression = ((TheDayOfWeek) cronExpression).andDay(dayOfWeek);
+            } else if (cronExpression instanceof Week) {
+                cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
+                cronExpression = ((Week) cronExpression).day(dayOfWeek);
+            } else if (cronExpression instanceof Month) {
+                cronExpression.getBuilder().setUseDayOfWeekAsNumber(useNumber);
+                cronExpression = ((Month) cronExpression).everyWeek().day(dayOfWeek);
+            }
+            context.setCronExpression(cronExpression);
+        }
+        return cronExpression;
+    }
 }

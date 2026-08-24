@@ -29,3 +29,9 @@ replay_pid*
 .project
 .settings
 
+# Idea
+.idea
+
+# Other
+MEMORY.md
+

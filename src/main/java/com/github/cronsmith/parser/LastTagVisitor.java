@@ -5,7 +5,7 @@ import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Month;
 import com.github.cronsmith.cron.TheDay;
 import com.github.cronsmith.cron.TheDayOfWeekInMonth;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
 /**
  * 
  * Match and parse letter 'L' and relevant
@@ -96,11 +96,17 @@ public class LastTagVisitor implements TagVisitor {
     @Override
     public CronExpression visitDayOfWeek(String text, String filter,
             CronExpressionContext context) {
-        if (text.matches("[1-7]L") && (filter == null || filter.contains("L"))) {
+        if (text.matches("([1-7]|SUN|MON|TUE|WED|THU|FRI|SAT)L")
+                && (filter == null || filter.contains("L"))) {
             CronExpression cronExpression =
                     context.getCronExpression() != null ? context.getCronExpression()
                             : new CronBuilder().setZoneId(context.getZoneId()).everyMonth();
-            int dayOfWeek = Integer.parseInt(text.replace("L", ""));
+            String repr = text.substring(0, text.length() - 1);
+            int dayOfWeek = repr.length() == 1 ? context.toDayOfWeek(Integer.parseInt(repr))
+                    : AbbreviationUtils.getDayOfWeekValue(repr);
+            if (cronExpression != null) {
+                cronExpression.getBuilder().setUseDayOfWeekAsNumber(repr.length() == 1);
+            }
             if (cronExpression instanceof TheDayOfWeekInMonth) {
                 return ((TheDayOfWeekInMonth) cronExpression).andLast(dayOfWeek);
             } else if (cronExpression instanceof Month) {

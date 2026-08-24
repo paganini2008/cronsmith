@@ -10,10 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import com.github.cronsmith.AbbreviationUtils;
 import com.github.cronsmith.CRON;
-import com.github.cronsmith.IteratorUtils;
-
+import com.github.cronsmith.utils.AbbreviationUtils;
+import com.github.cronsmith.utils.IteratorUtils;
 /**
  * 
  * @Description: ThisMonth
@@ -21,7 +20,7 @@ import com.github.cronsmith.IteratorUtils;
  * @Date: 27/02/2025
  * @Version 1.0.0
  */
-public class ThisMonth implements TheMonth {
+public class ThisMonth implements TheMonth, PendingValueHolder {
 
     private static final long serialVersionUID = 229203112866380942L;
     private final List<TagIterator> iterators = new ArrayList<>();
@@ -29,6 +28,13 @@ public class ThisMonth implements TheMonth {
     private int index;
     private LocalDateTime month;
     private int startMonthFlag;
+
+    /**
+     * Whether the value reached by the last synchronize is still owed to the caller. Without it the
+     * first step after a synchronize would move past that value, and a schedule such as "every day
+     * at 12:00" asked at 10:00 would answer with tomorrow rather than with today.
+     */
+    private boolean pendingCurrent;
 
     ThisMonth(Year year, int month) {
         ChronoField.MONTH_OF_YEAR.checkValidValue(month);
@@ -84,6 +90,7 @@ public class ThisMonth implements TheMonth {
                     break;
                 }
             }
+            pendingCurrent = true;
         }
         return this;
     }
@@ -125,7 +132,9 @@ public class ThisMonth implements TheMonth {
     @Override
     public int getLatestWeekday(int dayOfMonth) {
         ChronoField.DAY_OF_MONTH.checkValidValue(dayOfMonth);
-        LocalDateTime ldt = month.withDayOfMonth(dayOfMonth);
+        // A short month simply has no 31st, so '31W' falls back to its last day.
+        LocalDateTime ldt = month.withDayOfMonth(
+                Math.min(dayOfMonth, month.toLocalDate().lengthOfMonth()));
         LocalDateTime nextDay;
         if (ldt.getDayOfWeek() == DayOfWeek.SATURDAY) {
             nextDay = ldt.minusDays(1);
@@ -192,6 +201,9 @@ public class ThisMonth implements TheMonth {
 
     @Override
     public boolean hasNext() {
+        if (pendingCurrent) {
+            return true;
+        }
         boolean next = index < iterators.size();
         if (!next) {
             if (year.hasNext()) {
@@ -206,6 +218,10 @@ public class ThisMonth implements TheMonth {
 
     @Override
     public Month next() {
+        if (pendingCurrent) {
+            pendingCurrent = false;
+            return this;
+        }
         TagIterator iterator = iterators.get(index);
         month = iterator.next();
         if (!iterator.hasNext()) {
@@ -336,4 +352,9 @@ public class ThisMonth implements TheMonth {
 
     }
 
+
+    @Override
+    public void takePendingValue() {
+        this.pendingCurrent = false;
+    }
 }

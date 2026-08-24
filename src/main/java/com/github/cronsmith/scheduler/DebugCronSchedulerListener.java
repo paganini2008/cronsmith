@@ -37,7 +37,9 @@ public class DebugCronSchedulerListener implements CronSchedulerListener {
     @Override
     public void onTaskFailed(CronScheduledEvent event) {
         System.err.println(event);
-        event.getReason().printStackTrace();
+        if (event.getReason() != null) {
+            event.getReason().printStackTrace();
+        }
     }
 
     @Override

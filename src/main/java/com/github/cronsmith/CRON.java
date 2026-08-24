@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -76,6 +77,65 @@ public abstract class CRON {
 
     public static CronExpression setInterval(int interval, TimeUnit timeUnit) {
         return setInterval(interval, interval, timeUnit);
+    }
+
+    /**
+     * Builds a fixed-interval schedule from an ISO-8601 duration string, for example {@code "PT30S"},
+     * {@code "PT5M"}, {@code "PT2H"} or {@code "P1D"}.
+     *
+     * @see #setInterval(Duration)
+     * @throws java.time.format.DateTimeParseException if the text is not a valid ISO-8601 duration
+     * @throws IllegalArgumentException if the duration cannot be expressed as a fixed cron interval
+     */
+    public static CronExpression setInterval(String isoDuration) {
+        if (isoDuration == null) {
+            throw new IllegalArgumentException("Null duration");
+        }
+        return setInterval(Duration.parse(isoDuration.trim()));
+    }
+
+    /**
+     * Builds a fixed-interval schedule from a {@link Duration}: fire once now, then every duration
+     * thereafter.
+     *
+     * <p>
+     * A cron field steps within its own range, so an interval is only expressible when it is an exact
+     * multiple of a single unit that fits: seconds 1-59, minutes 1-59, hours 1-23, or whole days. The
+     * coarsest such unit is chosen — two hours becomes {@code everyHour(2)}, not 7200 seconds.
+     * Durations that fit none of these (for instance {@code PT1H30M}, {@code PT90M} or {@code PT25H})
+     * cannot be a fixed cron step and are rejected rather than silently rounded. Sub-second precision
+     * is likewise rejected, since cron resolves to the second.
+     *
+     * @throws IllegalArgumentException if the duration is null, not positive, has sub-second parts,
+     *         or is not an exact multiple of a single supported unit
+     */
+    public static CronExpression setInterval(Duration duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Null duration");
+        }
+        if (duration.isZero() || duration.isNegative()) {
+            throw new IllegalArgumentException("Duration must be positive: " + duration);
+        }
+        if (duration.getNano() != 0) {
+            throw new IllegalArgumentException(
+                    "Sub-second precision is not supported for a cron interval: " + duration);
+        }
+        long seconds = duration.getSeconds();
+        if (seconds % 86400L == 0L) {
+            return setInterval((int) (seconds / 86400L), TimeUnit.DAYS);
+        }
+        if (seconds % 3600L == 0L && seconds / 3600L <= 23L) {
+            return setInterval((int) (seconds / 3600L), TimeUnit.HOURS);
+        }
+        if (seconds % 60L == 0L && seconds / 60L <= 59L) {
+            return setInterval((int) (seconds / 60L), TimeUnit.MINUTES);
+        }
+        if (seconds <= 59L) {
+            return setInterval((int) seconds, TimeUnit.SECONDS);
+        }
+        throw new IllegalArgumentException("Duration " + duration
+                + " cannot be expressed as a fixed cron interval: it is not an exact multiple of a"
+                + " single supported unit (seconds 1-59, minutes 1-59, hours 1-23, or whole days).");
     }
 
     public static CronExpression setInterval(long initialDelay, int interval, TimeUnit timeUnit) {

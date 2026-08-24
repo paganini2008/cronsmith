@@ -14,6 +14,10 @@ import java.util.List;
  */
 public abstract class EnumUtils {
 
+    public record User(String id, String name, String email) {
+
+    }
+
     /**
      * All constants of the given type that belong to the given group.
      */

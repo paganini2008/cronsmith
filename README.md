@@ -240,6 +240,24 @@ new CronBuilder().setZoneId(ZoneId.of("UTC"))
 // 2028-10-02T12:00 ...
 ```
 
+**ISO-8601 durations**
+
+Turn a plain interval — an ISO-8601 duration or a `java.time.Duration` — into a schedule. Fires once
+now, then every interval thereafter.
+
+```java
+CRON.setInterval("PT30S");                 // every 30 seconds
+CRON.setInterval("PT5M");                  // every 5 minutes
+CRON.setInterval("PT2H");                  // every 2 hours
+CRON.setInterval("P1D");                   // every day
+CRON.setInterval(Duration.ofHours(2));     // same as "PT2H"
+```
+
+A cron field steps within its own range, so the coarsest exact unit is chosen — `PT120M` becomes
+every two hours, not 7200 seconds. An interval that is not an exact multiple of a single unit that
+fits (`PT1H30M`, `PT90M`, `PT25H`, or anything below a second) is rejected rather than silently
+rounded.
+
 **Multi-value `L` and `#`**
 
 ```java

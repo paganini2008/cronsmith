@@ -48,7 +48,15 @@ public abstract class TaskReflectionUtils {
      * to call it.
      */
     public static Task getTaskObject(String taskClassName, Map<String, Object> record) {
-        Class<?> taskClass = getTaskClass(taskClassName);
+        Class<?> taskClass;
+        try {
+            taskClass = getTaskClass(taskClassName);
+        } catch (TaskInvocationException e) {
+            // The task's class is not on this node — for instance a distributed executor's class,
+            // absent on a server that only triggers the task. Treat it as a data-only task and let
+            // the factory build a runnable form (which may reach the body over the network).
+            return customTaskFactory.createTaskObject(record);
+        }
         if (!Task.class.isAssignableFrom(taskClass)
                 || CustomTask.class.isAssignableFrom(taskClass)) {
             return customTaskFactory.createTaskObject(record);

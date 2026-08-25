@@ -1,21 +1,25 @@
 package com.github.cronsmith.extension;
 
+import java.io.Serializable;
 import com.github.cronsmith.cron.CronExpression;
 
 /**
- * 
+ *
  * A unit of work with a schedule attached.
- * 
+ *
  * <p>
  * Implementations are expected to be stateless with respect to a single run: the same instance is
  * reused for every occurrence, and two occurrences may overlap if one run outlives its interval.
- * 
+ *
+ * <p>
+ * Serializable so a task definition can be forwarded to, or replicated across, cluster nodes.
+ *
  * @Description: Task
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public interface Task {
+public interface Task extends Serializable {
 
     String DEFAULT_METHOD_NAME = "execute";
 

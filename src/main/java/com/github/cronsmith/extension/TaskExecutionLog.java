@@ -1,20 +1,26 @@
 package com.github.cronsmith.extension;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import com.github.cronsmith.utils.ExceptionUtils;
 
 /**
- * 
+ *
  * A record of one attempt to run a task: when it was due, when it actually started, how long it
  * took, and what came back. One row is written per attempt, so a task that failed twice before
  * succeeding leaves three.
- * 
+ *
+ * <p>
+ * Serializable so a log entry can be replicated across cluster nodes.
+ *
  * @Description: TaskExecutionLog
  * @Author: Fred Feng
  * @Date: 24/08/2026
  * @Version 1.0.0
  */
-public class TaskExecutionLog {
+public class TaskExecutionLog implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** How much of a return value or stack trace is kept, to bound the size of a log row. */
     public static final int MAX_TEXT_LENGTH = 4000;

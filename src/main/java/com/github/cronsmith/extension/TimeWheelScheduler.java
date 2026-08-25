@@ -65,8 +65,14 @@ public class TimeWheelScheduler implements AutoCloseable {
     private ErrorHandler errorHandler = new LoggingErrorHandler();
     private long tickDuration = Settings.DEFAULT_TICK_DURATION;
     private long misfireThreshold = Settings.DEFAULT_MISFIRE_THRESHOLD;
+    // 0 = load every active task into the wheel at start (the single-node default). > 0 = only hold
+    // tasks whose next fire is within this many milliseconds, claimed from the store on an interval,
+    // so a very large schedule needs only a bounded slice in memory and failover is quick.
+    private long claimWindowMillis = 0L;
+    private long claimIntervalMillis = 30000L;
 
     private volatile ScheduledFuture<?> tickFuture;
+    private volatile ScheduledFuture<?> claimFuture;
     private volatile TaskInvoker taskInvoker;
 
     public TimeWheelScheduler() {
@@ -150,6 +156,32 @@ public class TimeWheelScheduler implements AutoCloseable {
 
     public long getMisfireThreshold() {
         return misfireThreshold;
+    }
+
+    /**
+     * How far ahead, in milliseconds, to hold tasks in the wheel. {@code 0} (the default) loads every
+     * active task at start and keeps each in the wheel across runs. A positive value switches on
+     * windowed loading: only tasks due within the window are parked, the rest are left in the store
+     * and claimed as they come due, so total task count no longer bounds memory or restart time.
+     */
+    public void setClaimWindow(long claimWindowMillis) {
+        this.claimWindowMillis = Math.max(0L, claimWindowMillis);
+    }
+
+    public long getClaimWindow() {
+        return claimWindowMillis;
+    }
+
+    /** How often, in milliseconds, to claim newly-due tasks from the store when windowed. */
+    public void setClaimInterval(long claimIntervalMillis) {
+        if (claimIntervalMillis <= 0) {
+            throw new IllegalArgumentException("Claim interval must be positive");
+        }
+        this.claimIntervalMillis = claimIntervalMillis;
+    }
+
+    public long getClaimInterval() {
+        return claimIntervalMillis;
     }
 
     public boolean isStarted() {
@@ -242,10 +274,20 @@ public class TimeWheelScheduler implements AutoCloseable {
             return;
         }
         taskInvoker = new TaskInvoker(taskManager, workerThreads, taskListeners, errorHandler);
-        restoreTasks();
+        if (claimWindowMillis > 0) {
+            // Windowed: recover anything left mid-run, then claim due tasks on an interval instead
+            // of loading the whole schedule.
+            recoverRunningTasks();
+            claimFuture = schedulerThreads.scheduleAtFixedRate(this::claim, 0L, claimIntervalMillis,
+                    TimeUnit.MILLISECONDS);
+            log.info("TimeWheelScheduler started (windowed: {}ms window, {}ms claim, {}ms tick).",
+                    claimWindowMillis, claimIntervalMillis, tickDuration);
+        } else {
+            restoreTasks();
+            log.info("TimeWheelScheduler is started with a {}ms tick.", tickDuration);
+        }
         tickFuture = schedulerThreads.scheduleAtFixedRate(this::tick, tickDuration, tickDuration,
                 TimeUnit.MILLISECONDS);
-        log.info("TimeWheelScheduler is started with a {}ms tick.", tickDuration);
     }
 
     /**
@@ -261,6 +303,11 @@ public class TimeWheelScheduler implements AutoCloseable {
         if (future != null) {
             future.cancel(false);
             tickFuture = null;
+        }
+        ScheduledFuture<?> claim = claimFuture;
+        if (claim != null) {
+            claim.cancel(false);
+            claimFuture = null;
         }
         queue().clear();
         if (executorServiceFactory.isAutoClosed()) {
@@ -399,6 +446,13 @@ public class TimeWheelScheduler implements AutoCloseable {
                 finish(taskId);
                 return false;
             }
+            if (claimWindowMillis > 0 && nextFiredDateTime.isAfter(
+                    now().plusNanos(TimeUnit.MILLISECONDS.toNanos(claimWindowMillis)))) {
+                // Too far ahead to hold in the wheel. Its next fire time is already persisted, so
+                // leave it standing by in the store; the claim loop parks it once it comes due.
+                taskManager.setTaskStatus(taskId, TaskStatus.STANDBY);
+                return false;
+            }
             if (queue().offer(nextFiredDateTime, taskId)) {
                 if (taskManager.setTaskStatus(taskId, TaskStatus.SCHEDULED)) {
                     TaskDetail taskDetail = taskManager.getTaskDetail(taskId, false);
@@ -502,6 +556,55 @@ public class TimeWheelScheduler implements AutoCloseable {
         LocalDateTime catchUp = now().plusNanos(TimeUnit.MILLISECONDS.toNanos(tickDuration));
         if (queue().offer(catchUp, taskId)) {
             taskManager.setTaskStatus(taskId, TaskStatus.SCHEDULED);
+        }
+    }
+
+    /**
+     * Windowed start-up: a task left {@code RUNNING} was mid-run when the previous owner stopped.
+     * Reset it and let {@link #restoreOne} apply its misfire policy to the occurrence it was on.
+     */
+    private void recoverRunningTasks() {
+        try {
+            List<TaskDetail> running =
+                    taskManager.findTaskDetails(TaskQuery.newQuery().statuses(TaskStatus.RUNNING));
+            for (TaskDetail detail : running) {
+                TaskId taskId = detail.getTaskId();
+                if (taskManager.setTaskStatus(taskId, TaskStatus.STANDBY)) {
+                    restoreOne(taskId, detail.getNextFiredDateTime());
+                }
+            }
+        } catch (Throwable e) {
+            errorHandler.onHandleScheduler(e);
+        }
+    }
+
+    /**
+     * Windowed loading: park every task now due within the window that is not already in the wheel,
+     * at its stored fire time. Runs on an interval, so a task far in the future costs nothing until
+     * it comes due.
+     */
+    private void claim() {
+        try {
+            LocalDateTime now = now();
+            LocalDateTime windowEnd =
+                    now.plusNanos(TimeUnit.MILLISECONDS.toNanos(claimWindowMillis));
+            // From the epoch, not from now: a task whose fire time has already slipped into the past
+            // (claimed late, or missed while nothing owned the schedule) must still be picked up and
+            // handed to its misfire policy, not stranded.
+            LocalDateTime windowStart = LocalDateTime.of(1970, 1, 1, 0, 0);
+            for (TaskId taskId : taskManager.findUpcomingTasksBetween(windowStart, windowEnd)) {
+                if (queue().contains(taskId)) {
+                    continue;
+                }
+                TaskDetail detail = taskManager.getTaskDetail(taskId, false);
+                if (detail == null || detail.isUnavailable()
+                        || detail.getTaskStatus() == TaskStatus.RUNNING) {
+                    continue;
+                }
+                restoreOne(taskId, detail.getNextFiredDateTime());
+            }
+        } catch (Throwable e) {
+            errorHandler.onHandleScheduler(e);
         }
     }
 

@@ -35,3 +35,6 @@ replay_pid*
 # Other
 MEMORY.md
 
+
+# daily change logs (local only)
+change_logs/

@@ -1,19 +1,23 @@
 package com.github.cronsmith.extension;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 
+ *
  * A task together with the scheduling state the task manager holds for it. Instances are snapshots:
  * reading one twice may yield different values, and callers must not assume the state is still
  * current by the time they act on it.
- * 
+ *
+ * <p>
+ * Serializable so a snapshot can be returned across cluster nodes.
+ *
  * @Description: TaskDetail
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public interface TaskDetail {
+public interface TaskDetail extends Serializable {
 
     Task getTask();
 

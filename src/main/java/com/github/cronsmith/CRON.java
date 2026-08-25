@@ -25,6 +25,7 @@ import org.antlr.v4.runtime.tree.Trees;
 import com.github.cronsmith.antlr.CronExpressionLexer;
 import com.github.cronsmith.antlr.CronExpressionParser;
 import com.github.cronsmith.cron.CronBuilder;
+import com.github.cronsmith.cron.PeriodicCronExpression;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
 import com.github.cronsmith.cron.DayOfWeek;
@@ -161,6 +162,36 @@ public abstract class CRON {
             default:
                 throw new UnsupportedOperationException("timeUnit: " + timeUnit.name());
         }
+    }
+
+    /**
+     * A true fixed-period schedule: fire now, then every {@code duration} thereafter, with no regard
+     * for calendar boundaries. Unlike {@link #setInterval(Duration)}, any interval works — including
+     * ones a single cron field cannot express, such as {@code PT1H30M} (90 minutes) or {@code PT25H}.
+     */
+    public static CronExpression every(Duration duration) {
+        if (duration == null) {
+            throw new IllegalArgumentException("Null duration");
+        }
+        if (duration.isZero() || duration.isNegative()) {
+            throw new IllegalArgumentException("Duration must be positive: " + duration);
+        }
+        return new PeriodicCronExpression(duration.toMillis(), LocalDateTime.now());
+    }
+
+    public static CronExpression every(long interval, TimeUnit timeUnit) {
+        if (interval <= 0 || timeUnit == null) {
+            throw new IllegalArgumentException("Invalid interval or timeUnit");
+        }
+        return every(Duration.ofMillis(timeUnit.toMillis(interval)));
+    }
+
+    /** Fixed-period schedule from an ISO-8601 duration string such as {@code "PT1H30M"}. */
+    public static CronExpression every(String isoDuration) {
+        if (isoDuration == null) {
+            throw new IllegalArgumentException("Null duration");
+        }
+        return every(Duration.parse(isoDuration.trim()));
     }
 
     /** Number of fields in a Unix crontab line: minute, hour, day-of-month, month, day-of-week. */

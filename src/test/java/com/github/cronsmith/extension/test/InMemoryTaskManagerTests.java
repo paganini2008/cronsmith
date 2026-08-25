@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,8 +31,10 @@ import com.github.cronsmith.extension.TaskStatus;
  */
 public class InMemoryTaskManagerTests {
 
+    // Anchored to tomorrow's midnight, not a fixed calendar date: saveTask() sync()s the schedule to
+    // "now", so a deterministic fire-time window has to start after now regardless of the run date.
     private static final LocalDateTime BASE =
-            LocalDateTime.of(2026, Month.AUGUST, 24, 10, 0, 0);
+            LocalDateTime.now().plusDays(1).truncatedTo(java.time.temporal.ChronoUnit.DAYS);
 
     private InMemoryTaskManager taskManager;
 

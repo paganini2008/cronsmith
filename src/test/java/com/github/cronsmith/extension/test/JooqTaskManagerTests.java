@@ -7,7 +7,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -45,8 +44,11 @@ import com.zaxxer.hikari.HikariDataSource;
 @RunWith(Parameterized.class)
 public class JooqTaskManagerTests {
 
+    // Anchored to tomorrow's midnight rather than a fixed calendar date. saveTask() sync()s a task's
+    // schedule to "now", so fire-time windows have to start after now to be deterministic whatever
+    // day (and time of day) the suite runs; a hard-coded past date made these assertions drift.
     private static final LocalDateTime BASE =
-            LocalDateTime.of(2026, Month.AUGUST, 24, 10, 0, 0);
+            LocalDateTime.now().plusDays(1).truncatedTo(java.time.temporal.ChronoUnit.DAYS);
 
     @Parameters(name = "{0}")
     public static Collection<Object[]> databases() {

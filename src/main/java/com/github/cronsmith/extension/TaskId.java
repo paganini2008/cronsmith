@@ -1,16 +1,21 @@
 package com.github.cronsmith.extension;
 
+import java.io.Serializable;
+
 /**
- * 
+ *
  * Identifies a task by group and name. The pair is the primary key everywhere a task is stored, so
  * implementations must be immutable and must define equals and hashCode.
- * 
+ *
+ * <p>
+ * Serializable so a task id can travel between cluster nodes.
+ *
  * @Description: TaskId
  * @Author: Fred Feng
  * @Date: 30/03/2025
  * @Version 1.0.0
  */
-public interface TaskId {
+public interface TaskId extends Serializable {
 
     String DEFAULT_GROUP = "default";
 

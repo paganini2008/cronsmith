@@ -189,6 +189,18 @@ public class TimeWheelScheduler implements AutoCloseable {
     }
 
     /**
+     * Runs one windowed claim immediately, on top of the periodic one, so an external change — a
+     * cluster re-sharding, say — is picked up at once rather than at the next claim interval.
+     * Submitted to the scheduler's own executor, so it is serialized with the periodic claim and the
+     * tick and adds no new concurrency. A no-op when the scheduler is stopped or not windowed.
+     */
+    public void claimNow() {
+        if (started.get() && claimWindowMillis > 0) {
+            schedulerThreads.execute(this::claim);
+        }
+    }
+
+    /**
      * Registers a task and queues its first run. Re-registering a task that is already scheduled
      * does nothing; one that has finished or been canceled is registered afresh.
      * 

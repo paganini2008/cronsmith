@@ -20,7 +20,7 @@ import com.github.cronsmith.utils.ExceptionUtils;
  */
 public class TaskExecutionLog implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 3486547908234561239L;
 
     /** How much of a return value or stack trace is kept, to bound the size of a log row. */
     public static final int MAX_TEXT_LENGTH = 4000;

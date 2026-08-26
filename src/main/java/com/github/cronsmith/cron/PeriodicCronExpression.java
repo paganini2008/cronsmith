@@ -21,7 +21,7 @@ import java.util.Iterator;
  */
 public class PeriodicCronExpression implements CronExpression, Iterator<CronExpression> {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -6427883901276544820L;
 
     private final CronBuilder parent;
     private final long periodMillis;

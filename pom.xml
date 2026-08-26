@@ -17,8 +17,8 @@
   </developers>  
   <licenses>
     <license>
-        <name>MIT License</name>
-        <url>https://opensource.org/licenses/MIT</url>
+        <name>Apache License, Version 2.0</name>
+        <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         <distribution>repo</distribution>
     </license>
   </licenses>
@@ -192,6 +192,32 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Attach a javadoc jar on every build, alongside the sources jar above. doclint is off so
+           the build never fails on non-conforming comments; the ANTLR-generated sources carry no
+           usable doc and are excluded. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.11.2</version>
+        <configuration>
+          <doclint>none</doclint>
+          <charset>UTF-8</charset>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <sourceFileExcludes>
+            <exclude>com/github/cronsmith/antlr/**</exclude>
+          </sourceFileExcludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin> 
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-maven-plugin</artifactId>
@@ -276,28 +302,32 @@
             </executions> 
           </plugin>  
           -->
-          <!-- Javadoc -->  
-          <plugin> 
-            <groupId>org.apache.maven.plugins</groupId>  
-            <artifactId>maven-javadoc-plugin</artifactId>  
-            <version>2.9.1</version>  
-            <configuration> 
-              <show>private</show>  
-              <nohelp>true</nohelp>  
-              <charset>UTF-8</charset>  
-              <encoding>UTF-8</encoding>  
-              <docencoding>UTF-8</docencoding>  
-              <additionalparam>-Xdoclint:none</additionalparam> 
-            </configuration>  
-            <executions> 
-              <execution> 
-                <phase>package</phase>  
-                <goals> 
-                  <goal>jar</goal> 
-                </goals> 
-              </execution> 
-            </executions> 
-          </plugin>  
+          <!-- Javadoc: now attached by the maven-javadoc-plugin in the main build, so enabling it
+               here would bind the jar goal to package a second time and fail on a duplicate
+               attachment. Kept for reference only. -->
+          <!--
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <configuration>
+              <show>private</show>
+              <nohelp>true</nohelp>
+              <charset>UTF-8</charset>
+              <encoding>UTF-8</encoding>
+              <docencoding>UTF-8</docencoding>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          -->
           <!-- GPG -->  
           <plugin> 
             <groupId>org.apache.maven.plugins</groupId>  

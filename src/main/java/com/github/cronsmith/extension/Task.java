@@ -81,9 +81,21 @@ public interface Task extends Serializable {
     Object execute(String initialParameter);
 
     /**
-     * Called after every run, successful or not, with exactly one of the two arguments set. Runs on
-     * a worker thread and must not throw; anything it throws is reported to the error handler and
-     * otherwise ignored.
+     * An optional per-task completion hook: called after every run, successful or not, with exactly
+     * one of the two arguments set. Runs on a worker thread and must not throw; anything it throws is
+     * reported to the error handler and otherwise ignored.
+     *
+     * <p>
+     * This is an extension point for a task written as code — a class that implements {@link Task}
+     * directly and wants to react to its own outcome (update its state, fire a notification, release a
+     * latch) without registering anything. The default is a no-op, which is correct and expected for
+     * the data-driven built-in tasks: a task whose body is a reflective call or an HTTP request has
+     * nothing local to do here.
+     *
+     * <p>
+     * To observe the outcome of <em>every</em> task from one place (metrics, alerting), register a
+     * {@link TaskListener} and use {@link TaskListener#onTaskEnded} instead — it receives the same
+     * result and throwable, but as a cross-cutting observer rather than a per-task self-callback.
      */
     default void handleResult(Object result, Throwable reason) {}
 

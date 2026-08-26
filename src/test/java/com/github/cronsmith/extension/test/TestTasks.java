@@ -288,52 +288,31 @@ public abstract class TestTasks {
      * @Date: 24/08/2026
      * @Version 1.0.0
      */
-    public static class PersistentTask implements com.github.cronsmith.extension.CustomTask {
-
-        private final String group;
-        private final String name;
-        private final String cronText;
-        private final String method;
+    public static class PersistentTask extends com.github.cronsmith.extension.BeanReflectionTask {
 
         public PersistentTask(String group, String name, String cronText) {
             this(group, name, cronText, "execute");
         }
 
         public PersistentTask(String group, String name, String cronText, String method) {
-            this.group = group;
-            this.name = name;
-            this.cronText = cronText;
-            this.method = method;
+            super(record(group, name, cronText, method));
+        }
+
+        private static java.util.Map<String, Object> record(String group, String name,
+                String cronText, String method) {
+            java.util.Map<String, Object> record = new java.util.HashMap<>();
+            record.put("taskGroup", group);
+            record.put("taskName", name);
+            record.put("taskClass", ReflectiveTarget.class.getName());
+            record.put("taskMethod", method);
+            record.put("cron", cronText);
+            return record;
         }
 
         @Override
-        public TaskId getTaskId() {
-            return TaskId.of(group, name);
-        }
-
-        @Override
-        public String getTaskClassName() {
-            return ReflectiveTarget.class.getName();
-        }
-
-        @Override
-        public String getTaskMethodName() {
-            return method;
-        }
-
-        @Override
-        public String getUrl() {
-            return null;
-        }
-
-        @Override
-        public CronExpression getCronExpression() {
-            return com.github.cronsmith.CRON.parse(cronText);
-        }
-
-        @Override
-        public Object execute(String initialParameter) {
-            // Not called on the restored path -- there the rebuilt DefaultCustomTask runs the body
+        protected Object invokeTaskMethod(TaskId taskId, String taskClassName, String taskMethodName,
+                String initialParameter) {
+            // Not called on the restored path -- there the rebuilt bean-reflection task runs the body
             // reflectively -- but a task saved directly still needs a working execute().
             return new ReflectiveTarget().execute(initialParameter);
         }

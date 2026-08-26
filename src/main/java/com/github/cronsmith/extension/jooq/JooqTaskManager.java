@@ -48,7 +48,8 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.tools.jdbc.JDBCUtils;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.extension.CustomTask;
+import com.github.cronsmith.extension.ApiCallTask;
+import com.github.cronsmith.extension.BeanReflectionTask;
 import com.github.cronsmith.extension.MisfirePolicy;
 import com.github.cronsmith.extension.Settings;
 import com.github.cronsmith.extension.Task;
@@ -237,10 +238,23 @@ public class JooqTaskManager implements TaskManager {
         // Anchored to now before it is stored, so the fire times computed from the row start from
         // when the task was registered rather than from whenever its builder was constructed.
         CronExpression cronExpression = task.getCronExpression().sync();
-        String taskClass = TaskReflectionUtils.taskClassNameOf(task);
-        String taskMethod = task instanceof CustomTask ? ((CustomTask) task).getTaskMethodName()
-                : Task.DEFAULT_METHOD_NAME;
-        String url = task instanceof CustomTask ? ((CustomTask) task).getUrl() : null;
+        String taskClass;
+        String taskMethod;
+        String url;
+        if (task instanceof ApiCallTask apiCallTask) {
+            // A data-only HTTP task: no class or method; the request line lives in the url column.
+            taskClass = null;
+            taskMethod = null;
+            url = apiCallTask.getUrl();
+        } else if (task instanceof BeanReflectionTask beanReflectionTask) {
+            taskClass = beanReflectionTask.getTaskClassName();
+            taskMethod = beanReflectionTask.getTaskMethodName();
+            url = null;
+        } else {
+            taskClass = task.getClass().getName();
+            taskMethod = Task.DEFAULT_METHOD_NAME;
+            url = null;
+        }
         try {
             // Re-saving is a re-registration: the definition is refreshed and the task drops back
             // to standby with no fire times, but its counters are history and are left alone.
@@ -316,7 +330,7 @@ public class JooqTaskManager implements TaskManager {
 
     /**
      * Turns a row into a map keyed by property name, which is the form
-     * {@link com.github.cronsmith.extension.AbstractCustomTask} reads a stored task from.
+     * {@link com.github.cronsmith.extension.AbstractTask} reads a stored task from.
      */
     private static Map<String, Object> toMap(Record record) {
         CamelCasedLinkedHashMap map = new CamelCasedLinkedHashMap(record.size());

@@ -26,45 +26,55 @@ public abstract class TaskReflectionUtils {
     private static final Map<String, Object> taskObjects = new ConcurrentHashMap<>();
     private static final Map<String, Method> taskMethods = new ConcurrentHashMap<>();
 
-    private static volatile CustomTaskFactory customTaskFactory = new DefaultCustomTaskFactory();
+    private static volatile TaskFactory taskFactory = new DefaultTaskFactory();
 
     /**
      * Replaces the factory used to rebuild tasks from stored rows.
      */
-    public static void setCustomTaskFactory(CustomTaskFactory factory) {
+    public static void setTaskFactory(TaskFactory factory) {
         if (factory == null) {
-            throw new IllegalArgumentException("CustomTaskFactory is required");
+            throw new IllegalArgumentException("TaskFactory is required");
         }
-        customTaskFactory = factory;
+        taskFactory = factory;
     }
 
-    public static CustomTaskFactory getCustomTaskFactory() {
-        return customTaskFactory;
+    public static TaskFactory getTaskFactory() {
+        return taskFactory;
     }
 
     /**
-     * The task a stored row stands for. A class that implements {@link Task} directly is
-     * instantiated as itself; anything else is wrapped by the custom task factory, which knows how
-     * to call it.
+     * The task a stored row stands for. There are two kinds, told apart by the row itself:
+     *
+     * <ul>
+     * <li>A row carrying a request line (a non-blank {@code url}) is an HTTP-API task, built by the
+     * factory straight from the row.
+     * <li>Everything else is a bean task. A class that implements {@link Task} directly is
+     * instantiated as itself; a plain target class (no {@link Task}), or one absent from this node,
+     * is wrapped by the factory as a bean-reflection task, which knows how to reach its body — even
+     * over the network.
+     * </ul>
      */
     public static Task getTaskObject(String taskClassName, Map<String, Object> record) {
+        Object url = record != null ? record.get("url") : null;
+        if (url != null && !url.toString().isBlank()) {
+            return taskFactory.createApiCallTask(record);
+        }
         if (taskClassName == null || taskClassName.trim().isEmpty()) {
-            // A data-only task (such as an HTTP-API task) stores no class of its own; let the
-            // factory build a runnable form straight from the row.
-            return customTaskFactory.createTaskObject(record);
+            return taskFactory.createBeanReflectionTask(record);
         }
         Class<?> taskClass;
         try {
             taskClass = getTaskClass(taskClassName);
         } catch (TaskInvocationException e) {
             // The task's class is not on this node — for instance a distributed executor's class,
-            // absent on a server that only triggers the task. Treat it as a data-only task and let
-            // the factory build a runnable form (which may reach the body over the network).
-            return customTaskFactory.createTaskObject(record);
+            // absent on a server that only triggers the task. Let the factory build a bean-reflection
+            // form (which may reach the body over the network).
+            return taskFactory.createBeanReflectionTask(record);
         }
         if (!Task.class.isAssignableFrom(taskClass)
-                || CustomTask.class.isAssignableFrom(taskClass)) {
-            return customTaskFactory.createTaskObject(record);
+                || BeanReflectionTask.class.isAssignableFrom(taskClass)
+                || ApiCallTask.class.isAssignableFrom(taskClass)) {
+            return taskFactory.createBeanReflectionTask(record);
         }
         return (Task) getTaskObject(taskClassName);
     }
@@ -151,8 +161,14 @@ public abstract class TaskReflectionUtils {
      * stands in for, rather than the wrapper's own class.
      */
     public static String taskClassNameOf(Task task) {
-        return task instanceof CustomTask ? ((CustomTask) task).getTaskClassName()
-                : task.getClass().getName();
+        if (task instanceof BeanReflectionTask) {
+            return ((BeanReflectionTask) task).getTaskClassName();
+        }
+        if (task instanceof ApiCallTask) {
+            // A data-only HTTP task stands for no class of its own; nothing to filter it by.
+            return "";
+        }
+        return task.getClass().getName();
     }
 
     /**

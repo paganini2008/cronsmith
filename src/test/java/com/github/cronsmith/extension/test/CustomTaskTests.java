@@ -11,7 +11,8 @@ import java.util.Map;
 import org.junit.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.extension.CustomTask;
+import com.github.cronsmith.extension.BeanReflectionTask;
+import com.github.cronsmith.extension.DefaultTaskFactory;
 import com.github.cronsmith.extension.MisfirePolicy;
 import com.github.cronsmith.extension.TaskException;
 import com.github.cronsmith.extension.TaskId;
@@ -19,10 +20,10 @@ import com.github.cronsmith.extension.TaskReflectionUtils;
 import com.github.cronsmith.extension.test.TestTasks.ReflectiveTarget;
 
 /**
- * 
- * Covers how a task rebuilt from a stored row reads each of its properties, especially the several
- * forms the schedule can be stored in.
- * 
+ *
+ * Covers how a bean-reflection task rebuilt from a stored row reads each of its properties,
+ * especially the several forms the schedule can be stored in.
+ *
  * @Description: CustomTaskTests
  * @Author: Fred Feng
  * @Date: 24/08/2026
@@ -39,8 +40,9 @@ public class CustomTaskTests {
         return record;
     }
 
-    private CustomTask custom(Map<String, Object> record) {
-        return TaskReflectionUtils.getCustomTaskFactory().createTaskObject(record);
+    private BeanReflectionTask bean(Map<String, Object> record) {
+        return (BeanReflectionTask) TaskReflectionUtils.getTaskFactory()
+                .createBeanReflectionTask(record);
     }
 
     @Test
@@ -48,70 +50,68 @@ public class CustomTaskTests {
         Map<String, Object> record = baseRecord();
         CronExpression expr = CRON.parse("0 0 12 * * ?");
         record.put("cronExpression", expr);
-        assertEquals(expr, custom(record).getCronExpression());
+        assertEquals(expr, bean(record).getCronExpression());
     }
 
     @Test
     public void testScheduleFromBytes() {
         Map<String, Object> record = baseRecord();
         record.put("cronExpression", CRON.parse("0 0 12 * * ?").serialize());
-        assertEquals("0 0 12 * * ?", custom(record).getCronExpression().toString());
+        assertEquals("0 0 12 * * ?", bean(record).getCronExpression().toString());
     }
 
     @Test
     public void testScheduleFromText() {
         Map<String, Object> record = baseRecord();
         record.put("cronExpression", "0 0/5 * * * ?");
-        assertEquals("0 0/5 * * * ?", custom(record).getCronExpression().toString());
+        assertEquals("0 0/5 * * * ?", bean(record).getCronExpression().toString());
     }
 
     @Test
     public void testScheduleFromCronColumnFallback() {
         Map<String, Object> record = baseRecord();
         record.put("cron", "0 0 12 * * ?");
-        assertNotNull(custom(record).getCronExpression());
+        assertNotNull(bean(record).getCronExpression());
     }
 
     @Test
     public void testScheduleFromLocalDateTime() {
         Map<String, Object> record = baseRecord();
         record.put("cronExpression", LocalDateTime.now().plusDays(1));
-        assertNotNull(custom(record).getCronExpression());
+        assertNotNull(bean(record).getCronExpression());
     }
 
     @Test
     public void testScheduleFromLocalDate() {
         Map<String, Object> record = baseRecord();
         record.put("cronExpression", LocalDate.now().plusDays(1));
-        assertNotNull(custom(record).getCronExpression());
+        assertNotNull(bean(record).getCronExpression());
     }
 
     @Test
     public void testScheduleFromLocalTime() {
         Map<String, Object> record = baseRecord();
         record.put("cronExpression", LocalTime.of(23, 30));
-        assertNotNull(custom(record).getCronExpression());
+        assertNotNull(bean(record).getCronExpression());
     }
 
     @Test(expected = TaskException.class)
     public void testMissingScheduleThrows() {
-        custom(baseRecord()).getCronExpression();
+        bean(baseRecord()).getCronExpression();
     }
 
     @Test
     public void testIdentityAndMetadata() {
         Map<String, Object> record = baseRecord();
-        record.put("url", "http://x");
         record.put("description", "desc");
         record.put("timeout", 5000L);
         record.put("maxRetryCount", 3);
         record.put("initialParameter", "p");
         record.put("misfirePolicy", "SKIP");
-        CustomTask task = custom(record);
+        BeanReflectionTask task = bean(record);
         assertEquals(TaskId.of("g", "n"), task.getTaskId());
         assertEquals(ReflectiveTarget.class.getName(), task.getTaskClassName());
         assertEquals("execute", task.getTaskMethodName());
-        assertEquals("http://x", task.getUrl());
         assertEquals("desc", task.getDescription());
         assertEquals(5000L, task.getTimeout());
         assertEquals(3, task.getMaxRetryCount());
@@ -125,7 +125,7 @@ public class CustomTaskTests {
         record.put("cron", "0 0 12 * * ?");
         record.put("timeout", "2000");
         record.put("maxRetryCount", "4");
-        CustomTask task = custom(record);
+        BeanReflectionTask task = bean(record);
         assertEquals(2000L, task.getTimeout());
         assertEquals(4, task.getMaxRetryCount());
     }
@@ -134,7 +134,7 @@ public class CustomTaskTests {
     public void testDefaultsWhenAbsent() {
         Map<String, Object> record = baseRecord();
         record.put("cron", "0 0 12 * * ?");
-        CustomTask task = custom(record);
+        BeanReflectionTask task = bean(record);
         assertEquals(-1L, task.getTimeout());
         assertEquals(0, task.getMaxRetryCount());
         assertEquals(MisfirePolicy.FIRE_ONCE_NOW, task.getMisfirePolicy());
@@ -146,7 +146,7 @@ public class CustomTaskTests {
         Map<String, Object> record = baseRecord();
         record.put("cron", "0 0 12 * * ?");
         ReflectiveTarget.resetCalls();
-        Object result = custom(record).execute("arg");
+        Object result = bean(record).execute("arg");
         assertEquals("reflective:arg", result);
         assertTrue(ReflectiveTarget.getCalls() >= 1);
     }
@@ -155,13 +155,12 @@ public class CustomTaskTests {
     public void testToString() {
         Map<String, Object> record = baseRecord();
         record.put("cron", "0 0 12 * * ?");
-        assertTrue(custom(record).toString().contains("g#n"));
+        assertTrue(bean(record).toString().contains("g#n"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullRecordRejected() {
-        new com.github.cronsmith.extension.DefaultCustomTaskFactory().createTaskObject(null)
-                .getTaskId();
+        new DefaultTaskFactory().createBeanReflectionTask(null).getTaskId();
     }
 
 }

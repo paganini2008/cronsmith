@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.extension.CustomTask;
+import com.github.cronsmith.extension.Task;
 import com.github.cronsmith.extension.TaskId;
 import com.github.cronsmith.extension.TimeWheelScheduler;
 import com.github.cronsmith.extension.jooq.JooqTaskManager;
@@ -85,26 +85,11 @@ public class CustomTaskSchedulingTests {
      * @Date: 24/08/2026
      * @Version 1.0.0
      */
-    public static class ReportTask implements CustomTask {
+    public static class ReportTask implements Task {
 
         @Override
         public TaskId getTaskId() {
             return TaskId.of("reports", "daily-report");
-        }
-
-        @Override
-        public String getTaskClassName() {
-            return BusinessService.class.getName();
-        }
-
-        @Override
-        public String getTaskMethodName() {
-            return "runReport";
-        }
-
-        @Override
-        public String getUrl() {
-            return null;
         }
 
         @Override

@@ -48,6 +48,11 @@ public abstract class TaskReflectionUtils {
      * to call it.
      */
     public static Task getTaskObject(String taskClassName, Map<String, Object> record) {
+        if (taskClassName == null || taskClassName.trim().isEmpty()) {
+            // A data-only task (such as an HTTP-API task) stores no class of its own; let the
+            // factory build a runnable form straight from the row.
+            return customTaskFactory.createTaskObject(record);
+        }
         Class<?> taskClass;
         try {
             taskClass = getTaskClass(taskClassName);

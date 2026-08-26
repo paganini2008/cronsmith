@@ -34,6 +34,7 @@ public class TaskExecutionLog implements Serializable {
     private long elapsed;
     private int attempt;
     private boolean success;
+    private String parameter;
 
     public TaskExecutionLog(TaskId taskId, LocalDateTime scheduledDateTime) {
         this.taskId = taskId;
@@ -125,6 +126,16 @@ public class TaskExecutionLog implements Serializable {
 
     public TaskExecutionLog success(boolean success) {
         this.success = success;
+        return this;
+    }
+
+    public String getParameter() {
+        return parameter;
+    }
+
+    /** Records the input parameter the task was invoked with for this run. */
+    public TaskExecutionLog parameter(String parameter) {
+        this.parameter = truncate(parameter);
         return this;
     }
 

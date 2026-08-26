@@ -9,7 +9,7 @@ import java.sql.Statement;
 import org.h2.jdbcx.JdbcDataSource;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
-import com.github.cronsmith.extension.CustomTask;
+import com.github.cronsmith.extension.Task;
 import com.github.cronsmith.extension.TaskId;
 import com.github.cronsmith.extension.TimeWheelScheduler;
 import com.github.cronsmith.extension.jooq.JooqTaskManager;
@@ -18,8 +18,8 @@ import com.github.cronsmith.extension.jooq.JooqTaskManager;
  *
  * A runnable example of the persistent scheduler. It stores tasks in an embedded H2 database through
  * the JOOQ task manager, so the schedule would survive a restart against a real database. The task
- * is a {@link CustomTask} — its whole definition is data, which is what lets it be rebuilt from a
- * stored row and reached reflectively.
+ * is a plain {@link Task} whose class is stored by name, which is what lets it be rebuilt from a
+ * stored row after a restart.
  *
  * <p>
  * Swap the H2 {@code DataSource} for PostgreSQL, MySQL or SQLite and nothing else changes; only run
@@ -69,26 +69,11 @@ public class PersistentTaskExample {
      * @Date: 24/08/2026
      * @Version 1.0.0
      */
-    public static class ReportTask implements CustomTask {
+    public static class ReportTask implements Task {
 
         @Override
         public TaskId getTaskId() {
             return TaskId.of("reports", "sales");
-        }
-
-        @Override
-        public String getTaskClassName() {
-            return ReportService.class.getName();
-        }
-
-        @Override
-        public String getTaskMethodName() {
-            return "sendReport";
-        }
-
-        @Override
-        public String getUrl() {
-            return null;
         }
 
         @Override

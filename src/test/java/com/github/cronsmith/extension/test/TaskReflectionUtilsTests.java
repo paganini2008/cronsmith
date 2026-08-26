@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
-import com.github.cronsmith.extension.CustomTask;
+import com.github.cronsmith.extension.BeanReflectionTask;
 import com.github.cronsmith.extension.Task;
 import com.github.cronsmith.extension.TaskId;
 import com.github.cronsmith.extension.TaskInvocationException;
@@ -115,8 +115,9 @@ public class TaskReflectionUtilsTests {
         record.put("taskName", "n");
         record.put("taskClass", TARGET);
         record.put("cron", "0 0 12 * * ?");
-        CustomTask custom =
-                TaskReflectionUtils.getCustomTaskFactory().createTaskObject(record);
+        BeanReflectionTask custom =
+                (BeanReflectionTask) TaskReflectionUtils.getTaskFactory()
+                        .createBeanReflectionTask(record);
         assertEquals(TARGET, TaskReflectionUtils.taskClassNameOf(custom));
     }
 
@@ -131,7 +132,7 @@ public class TaskReflectionUtilsTests {
         // used as a task itself.
         Task task = TaskReflectionUtils.getTaskObject(TARGET, record);
         assertNotNull(task);
-        assertTrue(task instanceof CustomTask);
+        assertTrue(task instanceof BeanReflectionTask);
         assertEquals(TaskId.of("g", "n"), task.getTaskId());
     }
 

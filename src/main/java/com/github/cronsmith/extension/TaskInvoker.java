@@ -54,7 +54,8 @@ class TaskInvoker {
 
         for (int attempt = 0; attempt <= maxRetryCount; attempt++) {
             TaskExecutionLog executionLog =
-                    new TaskExecutionLog(taskId, scheduledDateTime).attempt(attempt);
+                    new TaskExecutionLog(taskId, scheduledDateTime).attempt(attempt)
+                            .parameter(initialParameter);
             LocalDateTime firedDateTime = Settings.now();
             long startedAt = System.currentTimeMillis();
             executionLog.firedAt(firedDateTime);

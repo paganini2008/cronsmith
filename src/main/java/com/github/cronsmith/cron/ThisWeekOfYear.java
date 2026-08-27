@@ -4,8 +4,11 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import com.github.cronsmith.YCRON;
 import com.github.cronsmith.utils.AbbreviationUtils;
 import com.github.cronsmith.utils.IteratorUtils;
 
@@ -179,8 +182,53 @@ public class ThisWeekOfYear implements TheWeek, PendingValueHolder {
     }
 
     @Override
+    public CronType getCronType() {
+        return CronType.YCRON;
+    }
+
+    /**
+     * Week-of-year has no field in traditional cron, so it stays unrenderable there - the CRON path
+     * keeps refusing it. YCRON, which does have a week-of-year field, calls {@link #toCronString()}
+     * directly instead.
+     */
+    @Override
     public boolean supportCronString() {
         return false;
+    }
+
+    /**
+     * The week-of-year field body, e.g. {@code 20}, {@code 10-14/2} or {@code L} (the last ISO week
+     * of the year). The internal iterators still carry the {@code 1#20} / {@code 1L} shape from when
+     * week-of-year borrowed the day-of-week field; here that day-of-week prefix is stripped so the
+     * YCRON week-of-year field reads as bare weeks. Placed by {@link YCRON}, not by the traditional
+     * CRON path.
+     */
+    @Override
+    public String toCronString() {
+        return iterators.stream().map(Object::toString)
+                .flatMap(tag -> Arrays.stream(tag.split(",")))
+                .map(ThisWeekOfYear::stripDayOfWeek).collect(Collectors.joining(","));
+    }
+
+    /**
+     * The iterators still carry the day-of-week marker week-of-year borrowed from the day-of-week
+     * field - "MON#20" / "1#20" for a week, and "1L" for the last week. Strip it so the YCRON
+     * week-of-year field reads as bare weeks ("20", "L").
+     */
+    private static String stripDayOfWeek(String token) {
+        int hash = token.indexOf('#');
+        if (hash >= 0) {
+            return token.substring(hash + 1);
+        }
+        if (token.endsWith("L")) {
+            return "L";
+        }
+        return token;
+    }
+
+    @Override
+    public String toString() {
+        return YCRON.toYCronString(this);
     }
 
     private class SingleValueIterator implements TagIterator {

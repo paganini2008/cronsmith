@@ -131,11 +131,8 @@ public class EveryYear implements Year {
         return new ThisMonth(IteratorUtils.getFirst(copy), month);
     }
 
-    @Override
-    public Day lastDay() {
-        final Year copy = (Year) this.copy();
-        return new ThisDayOfYear(IteratorUtils.getFirst(copy, copy));
-    }
+    // lastDay() intentionally not overridden: the Year default routes the year's last day to
+    // traditional "L in December" (a fixed calendar date), keeping it out of YCRON.
 
     @Override
     public Week lastWeek() {

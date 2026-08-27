@@ -2,6 +2,7 @@ package com.github.cronsmith.extension;
 
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.cron.CronType;
 import com.github.cronsmith.extension.MisfirePolicy;
 import com.github.cronsmith.extension.Task;
 import com.github.cronsmith.extension.TaskException;
@@ -89,15 +90,25 @@ public abstract class AbstractTask implements Task {
         } else if (object instanceof LocalTime) {
             return CRON.setInterval((LocalTime) object);
         } else if (object instanceof CharSequence) {
-            return CRON.parse(object.toString());
+            return CRON.parse(object.toString(), cronType());
         }
         // The 'cron' column holds the text form and is written alongside the bytes, so it is worth
         // trying before giving up.
         Object cron = record.get("cron");
         if (cron instanceof CharSequence) {
-            return CRON.parse(cron.toString());
+            return CRON.parse(cron.toString(), cronType());
         }
         throw new TaskException("No cron expression stored for task: " + getTaskId());
+    }
+
+    /**
+     * Which cron family the stored text expression is written in, as declared by the task's
+     * {@code parser} attribute ({@code "cron"} / {@code "ycron"}). Only consulted when the schedule
+     * is a text expression; a schedule restored from its serialized bytes already knows its own
+     * type. Defaults to {@link CronType#CRON}.
+     */
+    protected CronType cronType() {
+        return CronType.of(stringOf("parser", "cron"));
     }
 
     protected String stringOf(String key, String defaultValue) {

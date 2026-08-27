@@ -6,6 +6,8 @@ import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import com.github.cronsmith.YCRON;
 import com.github.cronsmith.utils.IteratorUtils;
 
 /**
@@ -219,8 +221,32 @@ public class ThisDayOfYear implements TheDay, PendingValueHolder {
     }
 
     @Override
+    public CronType getCronType() {
+        return CronType.YCRON;
+    }
+
+    /**
+     * Day-of-year has no field in traditional cron, so it stays unrenderable there - the CRON path
+     * keeps refusing it. YCRON, which does have a day-of-year field, calls {@link #toCronString()}
+     * directly instead.
+     */
+    @Override
     public boolean supportCronString() {
         return false;
+    }
+
+    /**
+     * The day-of-year field body, e.g. {@code 100}, {@code 100-200/10}, {@code L}, {@code L-3},
+     * {@code 100W} or {@code LW}. Placed by {@link YCRON}, not by the traditional CRON path.
+     */
+    @Override
+    public String toCronString() {
+        return iterators.stream().map(Object::toString).collect(Collectors.joining(","));
+    }
+
+    @Override
+    public String toString() {
+        return YCRON.toYCronString(this);
     }
 
     private class ToLastWeekdayIterator extends ValueRangeIterator {

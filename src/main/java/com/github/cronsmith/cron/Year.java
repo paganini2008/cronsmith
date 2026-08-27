@@ -3,7 +3,7 @@ package com.github.cronsmith.cron;
 import java.util.Iterator;
 
 /**
- * 
+ *
  * @Description: Year
  * @Author: Fred Feng
  * @Date: 26/02/2025
@@ -11,7 +11,7 @@ import java.util.Iterator;
  */
 public interface Year extends Iterator<Year>, CronExpression {
 
-    static final int MAX_YEAR = 2099;
+    static final int MAX_YEAR = 2999;
 
     int getYear();
 
@@ -32,7 +32,10 @@ public interface Year extends Iterator<Year>, CronExpression {
     TheDay day(int dayOfYear);
 
     default Day lastDay() {
-        return day(getLastDayOfYear());
+        // The last day of the year is always 31 December - a fixed calendar date plain cron
+        // expresses directly - so it stays traditional (L in December) rather than becoming a
+        // year-based day-of-year. Only what has no fixed field, e.g. day(100), is YCRON.
+        return Dec().lastDay();
     }
 
     TheWeek week(int week);

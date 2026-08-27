@@ -46,17 +46,19 @@ hourField
     ;
     
 dayOfMonthField
-    : rangeWithStep 
+    : rangeWithStep
+    | INT '-' INT 'W' ('/' INT)?
+    | INT '-' 'LW' ('/' INT)?
     | range
-    | '*/' INT  
-    | INT '/' INT   
-    | '*'     
-    | INT 'W'        
-    | INT      
-    | '?' 
-    | 'LW'      
+    | '*/' INT
+    | INT '/' INT
+    | '*'
+    | INT 'W'
+    | INT
+    | '?'
+    | 'LW'
     | 'L'
-    | 'L-' INT    
+    | 'L-' INT
     ;
 
 monthField

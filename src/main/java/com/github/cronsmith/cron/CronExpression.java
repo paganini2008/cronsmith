@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
+import com.github.cronsmith.CRON;
 import com.github.cronsmith.scheduler.CronScheduler;
 import com.github.cronsmith.scheduler.CronSchedulerImpl;
 import com.github.cronsmith.scheduler.DefaultPeriodicalExecutor;
@@ -116,6 +117,30 @@ public interface CronExpression extends CronStringBuilder, Serializable {
 
     CronExpression getParent();
 
+    /**
+     * Which cron family this expression belongs to - traditional {@link CronType#CRON} or the
+     * year-based {@link CronType#YCRON} extension.
+     * <p>
+     * The default walks up the parent chain: a node is year-based only if it sits under a
+     * year-based tier (a day-of-year or week-of-year node), which those nodes report by overriding
+     * this method. Everything else - and any bare root - is traditional cron.
+     */
+    default CronType getCronType() {
+        CronExpression parent = getParent();
+        return parent != null ? parent.getCronType() : CronType.CRON;
+    }
+
+    /**
+     * A diagnostic, one-line dump of everything that shapes this expression: its zone, its cron
+     * family, whether it renders as traditional cron, and finally the cron string itself. Unlike
+     * {@link #toString()}, which is just the cron string.
+     */
+    @Override
+    default String toFullString() {
+        return String.format("[zone=%s | type=%s | supportCronString=%s] %s", getZoneId(),
+                getCronType(), supportCronString(), toString());
+    }
+
     LocalDateTime getTime();
 
     /**
@@ -150,11 +175,11 @@ public interface CronExpression extends CronStringBuilder, Serializable {
      * {@link com.github.cronsmith.CRON#toByteArray(CronExpression)}.
      */
     default byte[] serialize() {
-        return com.github.cronsmith.CRON.toByteArray(this);
+        return CRON.toByteArray(this);
     }
 
     static CronExpression deserialize(byte[] bytes) {
-        return com.github.cronsmith.CRON.load(bytes);
+        return CRON.load(bytes);
     }
 
     /**

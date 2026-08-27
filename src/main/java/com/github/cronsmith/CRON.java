@@ -27,6 +27,7 @@ import com.github.cronsmith.antlr.CronExpressionParser;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.PeriodicCronExpression;
 import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.cron.CronType;
 import com.github.cronsmith.cron.Day;
 import com.github.cronsmith.cron.DayOfWeek;
 import com.github.cronsmith.cron.Hour;
@@ -236,6 +237,17 @@ public abstract class CRON {
     }
 
     /**
+     * Parses an expression in the family the caller already knows it to be - traditional,
+     * month-based {@link #parse cron} for {@link CronType#CRON}, or the year-based
+     * {@link YCRON#parse YCRON} for {@link CronType#YCRON}. The type comes from an explicit,
+     * declared source (a {@code @Task(parser=...)} flag), so there is no guessing; the parsed
+     * expression then carries its own {@link CronExpression#getCronType()} from there on.
+     */
+    public static CronExpression parse(String cronExpression, CronType cronType) {
+        return cronType == CronType.YCRON ? YCRON.parse(cronExpression) : parse(cronExpression);
+    }
+
+    /**
      * Turns a crontab line into the six-field form: a leading seconds field, and a {@code ?} in
      * whichever of the two day fields carries no restriction.
      * <p>
@@ -319,6 +331,11 @@ public abstract class CRON {
     }
 
     public static String toCronString(CronExpression cronExpression) {
+        // A year-based expression has no month-based fields to render; hand it to YCRON. Traditional
+        // expressions never take this branch, so the CRON path is unchanged.
+        if (cronExpression.getCronType() == CronType.YCRON) {
+            return YCRON.toYCronString(cronExpression);
+        }
         return CronDialect.CRONSMITH.render(toCronFields(cronExpression));
     }
 

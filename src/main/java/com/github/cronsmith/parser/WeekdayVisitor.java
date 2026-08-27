@@ -54,6 +54,34 @@ public class WeekdayVisitor implements TagVisitor {
     @Override
     public CronExpression visitDayOfMonth(String text, String filter,
             CronExpressionContext context) {
+        boolean wantsW = filter == null || filter.contains("W");
+        // '<from>-<to>W[/<step>]' - the weekday nearest each day, stepping from 'from' to 'to'.
+        if (wantsW && text.matches("\\d+-\\d+W(/\\d+)?")) {
+            int from = Integer.parseInt(text.substring(0, text.indexOf('-')));
+            int to = Integer.parseInt(text.substring(text.indexOf('-') + 1, text.indexOf('W')));
+            int interval = stepOf(text);
+            CronExpression cronExpression = context.getCronExpression();
+            if (cronExpression instanceof TheDay) {
+                return ((TheDay) cronExpression).andDay(from).toLatestWeekday(to, interval);
+            } else if (cronExpression instanceof Month) {
+                return ((Month) cronExpression).day(from).toLatestWeekday(to, interval);
+            }
+            return new CronBuilder().setZoneId(context.getZoneId()).everyMonth().day(from)
+                    .toLatestWeekday(to, interval);
+        }
+        // '<from>-LW[/<step>]' - stepping from 'from' to the month's last weekday.
+        if (wantsW && text.matches("\\d+-LW(/\\d+)?")) {
+            int from = Integer.parseInt(text.substring(0, text.indexOf('-')));
+            int interval = stepOf(text);
+            CronExpression cronExpression = context.getCronExpression();
+            if (cronExpression instanceof TheDay) {
+                return ((TheDay) cronExpression).andDay(from).toLastWeekday(interval);
+            } else if (cronExpression instanceof Month) {
+                return ((Month) cronExpression).day(from).toLastWeekday(interval);
+            }
+            return new CronBuilder().setZoneId(context.getZoneId()).everyMonth().day(from)
+                    .toLastWeekday(interval);
+        }
         if (text.matches("\\d{1,}W") && (filter == null || filter.contains("W"))) {
             int dayOfMonth = Integer.parseInt(text.replace("W", ""));
             CronExpression cronExpression = context.getCronExpression();
@@ -96,6 +124,11 @@ public class WeekdayVisitor implements TagVisitor {
             return nextVisitor.visitYear(text, filter, context);
         }
         throw new UnsupportedTagException(text);
+    }
+
+    private static int stepOf(String text) {
+        int slash = text.indexOf('/');
+        return slash < 0 ? 1 : Integer.parseInt(text.substring(slash + 1));
     }
 
     @Override

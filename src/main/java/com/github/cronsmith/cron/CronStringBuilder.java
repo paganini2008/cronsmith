@@ -1,8 +1,7 @@
-
 package com.github.cronsmith.cron;
 
 /**
- * 
+ *
  * @Description: CronStringBuilder
  * @Author: Fred Feng
  * @Date: 22/02/2025
@@ -18,6 +17,9 @@ public interface CronStringBuilder {
         throw new UnsupportedOperationException();
     }
 
-    String toString();
+    default String toFullString() {
+        throw new UnsupportedOperationException();
+    }
 
+    String toString();
 }

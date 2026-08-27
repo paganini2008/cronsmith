@@ -10,18 +10,22 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
+import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
+import com.github.cronsmith.cron.CronType;
 import com.github.cronsmith.cron.Day;
 import com.github.cronsmith.cron.Month;
 import com.github.cronsmith.cron.Year;
 
 /**
  *
- * Not every schedule this library can express fits into cron syntax. A day of the year or a week of
- * the year has no cron field to live in, and the builder itself is not a schedule at all. Such an
- * expression still iterates perfectly well - it just refuses to print itself as cron, which is what
- * {@code supportCronString()} announces.
+ * Not every schedule fits into <em>traditional</em>, month-based cron. A day of the year or a week
+ * of the year has no traditional field to live in - so {@code supportCronString()} is {@code false}
+ * and the traditional path refuses them - yet they still render, through the year-based YCRON
+ * extension. What is always 31 December (the year's last day) or always in December (its last week)
+ * does have a fixed traditional shape, and stays traditional cron. The builder itself is not a
+ * schedule at all and refuses either way.
  *
  * @Author: Fred Feng
  * @Version 1.0.0
@@ -54,22 +58,41 @@ public class CronUnsupportedExpressionTests {
     }
 
     @Test
-    public void testDayOfYearCannotBeRendered() {
+    public void testDayOfYearRendersAsYcron() {
         Day day = builder().year().day(200);
+        // "The 200th day of the year" drifts with leap years, so it has no fixed traditional field:
+        // the traditional path refuses it ...
         assertFalse(day.supportCronString());
-        assertUnrenderable(day.at(12, 0));
+        CronExpression cronExpression = day.at(12, 0);
+        assertNotTraditionalCron(cronExpression);
+        // ... and it lives in YCRON instead, in the day-of-year field (day-of-week / week-of-year
+        // stand aside as '?').
+        assertEquals(CronType.YCRON, cronExpression.getCronType());
+        assertEquals("0 0 12 ? ? 200 " + year(), cronExpression.toString());
     }
 
     @Test
-    public void testLastDayOfYearCannotBeRendered() {
-        assertUnrenderable(builder().year().lastDay().at(12, 0));
+    public void testLastDayOfYearRendersThroughDecember() {
+        // The last day of the year is always 31 December - a fixed date plain cron holds as L in
+        // December - so it stays traditional cron rather than becoming a day-of-year.
+        CronExpression cronExpression = builder().year().lastDay().at(12, 0);
+        assertEquals(CronType.CRON, cronExpression.getCronType());
+        assertEquals("0 0 12 L DEC ? " + year(), cronExpression.toString());
     }
 
     @Test
-    public void testWeekOfYearCannotBeRendered() {
+    public void testWeekOfYearRendersAsYcron() {
         assertFalse(builder().year().week(10).supportCronString());
-        assertUnrenderable(builder().year().week(10).Mon().at(12, 0));
-        assertUnrenderable(builder().year().week(10).toWeek(20, 2).Mon().at(12, 0));
+        CronExpression cronExpression = builder().year().week(10).Mon().at(12, 0);
+        // No traditional week-of-year field, so the traditional path refuses it ...
+        assertNotTraditionalCron(cronExpression);
+        // ... it renders through YCRON: day-of-week + week-of-year travel together, day-of-year '?'.
+        assertEquals(CronType.YCRON, cronExpression.getCronType());
+        assertEquals("0 0 12 MON 10 ? " + year(), cronExpression.toString());
+        // A week range behaves the same way - still YCRON, still refused by the traditional path.
+        CronExpression range = builder().year().week(10).toWeek(20, 2).Mon().at(12, 0);
+        assertNotTraditionalCron(range);
+        assertEquals(CronType.YCRON, range.getCronType());
     }
 
     /** The expression must still be usable even though it has no cron representation. */
@@ -153,11 +176,12 @@ public class CronUnsupportedExpressionTests {
         assertTrue(month.getWeekCountOfMonth() >= 4);
     }
 
-    private static void assertUnrenderable(CronExpression cronExpression) {
+    /** The traditional, month-based cron path still refuses a year-based schedule. */
+    private static void assertNotTraditionalCron(CronExpression cronExpression) {
         try {
-            cronExpression.toString();
+            CRON.toCronFields(cronExpression);
             fail("expected " + cronExpression.getClass().getSimpleName()
-                    + " to refuse to render itself as cron");
+                    + " to have no traditional cron representation");
         } catch (UnsupportedOperationException e) {
             assertTrue(String.valueOf(e.getMessage()),
                     e.getMessage() == null || e.getMessage().contains("cron"));

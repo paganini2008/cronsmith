@@ -1,15 +1,15 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -183,8 +183,7 @@ public class CronUnsupportedExpressionTests {
             fail("expected " + cronExpression.getClass().getSimpleName()
                     + " to have no traditional cron representation");
         } catch (UnsupportedOperationException e) {
-            assertTrue(String.valueOf(e.getMessage()),
-                    e.getMessage() == null || e.getMessage().contains("cron"));
+            assertTrue(e.getMessage() == null || e.getMessage().contains("cron"), String.valueOf(e.getMessage()));
         }
     }
 

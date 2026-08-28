@@ -1,11 +1,11 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.antlr.CronExpressionBaseVisitor;
 import com.github.cronsmith.antlr.CronExpressionLexer;
 import com.github.cronsmith.antlr.CronExpressionParser;

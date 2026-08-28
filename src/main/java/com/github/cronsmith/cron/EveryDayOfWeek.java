@@ -60,14 +60,14 @@ public class EveryDayOfWeek implements DayOfWeek, IntervalChronoUnit, PendingVal
     private List<LocalDateTime> candidates() {
         List<LocalDateTime> list = new ArrayList<>();
         int ordinal = week instanceof WeekOrdinal ? ((WeekOrdinal) week).currentOrdinal()
-                : WeekOfMonth.LAST;
+                : WeekOfMonthUtils.LAST;
         for (int value = getFromDayOfWeek(); value <= 7; value += interval) {
             if (!(week instanceof WeekOrdinal)) {
                 list.add(week.getTime().with(WeekFields.ISO.dayOfWeek(), value));
-            } else if (ordinal == WeekOfMonth.EVERY) {
-                list.addAll(WeekOfMonth.allOccurrences(week.getTime(), value));
+            } else if (ordinal == WeekOfMonthUtils.EVERY) {
+                list.addAll(WeekOfMonthUtils.allOccurrences(week.getTime(), value));
             } else {
-                LocalDateTime occurrence = WeekOfMonth.occurrence(week.getTime(), ordinal, value);
+                LocalDateTime occurrence = WeekOfMonthUtils.occurrence(week.getTime(), ordinal, value);
                 if (occurrence != null) {
                     list.add(occurrence);
                 }
@@ -199,7 +199,7 @@ public class EveryDayOfWeek implements DayOfWeek, IntervalChronoUnit, PendingVal
             // Neither '#' nor 'L' has a range form, so the weekdays are listed one by one.
             List<String> list = new ArrayList<>();
             for (int i = fromDayOfWeek; i <= 7; i += interval) {
-                list.add(name(i) + (ordinal == WeekOfMonth.LAST ? "L" : "#" + ordinal));
+                list.add(name(i) + (ordinal == WeekOfMonthUtils.LAST ? "L" : "#" + ordinal));
             }
             return String.join(",", list);
         }

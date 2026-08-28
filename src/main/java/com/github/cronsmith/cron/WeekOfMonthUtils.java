@@ -16,12 +16,12 @@ import java.util.List;
  * month may start in the previous month, whereas {@code FRI#1} always means the first Friday that
  * falls inside the month itself.
  *
- * @Description: WeekOfMonth
+ * @Description: WeekOfMonthUtils
  * @Author: Fred Feng
  * @Date: 17/08/2026
  * @Version 1.0.0
  */
-abstract class WeekOfMonth {
+abstract class WeekOfMonthUtils {
 
     /** Ordinal standing for the last occurrence of a weekday in its month. */
     static final int LAST = -1;

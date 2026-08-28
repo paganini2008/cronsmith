@@ -18,7 +18,7 @@ import java.util.List;
  */
 interface WeekOrdinal {
 
-    /** The occurrence this week currently stands for: 1..5 or {@link WeekOfMonth#LAST}. */
+    /** The occurrence this week currently stands for: 1..5 or {@link WeekOfMonthUtils#LAST}. */
     int currentOrdinal();
 
     /**

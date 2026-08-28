@@ -1,13 +1,13 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.Random;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.YCRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -45,7 +45,7 @@ public class YCronParserTests {
         for (String cron : ROUND_TRIPS) {
             CronExpression parsed = YCRON.parse(cron);
             assertEquals(cron, parsed.toString());
-            assertEquals("must parse as year-based: " + cron, CronType.YCRON, parsed.getCronType());
+            assertEquals(CronType.YCRON, parsed.getCronType(), "must parse as year-based: " + cron);
         }
     }
 
@@ -208,12 +208,12 @@ public class YCronParserTests {
                 throw new AssertionError("YCRON failed to parse its own render: [" + rendered + "]",
                         parseFailure);
             }
-            assertEquals("round-trip mismatch for [" + rendered + "]", rendered, reparsed);
-            assertEquals("[" + rendered + "]", CronType.YCRON, built.getCronType());
+            assertEquals(rendered, reparsed, "round-trip mismatch for [" + rendered + "]");
+            assertEquals(CronType.YCRON, built.getCronType(), "[" + rendered + "]");
             tested++;
         }
         // Guard against the generator silently degenerating to almost nothing.
-        assertTrue("too few valid samples exercised: " + tested, tested > rounds / 2);
+        assertTrue(tested > rounds / 2, "too few valid samples exercised: " + tested);
     }
 
     private static CronExpression randomYcron(Random r) {
@@ -335,7 +335,7 @@ public class YCronParserTests {
             YCRON.parse(cron);
             fail("expected YCRON to reject: " + cron);
         } catch (YCronParserException e) {
-            assertTrue(String.valueOf(e.getMessage()), e.getMessage() != null);
+            assertTrue(e.getMessage() != null, String.valueOf(e.getMessage()));
         }
     }
 

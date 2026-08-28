@@ -1,11 +1,11 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
 
@@ -137,54 +137,84 @@ public class CronDurationTests {
 
     // ---- rejected: durations that are not a fixed cron step ---- //
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCompoundHourMinuteRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ofMinutes(90)); // 1h30m: not a whole hour and over 59 minutes
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCompoundStringRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval("PT1H30M");
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNinetySecondsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ofSeconds(90)); // over 59 seconds, not a whole minute
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTwentyFiveHoursRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ofHours(25)); // not whole days, over 23 hours
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testSubSecondRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ofMillis(500));
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testZeroRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ZERO);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(Duration.ofSeconds(-10));
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullDurationRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval((Duration) null);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullStringRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval((String) null);
+    
+        });
     }
 
-    @Test(expected = DateTimeParseException.class)
+    @Test
     public void testInvalidStringRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(DateTimeParseException.class, () -> {
         CRON.setInterval("not-a-duration");
+    
+        });
     }
 
 }

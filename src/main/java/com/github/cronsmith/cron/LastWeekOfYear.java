@@ -33,18 +33,18 @@ public class LastWeekOfYear implements LastWeek, WeekOrdinal {
      * ordinary {@code L} tag.
      */
     private static LocalDateTime lastWeekOfDecember(Year year) {
-        return WeekOfMonth.startOf(year.getTime().withMonth(12).withDayOfMonth(1),
-                WeekOfMonth.LAST);
+        return WeekOfMonthUtils.startOf(year.getTime().withMonth(12).withDayOfMonth(1),
+                WeekOfMonthUtils.LAST);
     }
 
     @Override
     public int currentOrdinal() {
-        return WeekOfMonth.LAST;
+        return WeekOfMonthUtils.LAST;
     }
 
     @Override
     public List<Integer> ordinals() {
-        return Collections.singletonList(WeekOfMonth.LAST);
+        return Collections.singletonList(WeekOfMonthUtils.LAST);
     }
 
     @Override

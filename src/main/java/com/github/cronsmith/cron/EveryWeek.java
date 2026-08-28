@@ -37,7 +37,7 @@ public class EveryWeek implements Week, IntervalChronoUnit, WeekOrdinal, Pending
         this.from = from;
         this.interval = interval;
         this.ordinal = getFromWeekOfMonth();
-        this.week = WeekOfMonth.startOf(month.getTime(), ordinal);
+        this.week = WeekOfMonthUtils.startOf(month.getTime(), ordinal);
         this.self = true;
         this.forward = true;
     }
@@ -57,13 +57,13 @@ public class EveryWeek implements Week, IntervalChronoUnit, WeekOrdinal, Pending
     public int currentOrdinal() {
         // Interval one means every occurrence, which a day-of-week expression resolves by listing
         // the whole month instead of picking a single ordinal out of it.
-        return interval > 1 ? ordinal : WeekOfMonth.EVERY;
+        return interval > 1 ? ordinal : WeekOfMonthUtils.EVERY;
     }
 
     @Override
     public List<Integer> ordinals() {
         List<Integer> list = new ArrayList<>();
-        for (int i = getFromWeekOfMonth(); i <= WeekOfMonth.MAX_ORDINAL; i += interval) {
+        for (int i = getFromWeekOfMonth(); i <= WeekOfMonthUtils.MAX_ORDINAL; i += interval) {
             list.add(i);
         }
         return list;
@@ -77,12 +77,12 @@ public class EveryWeek implements Week, IntervalChronoUnit, WeekOrdinal, Pending
     @Override
     public boolean hasNext() {
         boolean next =
-                self || (interval > 1 && ordinal + interval <= WeekOfMonth.MAX_ORDINAL);
+                self || (interval > 1 && ordinal + interval <= WeekOfMonthUtils.MAX_ORDINAL);
         if (!next) {
             if (month.hasNext()) {
                 month = month.next();
                 ordinal = getFromWeekOfMonth();
-                week = WeekOfMonth.startOf(month.getTime(), ordinal);
+                week = WeekOfMonthUtils.startOf(month.getTime(), ordinal);
                 forward = false;
                 next = true;
             }
@@ -96,7 +96,7 @@ public class EveryWeek implements Week, IntervalChronoUnit, WeekOrdinal, Pending
             self = false;
         } else if (forward) {
             ordinal += interval;
-            week = WeekOfMonth.startOf(month.getTime(), ordinal);
+            week = WeekOfMonthUtils.startOf(month.getTime(), ordinal);
         } else {
             forward = true;
         }

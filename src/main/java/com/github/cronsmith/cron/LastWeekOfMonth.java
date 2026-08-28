@@ -25,18 +25,18 @@ public class LastWeekOfMonth implements LastWeek, WeekOrdinal, PendingValueHolde
 
     LastWeekOfMonth(Month month) {
         this.month = month;
-        this.week = WeekOfMonth.startOf(month.getTime(), WeekOfMonth.LAST);
+        this.week = WeekOfMonthUtils.startOf(month.getTime(), WeekOfMonthUtils.LAST);
         this.self = true;
     }
 
     @Override
     public int currentOrdinal() {
-        return WeekOfMonth.LAST;
+        return WeekOfMonthUtils.LAST;
     }
 
     @Override
     public List<Integer> ordinals() {
-        return Collections.singletonList(WeekOfMonth.LAST);
+        return Collections.singletonList(WeekOfMonthUtils.LAST);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class LastWeekOfMonth implements LastWeek, WeekOrdinal, PendingValueHolde
 
     @Override
     public int getWeek() {
-        return WeekOfMonth.ordinalOf(week.toLocalDate());
+        return WeekOfMonthUtils.ordinalOf(week.toLocalDate());
     }
 
     @Override
@@ -100,7 +100,7 @@ public class LastWeekOfMonth implements LastWeek, WeekOrdinal, PendingValueHolde
             self = false;
         } else {
             month = month.next();
-            week = WeekOfMonth.startOf(month.getTime(), WeekOfMonth.LAST);
+            week = WeekOfMonthUtils.startOf(month.getTime(), WeekOfMonthUtils.LAST);
         }
         return this;
     }

@@ -93,7 +93,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, PendingValueHolder {
      */
     private int currentOrdinal() {
         return week instanceof WeekOrdinal ? ((WeekOrdinal) week).currentOrdinal()
-                : WeekOfMonth.LAST;
+                : WeekOfMonthUtils.LAST;
     }
 
     /** The dates the configured weekdays land on in the week the parent stands on. */
@@ -108,11 +108,11 @@ public class ThisDayOfWeek implements TheDayOfWeek, PendingValueHolder {
         }
         int ordinal = currentOrdinal();
         for (Integer value : values) {
-            if (ordinal == WeekOfMonth.EVERY) {
-                list.addAll(WeekOfMonth.allOccurrences(week.getTime(), value));
+            if (ordinal == WeekOfMonthUtils.EVERY) {
+                list.addAll(WeekOfMonthUtils.allOccurrences(week.getTime(), value));
             } else {
                 LocalDateTime occurrence =
-                        WeekOfMonth.occurrence(week.getTime(), ordinal, value);
+                        WeekOfMonthUtils.occurrence(week.getTime(), ordinal, value);
                 if (occurrence != null) {
                     list.add(occurrence);
                 }
@@ -293,7 +293,7 @@ public class ThisDayOfWeek implements TheDayOfWeek, PendingValueHolder {
         }
 
         private String suffix(int ordinal) {
-            return ordinal == WeekOfMonth.LAST ? "L" : "#" + ordinal;
+            return ordinal == WeekOfMonthUtils.LAST ? "L" : "#" + ordinal;
         }
 
         private String name(int dayOfWeek) {

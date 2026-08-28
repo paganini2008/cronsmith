@@ -1,7 +1,7 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.CronType;

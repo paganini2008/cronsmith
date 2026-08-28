@@ -1,15 +1,15 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -36,9 +36,9 @@ public class CronExpressionZoneTests {
         for (String zone : ZONES) {
             ZoneId zoneId = ZoneId.of(zone);
             CronExpression cronExpression = new CronBuilder().setZoneId(zoneId).everyDay().at(9, 0);
-            assertEquals(zone, zoneId, cronExpression.getZoneId());
-            assertEquals(zone, zoneId, cronExpression.getParent().getZoneId());
-            assertEquals(zone, zoneId, cronExpression.getBuilder().getZoneId());
+            assertEquals(zoneId, cronExpression.getZoneId(), zone);
+            assertEquals(zoneId, cronExpression.getParent().getZoneId(), zone);
+            assertEquals(zoneId, cronExpression.getBuilder().getZoneId(), zone);
         }
     }
 
@@ -53,7 +53,7 @@ public class CronExpressionZoneTests {
             if (reference == null) {
                 reference = list;
             } else {
-                assertEquals(zone, reference, list);
+                assertEquals(reference, list, zone);
             }
         }
         assertNotNull(reference);
@@ -78,8 +78,8 @@ public class CronExpressionZoneTests {
         List<LocalDateTime> list = new ArrayList<>();
         cronExpression.sync().consume(list::add, 14);
         for (LocalDateTime ldt : list) {
-            assertEquals(ldt.toString(), 2, ldt.getHour());
-            assertEquals(ldt.toString(), 30, ldt.getMinute());
+            assertEquals(2, ldt.getHour(), ldt.toString());
+            assertEquals(30, ldt.getMinute(), ldt.toString());
             // The instant a skipped local time maps to still has to be resolvable.
             ZonedDateTime zoned = ldt.atZone(berlin);
             assertNotNull(zoned.toInstant());
@@ -97,7 +97,7 @@ public class CronExpressionZoneTests {
         List<LocalDateTime> list = new ArrayList<>();
         cronExpression.sync().consume(list::add, 48);
         for (int i = 1; i < list.size(); i++) {
-            assertTrue(list.get(i - 1) + " -> " + list.get(i), list.get(i).isAfter(list.get(i - 1)));
+            assertTrue(list.get(i).isAfter(list.get(i - 1)), list.get(i - 1) + " -> " + list.get(i));
         }
     }
 
@@ -127,8 +127,8 @@ public class CronExpressionZoneTests {
                     new CronBuilder().setZoneId(ZoneId.of(zone)).everyMinute(5);
             LocalDateTime reference = LocalDateTime.now(ZoneId.of(zone));
             LocalDateTime next = cronExpression.getNextFiredDateTime(reference);
-            assertNotNull(zone, next);
-            assertTrue(zone + ": " + next + " <= " + reference, next.isAfter(reference));
+            assertNotNull(next, zone);
+            assertTrue(next.isAfter(reference), zone + ": " + next + " <= " + reference);
         }
     }
 

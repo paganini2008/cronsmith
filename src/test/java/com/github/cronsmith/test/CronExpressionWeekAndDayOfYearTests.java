@@ -1,13 +1,13 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 
@@ -40,8 +40,7 @@ public class CronExpressionWeekAndDayOfYearTests {
 
     private static void assertStrictlyIncreasing(List<LocalDateTime> list) {
         for (int i = 1; i < list.size(); i++) {
-            assertTrue("not increasing: " + list.get(i - 1) + " -> " + list.get(i),
-                    list.get(i).isAfter(list.get(i - 1)));
+            assertTrue(list.get(i).isAfter(list.get(i - 1)), "not increasing: " + list.get(i - 1) + " -> " + list.get(i));
         }
     }
 
@@ -105,19 +104,28 @@ public class CronExpressionWeekAndDayOfYearTests {
         assertTrue(week.getWeekOfYear() >= 1 && week.getWeekOfYear() <= 53);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingWeekOfMonthRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyMonth().week(4).toWeek(2);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingWeekOfMonthListIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyMonth().week(4).andWeek(2);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testWeekOfMonthIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyMonth().week(1).toWeek(3, 0);
+    
+        });
     }
 
     // ------------------------------------------------------------------ //
@@ -142,14 +150,20 @@ public class CronExpressionWeekAndDayOfYearTests {
         assertTrue(week.getMonth() >= 1 && week.getMonth() <= 12);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingWeekOfYearRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year().week(20).toWeek(10);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingWeekOfYearListIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year().week(20).andWeek(10);
+    
+        });
     }
 
     // ------------------------------------------------------------------ //
@@ -169,7 +183,7 @@ public class CronExpressionWeekAndDayOfYearTests {
         List<LocalDateTime> list = fire(builder().year().day(100).toDay(120, 5).at(12, 0), 10);
         assertStrictlyIncreasing(list);
         for (LocalDateTime ldt : list) {
-            assertTrue(ldt.toString(), ldt.getDayOfYear() >= 100 && ldt.getDayOfYear() <= 120);
+            assertTrue(ldt.getDayOfYear() >= 100 && ldt.getDayOfYear() <= 120, ldt.toString());
             assertEquals(0, (ldt.getDayOfYear() - 100) % 5);
         }
     }
@@ -205,14 +219,20 @@ public class CronExpressionWeekAndDayOfYearTests {
         assertEquals(31, list.get(0).getDayOfMonth());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingDayOfYearRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year().day(200).toDay(100);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingDayOfYearListIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year().day(200).andDay(100);
+    
+        });
     }
 
     // ------------------------------------------------------------------ //
@@ -246,24 +266,27 @@ public class CronExpressionWeekAndDayOfYearTests {
         assertEquals(java.time.Year.isLeap(everyYear.getYear()), everyYear.isLeapYear());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testYearAboveTheMaximumIsRejectedByEveryYear() {
-        builder().everyYear(2200, 1).Jan().day(1).at(0, 0).toString();
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        builder().everyYear(3000, 1).Jan().day(1).at(0, 0).toString();
+    
+        });
     }
 
     private static void assertMondays(CronExpression cronExpression, int n) {
         List<LocalDateTime> list = fire(cronExpression, n);
-        assertTrue("nothing fired", !list.isEmpty());
+        assertTrue(!list.isEmpty(), "nothing fired");
         assertStrictlyIncreasing(list);
         for (LocalDateTime ldt : list) {
-            assertEquals(ldt.toString(), DayOfWeek.MONDAY, ldt.getDayOfWeek());
+            assertEquals(DayOfWeek.MONDAY, ldt.getDayOfWeek(), ldt.toString());
             assertEquals(12, ldt.getHour());
         }
     }
 
     private static void assertNotWeekend(LocalDateTime ldt) {
-        assertTrue(ldt + " is a weekend", ldt.getDayOfWeek() != DayOfWeek.SATURDAY
-                && ldt.getDayOfWeek() != DayOfWeek.SUNDAY);
+        assertTrue(ldt.getDayOfWeek() != DayOfWeek.SATURDAY
+                && ldt.getDayOfWeek() != DayOfWeek.SUNDAY, ldt + " is a weekend");
     }
 
     private static LocalDateTime lastOf(List<LocalDateTime> list) {

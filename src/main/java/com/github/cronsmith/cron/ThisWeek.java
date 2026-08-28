@@ -35,13 +35,13 @@ public class ThisWeek implements TheWeek, WeekOrdinal, PendingValueHolder {
         checkOrdinal(weekOfMonth);
         this.month = month;
         this.ordinals.add(weekOfMonth);
-        this.week = WeekOfMonth.startOf(month.getTime(), weekOfMonth);
+        this.week = WeekOfMonthUtils.startOf(month.getTime(), weekOfMonth);
         this.ordinal = weekOfMonth;
         this.startWeekFlag = weekOfMonth;
     }
 
     static void checkOrdinal(int weekOfMonth) {
-        if (weekOfMonth < 1 || weekOfMonth > WeekOfMonth.MAX_ORDINAL) {
+        if (weekOfMonth < 1 || weekOfMonth > WeekOfMonthUtils.MAX_ORDINAL) {
             throw new IllegalArgumentException("Invalid week of month: " + weekOfMonth);
         }
     }
@@ -59,7 +59,7 @@ public class ThisWeek implements TheWeek, WeekOrdinal, PendingValueHolder {
 
     @Override
     public Week andLastWeek() {
-        this.ordinals.add(WeekOfMonth.LAST);
+        this.ordinals.add(WeekOfMonthUtils.LAST);
         return this;
     }
 
@@ -85,10 +85,10 @@ public class ThisWeek implements TheWeek, WeekOrdinal, PendingValueHolder {
     public Week toLastWeek(int interval) {
         final int fromWeek = startWeekFlag;
         this.ordinals.remove(Integer.valueOf(fromWeek));
-        for (int i = fromWeek; i <= WeekOfMonth.MAX_ORDINAL; i += interval) {
+        for (int i = fromWeek; i <= WeekOfMonthUtils.MAX_ORDINAL; i += interval) {
             this.ordinals.add(i);
         }
-        this.ordinals.add(WeekOfMonth.LAST);
+        this.ordinals.add(WeekOfMonthUtils.LAST);
         return this;
     }
 
@@ -168,7 +168,7 @@ public class ThisWeek implements TheWeek, WeekOrdinal, PendingValueHolder {
             index = 0;
         }
         ordinal = ordinals.get(index++);
-        week = WeekOfMonth.startOf(month.getTime(), ordinal);
+        week = WeekOfMonthUtils.startOf(month.getTime(), ordinal);
         return this;
     }
 
@@ -179,7 +179,7 @@ public class ThisWeek implements TheWeek, WeekOrdinal, PendingValueHolder {
 
     @Override
     public String toCronString() {
-        return ordinals.stream().map(o -> o == WeekOfMonth.LAST ? "L" : String.valueOf(o))
+        return ordinals.stream().map(o -> o == WeekOfMonthUtils.LAST ? "L" : String.valueOf(o))
                 .collect(Collectors.joining(","));
     }
 

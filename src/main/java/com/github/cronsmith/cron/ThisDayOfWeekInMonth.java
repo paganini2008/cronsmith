@@ -54,13 +54,13 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, PendingValueHo
     @Override
     public TheDayOfWeekInMonth andLast(int dayOfWeek) {
         ChronoField.DAY_OF_WEEK.checkValidValue(dayOfWeek);
-        this.entries.add(new Entry(WeekOfMonth.LAST, dayOfWeek));
+        this.entries.add(new Entry(WeekOfMonthUtils.LAST, dayOfWeek));
         rewind();
         return this;
     }
 
     private static void checkOrdinalOrLast(int weekOfMonth) {
-        if (weekOfMonth != WeekOfMonth.LAST) {
+        if (weekOfMonth != WeekOfMonthUtils.LAST) {
             ThisWeek.checkOrdinal(weekOfMonth);
         }
     }
@@ -77,7 +77,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, PendingValueHo
 
     private List<LocalDateTime> occurrencesOf(LocalDateTime anyDayOfMonth) {
         return entries.stream()
-                .map(entry -> WeekOfMonth.occurrence(anyDayOfMonth, entry.ordinal, entry.dayOfWeek))
+                .map(entry -> WeekOfMonthUtils.occurrence(anyDayOfMonth, entry.ordinal, entry.dayOfWeek))
                 .filter(Objects::nonNull).distinct().sorted()
                 .collect(Collectors.toList());
     }
@@ -214,7 +214,7 @@ public class ThisDayOfWeekInMonth implements TheDayOfWeekInMonth, PendingValueHo
             String name = getBuilder().isUseDayOfWeekAsNumber()
                     ? String.valueOf(AbbreviationUtils.toCronDayOfWeek(dayOfWeek))
                     : AbbreviationUtils.getDayOfWeekName(dayOfWeek);
-            return ordinal == WeekOfMonth.LAST ? name + "L" : name + "#" + ordinal;
+            return ordinal == WeekOfMonthUtils.LAST ? name + "L" : name + "#" + ordinal;
         }
 
         @Override

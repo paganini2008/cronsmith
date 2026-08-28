@@ -1,15 +1,15 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -105,8 +105,8 @@ public class CronExpressionSemanticsTests {
             for (DayOfWeek dayOfWeek : DayOfWeek.values()) {
                 String cron = "0 0 12 ? * " + name(dayOfWeek) + "#" + ordinal;
                 for (LocalDateTime ldt : fire(CRON.parse(cron), 6)) {
-                    assertEquals(cron + " -> " + ldt, dayOfWeek, ldt.getDayOfWeek());
-                    assertEquals(cron + " -> " + ldt, ldt.toLocalDate(), nth(ldt, ordinal, dayOfWeek));
+                    assertEquals(dayOfWeek, ldt.getDayOfWeek(), cron + " -> " + ldt);
+                    assertEquals(ldt.toLocalDate(), nth(ldt, ordinal, dayOfWeek), cron + " -> " + ldt);
                 }
             }
         }
@@ -117,8 +117,8 @@ public class CronExpressionSemanticsTests {
         String cron = "0 0 12 ? * FRI#5";
         for (LocalDateTime ldt : fire(CRON.parse(cron), 6)) {
             assertEquals(DayOfWeek.FRIDAY, ldt.getDayOfWeek());
-            assertEquals(ldt.toString(), ldt.toLocalDate(), nth(ldt, 5, DayOfWeek.FRIDAY));
-            assertTrue(ldt + " is not a fifth Friday", ldt.getDayOfMonth() >= 29);
+            assertEquals(ldt.toLocalDate(), nth(ldt, 5, DayOfWeek.FRIDAY), ldt.toString());
+            assertTrue(ldt.getDayOfMonth() >= 29, ldt + " is not a fifth Friday");
         }
     }
 
@@ -127,9 +127,9 @@ public class CronExpressionSemanticsTests {
         for (DayOfWeek dayOfWeek : DayOfWeek.values()) {
             String cron = "0 0 12 ? * " + name(dayOfWeek) + "L";
             for (LocalDateTime ldt : fire(CRON.parse(cron), 6)) {
-                assertEquals(cron + " -> " + ldt, dayOfWeek, ldt.getDayOfWeek());
-                assertEquals(cron + " -> " + ldt, ldt.toLocalDate(), ldt.toLocalDate()
-                        .with(TemporalAdjusters.lastInMonth(dayOfWeek)));
+                assertEquals(dayOfWeek, ldt.getDayOfWeek(), cron + " -> " + ldt);
+                assertEquals(ldt.toLocalDate(), ldt.toLocalDate()
+                        .with(TemporalAdjusters.lastInMonth(dayOfWeek)), cron + " -> " + ldt);
             }
         }
     }
@@ -164,7 +164,7 @@ public class CronExpressionSemanticsTests {
         for (int number = 1; number <= 7; number++) {
             String cron = "0 0 12 ? * " + number;
             for (LocalDateTime ldt : fire(CRON.parse(cron), 3)) {
-                assertEquals(cron + " -> " + ldt, expected[number - 1], ldt.getDayOfWeek());
+                assertEquals(expected[number - 1], ldt.getDayOfWeek(), cron + " -> " + ldt);
             }
         }
     }
@@ -237,9 +237,9 @@ public class CronExpressionSemanticsTests {
     @Test
     public void testCrontabNumbersSundayAsZeroOrSeven() {
         for (String cron : new String[] {"0 0 * * 0", "0 0 * * 7", "0 0 * * SUN"}) {
-            assertEquals(cron, "0 0 0 ? * SUN", CRON.parse(cron).toString());
+            assertEquals("0 0 0 ? * SUN", CRON.parse(cron).toString(), cron);
             for (LocalDateTime ldt : fire(CRON.parse(cron), 3)) {
-                assertEquals(cron, DayOfWeek.SUNDAY, ldt.getDayOfWeek());
+                assertEquals(DayOfWeek.SUNDAY, ldt.getDayOfWeek(), cron);
             }
         }
     }
@@ -266,10 +266,13 @@ public class CronExpressionSemanticsTests {
         assertNotNull(list.get(0));
     }
 
-    @Test(expected = com.github.cronsmith.parser.CronParserException.class)
+    @Test
     public void testCrontabRestrictingBothDayFieldsIsReported() {
+        org.junit.jupiter.api.Assertions.assertThrows(com.github.cronsmith.parser.CronParserException.class, () -> {
         // Crontab fires on either field, which this library has no way of expressing.
         CRON.parse("0 0 1 * MON");
+    
+        });
     }
 
     private static CronExpression daily(LocalDateTime startTime, int hour, int minute) {

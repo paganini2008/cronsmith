@@ -1,9 +1,9 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
@@ -330,7 +330,7 @@ public class CronExpressionApiSurfaceTests {
         for (int i = 0; i < 100 && !executor.shutdownNowCalled; i++) {
             Thread.sleep(20);
         }
-        assertTrue("shutdownNow was never reached", executor.shutdownNowCalled);
+        assertTrue(executor.shutdownNowCalled, "shutdownNow was never reached");
         assertFalse(ExecutorUtils.isShutdown(executor));
     }
 

@@ -1,16 +1,16 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -39,8 +39,7 @@ public class CronExpressionIterationTests {
 
     private static void assertStrictlyIncreasing(List<LocalDateTime> list) {
         for (int i = 1; i < list.size(); i++) {
-            assertTrue("not increasing: " + list.get(i - 1) + " -> " + list.get(i),
-                    list.get(i).isAfter(list.get(i - 1)));
+            assertTrue(list.get(i).isAfter(list.get(i - 1)), "not increasing: " + list.get(i - 1) + " -> " + list.get(i));
         }
     }
 
@@ -96,7 +95,7 @@ public class CronExpressionIterationTests {
         assertStrictlyIncreasing(list);
         for (LocalDateTime ldt : list) {
             assertEquals(15, ldt.getDayOfMonth());
-            assertEquals(ldt.toString(), 1, ldt.getMonthValue() % 2);
+            assertEquals(1, ldt.getMonthValue() % 2, ldt.toString());
         }
     }
 
@@ -107,25 +106,24 @@ public class CronExpressionIterationTests {
     @Test
     public void testLastDayFiresOnTheLastDayOfEachMonth() {
         for (LocalDateTime ldt : fire(builder().everyMonth().lastDay().at(12, 0), 14)) {
-            assertEquals(ldt.toString(), YearMonth.from(ldt).lengthOfMonth(), ldt.getDayOfMonth());
+            assertEquals(YearMonth.from(ldt).lengthOfMonth(), ldt.getDayOfMonth(), ldt.toString());
         }
     }
 
     @Test
     public void testLastDayWithOffset() {
         for (LocalDateTime ldt : fire(builder().everyMonth().lastDay(2).at(12, 0), 12)) {
-            assertEquals(ldt.toString(), YearMonth.from(ldt).lengthOfMonth() - 2,
-                    ldt.getDayOfMonth());
+            assertEquals(YearMonth.from(ldt).lengthOfMonth() - 2, ldt.getDayOfMonth(), ldt.toString());
         }
     }
 
     @Test
     public void testLastWeekdayIsTheLastWorkingDayOfTheMonth() {
         for (LocalDateTime ldt : fire(builder().everyMonth().lastWeekday().at(12, 0), 14)) {
-            assertFalse(ldt + " is a weekend", isWeekend(ldt.toLocalDate()));
+            assertFalse(isWeekend(ldt.toLocalDate()), ldt + " is a weekend");
             LocalDate next = ldt.toLocalDate().plusDays(1);
             while (next.getMonthValue() == ldt.getMonthValue()) {
-                assertTrue(next + " is a later weekday", isWeekend(next));
+                assertTrue(isWeekend(next), next + " is a later weekday");
                 next = next.plusDays(1);
             }
         }
@@ -134,8 +132,8 @@ public class CronExpressionIterationTests {
     @Test
     public void testLatestWeekdayStaysInsideItsMonth() {
         for (LocalDateTime ldt : fire(builder().everyMonth().latestWeekday(15).at(12, 0), 14)) {
-            assertFalse(ldt + " is a weekend", isWeekend(ldt.toLocalDate()));
-            assertTrue(ldt + " drifted too far", Math.abs(ldt.getDayOfMonth() - 15) <= 2);
+            assertFalse(isWeekend(ldt.toLocalDate()), ldt + " is a weekend");
+            assertTrue(Math.abs(ldt.getDayOfMonth() - 15) <= 2, ldt + " drifted too far");
         }
     }
 
@@ -146,8 +144,8 @@ public class CronExpressionIterationTests {
         assertStrictlyIncreasing(list);
         for (LocalDateTime ldt : list) {
             int day = ldt.getDayOfMonth();
-            assertTrue(ldt.toString(), day == 1 || day == 10 || day == 20
-                    || day == YearMonth.from(ldt).lengthOfMonth());
+            assertTrue(day == 1 || day == 10 || day == 20
+                    || day == YearMonth.from(ldt).lengthOfMonth(), ldt.toString());
         }
     }
 
@@ -159,8 +157,7 @@ public class CronExpressionIterationTests {
     public void testFebruaryLengthIsRespected() {
         for (LocalDateTime ldt : fire(builder().everyMonth().lastDay().at(0, 0), 26)) {
             if (ldt.getMonthValue() == 2) {
-                assertEquals(ldt.toString(), ldt.toLocalDate().isLeapYear() ? 29 : 28,
-                        ldt.getDayOfMonth());
+                assertEquals(ldt.toLocalDate().isLeapYear() ? 29 : 28, ldt.getDayOfMonth(), ldt.toString());
             }
         }
     }
@@ -182,7 +179,7 @@ public class CronExpressionIterationTests {
                 fire(builder().year().toYear(y + 2).Jan().day(1).at(0, 0), 10);
         assertStrictlyIncreasing(list);
         for (LocalDateTime ldt : list) {
-            assertTrue(ldt.toString(), ldt.getYear() >= y && ldt.getYear() <= y + 2);
+            assertTrue(ldt.getYear() >= y && ldt.getYear() <= y + 2, ldt.toString());
         }
         assertEquals(3, list.size());
     }
@@ -200,7 +197,7 @@ public class CronExpressionIterationTests {
     @Test
     public void testWeekdayRangeOnlyFiresOnWorkingDays() {
         for (LocalDateTime ldt : fire(builder().everyMonth().everyWeek().everyWeekday().at(9, 0), 20)) {
-            assertFalse(ldt + " is a weekend", isWeekend(ldt.toLocalDate()));
+            assertFalse(isWeekend(ldt.toLocalDate()), ldt + " is a weekend");
         }
     }
 
@@ -209,8 +206,8 @@ public class CronExpressionIterationTests {
         for (LocalDateTime ldt : fire(
                 builder().everyMonth().everyWeek().Mon().andWed().andFri().at(9, 0), 20)) {
             DayOfWeek dow = ldt.getDayOfWeek();
-            assertTrue(ldt.toString(), dow == DayOfWeek.MONDAY || dow == DayOfWeek.WEDNESDAY
-                    || dow == DayOfWeek.FRIDAY);
+            assertTrue(dow == DayOfWeek.MONDAY || dow == DayOfWeek.WEDNESDAY
+                    || dow == DayOfWeek.FRIDAY, ldt.toString());
         }
     }
 
@@ -218,14 +215,14 @@ public class CronExpressionIterationTests {
     public void testDayOfWeekInMonthAlwaysFiresOnThatWeekday() {
         for (LocalDateTime ldt : fire(
                 builder().everyMonth().dayOfWeek(2, DayOfWeek.TUESDAY).at(12, 0), 12)) {
-            assertEquals(ldt.toString(), DayOfWeek.TUESDAY, ldt.getDayOfWeek());
+            assertEquals(DayOfWeek.TUESDAY, ldt.getDayOfWeek(), ldt.toString());
         }
     }
 
     @Test
     public void testParsedWeekdayExpressionsFireOnTheRightWeekday() {
         for (LocalDateTime ldt : fire(CRON.parse("0 0 12 ? * SAT,SUN"), 10)) {
-            assertTrue(ldt.toString(), isWeekend(ldt.toLocalDate()));
+            assertTrue(isWeekend(ldt.toLocalDate()), ldt.toString());
         }
     }
 
@@ -246,7 +243,7 @@ public class CronExpressionIterationTests {
         LocalDateTime start = CronTestSupport.stableStartTime();
         List<LocalDateTime> list = builder().everyMonth().day(15).at(12, 0)
                 .list(start.minusYears(2), start.minusYears(1));
-        assertTrue(list.toString(), list.isEmpty());
+        assertTrue(list.isEmpty(), list.toString());
     }
 
     @Test

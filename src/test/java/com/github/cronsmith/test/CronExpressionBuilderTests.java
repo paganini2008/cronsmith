@@ -1,16 +1,16 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.concurrent.TimeUnit;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -22,7 +22,7 @@ import com.github.cronsmith.cron.CronExpression;
  * @Date: 09/03/2025
  * @Version 1.0.0
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class CronExpressionBuilderTests {
 
     private static final int Y = CronTestSupport.currentYear();
@@ -371,129 +371,204 @@ public class CronExpressionBuilderTests {
     // Invalid arguments                                                  //
     // ------------------------------------------------------------------ //
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everySecond(0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testMinuteIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyMinute(0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testHourIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyHour(0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDayIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyDay(0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testMonthIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyMonth(1, 0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testYearIntervalMustBePositive() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyYear(0);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testYearBeforeStartTimeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year(Y - 1);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testYearAboveMaximumIsRejected() {
-        builder().year(2100);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        builder().year(3000);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testEveryYearBeforeStartTimeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyYear(Y - 1, 1).Jan().day(1).at(0, 0).toString();
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingYearRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year(Y + 5).toYear(Y + 1);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingMonthRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().year().Sept().toMar();
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingHourRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyDay().hour(20).toHour(10);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingMinuteRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyDay().at(0, 30).getBuilder().everyDay().hour(0).minute(30).toMinute(10);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDescendingSecondRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         builder().everyDay().at(0, 0).second(30).toSecond(10);
+    
+        });
     }
 
-    @Test(expected = java.time.DateTimeException.class)
+    @Test
     public void testHourOutOfRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(java.time.DateTimeException.class, () -> {
         builder().everyDay().hour(24);
+    
+        });
     }
 
-    @Test(expected = java.time.DateTimeException.class)
+    @Test
     public void testMinuteOutOfRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(java.time.DateTimeException.class, () -> {
         builder().everyDay().hour(0).minute(60);
+    
+        });
     }
 
-    @Test(expected = java.time.DateTimeException.class)
+    @Test
     public void testSecondOutOfRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(java.time.DateTimeException.class, () -> {
         builder().everyDay().at(0, 0).second(60);
+    
+        });
     }
 
-    @Test(expected = java.time.DateTimeException.class)
+    @Test
     public void testMonthOutOfRangeIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(java.time.DateTimeException.class, () -> {
         builder().year().month(13);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testPastDateIsRejectedByAtFuture() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.atFuture(LocalDate.now(CronTestSupport.BUILDER_ZONE).minusDays(1));
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testTodayIsRejectedByAtFuture() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.atFuture(LocalDate.now(CronTestSupport.BUILDER_ZONE));
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testPastDateTimeIsRejectedByAtFuture() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.atFuture(LocalDateTime.now(CronTestSupport.BUILDER_ZONE).minusHours(1));
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeInitialDelayIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(-1, 5, TimeUnit.MINUTES);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testZeroIntervalIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(0, 0, TimeUnit.MINUTES);
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullTimeUnitIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.setInterval(0, 5, null);
+    
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testUnsupportedTimeUnitIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, () -> {
         CRON.setInterval(5, TimeUnit.MILLISECONDS);
+    
+        });
     }
 
     @Test

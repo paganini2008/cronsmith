@@ -1,11 +1,11 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.time.DayOfWeek;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.CronDialect;
 import com.github.cronsmith.cron.CronBuilder;
@@ -159,8 +159,7 @@ public class CronDialectTests {
                 int offset = fields.length == 6 && !cron.startsWith("0 ") ? -1 : 0;
                 String dayOfMonth = fields[3 + offset];
                 String dayOfWeek = fields[5 + offset];
-                assertEquals(cron, 1,
-                        ("?".equals(dayOfMonth) ? 1 : 0) + ("?".equals(dayOfWeek) ? 1 : 0));
+                assertEquals(1, ("?".equals(dayOfMonth) ? 1 : 0) + ("?".equals(dayOfWeek) ? 1 : 0), cron);
             }
         }
     }
@@ -169,13 +168,16 @@ public class CronDialectTests {
     public void testEveryDialectRendersEveryPlainSchedule() {
         CronExpression plain = builder().everyDay().at(0, 0);
         for (CronDialect dialect : CronDialect.values()) {
-            assertTrue(dialect.name(), CRON.toCronString(plain, dialect).length() > 0);
+            assertTrue(CRON.toCronString(plain, dialect).length() > 0, dialect.name());
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testRenderingRejectsSomethingThatIsNotACronsmithExpression() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CronDialect.QUARTZ.render("not a cron expression");
+    
+        });
     }
 
     // ------------------------------------------------------------------ //
@@ -192,7 +194,7 @@ public class CronDialectTests {
         assertEquals("?", fields[3]);
         assertEquals("*", fields[4]);
         assertEquals("MON", fields[5]);
-        assertNull("no year restriction", fields[6]);
+        assertNull(fields[6], "no year restriction");
     }
 
     @Test
@@ -225,7 +227,7 @@ public class CronDialectTests {
                     }
                     continue;
                 }
-                assertEquals(dialect + " " + canonical, dialect.render(canonical), fromFields);
+                assertEquals(dialect.render(canonical), fromFields, dialect + " " + canonical);
             }
         }
     }
@@ -239,9 +241,12 @@ public class CronDialectTests {
         assertEquals("0 30 9 * * ?", cronExpression.toString());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testCronFieldsRefuseASchedulePlainCronCannotHold() {
+        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, () -> {
         CRON.toCronFields(builder().year().day(200).at(12, 0));
+    
+        });
     }
 
     private static void assertRefused(CronDialect dialect, CronExpression cronExpression,
@@ -250,7 +255,7 @@ public class CronDialectTests {
             CRON.toCronString(cronExpression, dialect);
             fail(dialect + " should not be able to express " + cronExpression);
         } catch (UnsupportedOperationException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains(expectedInMessage));
+            assertTrue(e.getMessage().contains(expectedInMessage), e.getMessage());
         }
     }
 

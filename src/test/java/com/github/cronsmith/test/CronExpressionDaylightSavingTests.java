@@ -1,9 +1,9 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 
@@ -84,8 +84,8 @@ public class CronExpressionDaylightSavingTests {
         int year = CronTestSupport.currentYear();
         for (String zone : SWITCHING_ZONES) {
             ZoneId zoneId = ZoneId.of(zone);
-            assertNotNull(zone + " never springs forward", springForward(zoneId, year));
-            assertNotNull(zone + " never falls back", fallBack(zoneId, year));
+            assertNotNull(springForward(zoneId, year), zone + " never springs forward");
+            assertNotNull(fallBack(zoneId, year), zone + " never falls back");
         }
     }
 
@@ -97,8 +97,8 @@ public class CronExpressionDaylightSavingTests {
             LocalDate skipped = springForward(zoneId, year);
             CronExpression cronExpression = at(zoneId, skipped.minusDays(2).atStartOfDay(), 3, 30);
             for (LocalDateTime ldt : fire(cronExpression, 5)) {
-                assertEquals(zone + " " + ldt, LocalTime.of(3, 30), ldt.toLocalTime());
-                assertNotNull(zone, ldt.atZone(zoneId).toInstant());
+                assertEquals(LocalTime.of(3, 30), ldt.toLocalTime(), zone + " " + ldt);
+                assertNotNull(ldt.atZone(zoneId).toInstant(), zone);
             }
         }
     }
@@ -111,8 +111,8 @@ public class CronExpressionDaylightSavingTests {
             LocalDate repeated = fallBack(zoneId, year);
             CronExpression cronExpression = at(zoneId, repeated.minusDays(2).atStartOfDay(), 1, 30);
             for (LocalDateTime ldt : fire(cronExpression, 5)) {
-                assertEquals(zone + " " + ldt, LocalTime.of(1, 30), ldt.toLocalTime());
-                assertNotNull(zone, ldt.atZone(zoneId).toInstant());
+                assertEquals(LocalTime.of(1, 30), ldt.toLocalTime(), zone + " " + ldt);
+                assertNotNull(ldt.atZone(zoneId).toInstant(), zone);
             }
         }
     }
@@ -137,8 +137,7 @@ public class CronExpressionDaylightSavingTests {
         LocalDateTime onTheSkippedDay = skipped.atTime(2, 30);
         ZonedDateTime resolved = onTheSkippedDay.atZone(berlin);
         assertNotNull(resolved.toInstant());
-        assertFalse("02:30 should not exist on " + skipped,
-                resolved.toLocalDateTime().equals(onTheSkippedDay));
+        assertFalse(resolved.toLocalDateTime().equals(onTheSkippedDay), "02:30 should not exist on " + skipped);
     }
 
     /**
@@ -153,7 +152,7 @@ public class CronExpressionDaylightSavingTests {
         LocalDateTime ambiguous = repeated.atTime(2, 30);
 
         List<ZoneOffset> offsets = berlin.getRules().getValidOffsets(ambiguous);
-        assertEquals("expected 02:30 to happen twice on " + repeated, 2, offsets.size());
+        assertEquals(2, offsets.size(), "expected 02:30 to happen twice on " + repeated);
         assertEquals(offsets.get(0), ambiguous.atZone(berlin).getOffset());
 
         CronExpression cronExpression = at(berlin, repeated.minusDays(1).atStartOfDay(), 2, 30);
@@ -186,12 +185,10 @@ public class CronExpressionDaylightSavingTests {
         for (int i = 1; i < list.size(); i++) {
             long hours = Duration.between(list.get(i - 1).atZone(zoneId), list.get(i).atZone(zoneId))
                     .toHours();
-            assertTrue(zoneId + ": " + hours + "h between two daily runs",
-                    hours >= 23 && hours <= 25);
+            assertTrue(hours >= 23 && hours <= 25, zoneId + ": " + hours + "h between two daily runs");
             sawTheSwitch |= hours == expectedHours;
         }
-        assertTrue(zoneId + " never showed a " + expectedHours + "h gap around " + switchDay,
-                sawTheSwitch);
+        assertTrue(sawTheSwitch, zoneId + " never showed a " + expectedHours + "h gap around " + switchDay);
     }
 
     // ------------------------------------------------------------------ //
@@ -210,8 +207,8 @@ public class CronExpressionDaylightSavingTests {
                 List<LocalDateTime> list = fire(cronExpression, 72);
                 assertStrictlyIncreasing(list);
                 for (LocalDateTime ldt : list) {
-                    assertEquals(zone + " " + ldt, 0, ldt.getMinute());
-                    assertNotNull(zone, ldt.atZone(zoneId).toInstant());
+                    assertEquals(0, ldt.getMinute(), zone + " " + ldt);
+                    assertNotNull(ldt.atZone(zoneId).toInstant(), zone);
                 }
             }
         }
@@ -236,10 +233,9 @@ public class CronExpressionDaylightSavingTests {
     }
 
     private static void assertStrictlyIncreasing(List<LocalDateTime> list) {
-        assertFalse("nothing fired", list.isEmpty());
+        assertFalse(list.isEmpty(), "nothing fired");
         for (int i = 1; i < list.size(); i++) {
-            assertTrue("not increasing: " + list.get(i - 1) + " -> " + list.get(i),
-                    list.get(i).isAfter(list.get(i - 1)));
+            assertTrue(list.get(i).isAfter(list.get(i - 1)), "not increasing: " + list.get(i - 1) + " -> " + list.get(i));
         }
     }
 

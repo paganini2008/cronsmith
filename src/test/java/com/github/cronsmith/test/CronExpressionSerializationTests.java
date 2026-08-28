@@ -1,9 +1,9 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -100,9 +100,9 @@ public class CronExpressionSerializationTests {
         CronExpression cronExpression = builder().everySecond(3);
         LocalDateTime from = CronTestSupport.stableStartTime();
         List<LocalDateTime> list = cronExpression.sync().list(from, from.plusMinutes(1));
-        assertTrue("expected a few occurrences, got " + list.size(), list.size() > 1);
+        assertTrue(list.size() > 1, "expected a few occurrences, got " + list.size());
         for (LocalDateTime ldt : list) {
-            assertTrue(ldt + " out of bounds", !ldt.isBefore(from) && !ldt.isAfter(from.plusMinutes(1)));
+            assertTrue(!ldt.isBefore(from) && !ldt.isAfter(from.plusMinutes(1)), ldt + " out of bounds");
         }
     }
 
@@ -139,7 +139,7 @@ public class CronExpressionSerializationTests {
         CronExpression cronExpression = builder().everyMinute(3);
         LocalDateTime first = cronExpression.getNextFiredDateTime();
         LocalDateTime second = cronExpression.getNextFiredDateTime();
-        assertTrue(first + " -> " + second, second.isAfter(first));
+        assertTrue(second.isAfter(first), first + " -> " + second);
     }
 
     // ------------------------------------------------------------------ //
@@ -168,32 +168,44 @@ public class CronExpressionSerializationTests {
         cronExpression.getNextFiredDateTime();
 
         CronExpression restored = CronExpression.deserialize(cronExpression.serialize());
-        assertEquals("the schedule is restored", cronExpression.toString(), restored.toString());
-        assertEquals("and so is where it stands", cronExpression.getTime(), restored.getTime());
+        assertEquals(cronExpression.toString(), restored.toString(), "the schedule is restored");
+        assertEquals(cronExpression.getTime(), restored.getTime(), "and so is where it stands");
         assertEquals(cronExpression.getNextFiredDateTime(), restored.getNextFiredDateTime());
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testBytesWithoutTheMarkerAreRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         // What a snapshot written before the format was versioned looks like: a bare object stream.
         CRON.load(SerializationUtils.serialize(builder().everyMinute(5)));
+    
+        });
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testAnUnknownFormatVersionIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         byte[] snapshot = CRON.toByteArray(builder().everyMinute(5));
         snapshot[5] = (byte) (CRON.SNAPSHOT_VERSION + 1);
         CRON.load(snapshot);
+    
+        });
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testTruncatedSnapshotIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         CRON.load(new byte[] {'C', 'R'});
+    
+        });
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testNullSnapshotIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         CRON.load((byte[]) null);
+    
+        });
     }
 
     @Test
@@ -210,24 +222,36 @@ public class CronExpressionSerializationTests {
         assertEquals(cronExpression.toString(), SerializationUtils.copy(cronExpression).toString());
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testNonSerializableObjectIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         SerializationUtils.serialize(new Object());
+    
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullOutputStreamIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> {
         SerializationUtils.writeObject("a serializable string", null);
+    
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNullInputStreamIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> {
         SerializationUtils.readObject(null);
+    
+        });
     }
 
-    @Test(expected = SerializationException.class)
+    @Test
     public void testGarbageBytesAreRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(SerializationException.class, () -> {
         SerializationUtils.deserialize(new byte[] {1, 2, 3, 4, 5, 6, 7, 8});
+    
+        });
     }
 
 }

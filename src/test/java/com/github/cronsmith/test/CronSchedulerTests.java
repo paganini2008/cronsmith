@@ -1,9 +1,9 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -15,9 +15,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.scheduler.CronFuture;
@@ -50,20 +50,19 @@ public class CronSchedulerTests {
 
     private ScheduledExecutorService scheduledExecutorService;
 
-    @Before
+    @BeforeEach
     public void start() {
         scheduledExecutorService =
                 Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     }
 
-    @After
+    @AfterEach
     public void release() {
         scheduledExecutorService.shutdownNow();
     }
 
     private static void await(CountDownLatch latch) throws InterruptedException {
-        assertTrue("timed out waiting for the task to run",
-                latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+        assertTrue(latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS), "timed out waiting for the task to run");
     }
 
     @Test
@@ -121,9 +120,9 @@ public class CronSchedulerTests {
             Thread.sleep(100);
         }
         future.cancel(true);
-        assertTrue(events.toString(), events.contains(EventType.SCHEDULED));
-        assertTrue(events.toString(), events.contains(EventType.FINISHED));
-        assertTrue(events.toString(), events.contains(EventType.REMOVED));
+        assertTrue(events.contains(EventType.SCHEDULED), events.toString());
+        assertTrue(events.contains(EventType.FINISHED), events.toString());
+        assertTrue(events.contains(EventType.REMOVED), events.toString());
     }
 
     @Test
@@ -170,9 +169,9 @@ public class CronSchedulerTests {
         scheduler.removeTask(task);
         assertFalse(scheduler.checkExisted(task));
         assertEquals(0, scheduler.countOfTasks());
-        assertTrue(events.toString(), events.contains(EventType.PAUSED));
-        assertTrue(events.toString(), events.contains(EventType.RESUMED));
-        assertTrue(events.toString(), events.contains(EventType.REMOVED));
+        assertTrue(events.contains(EventType.PAUSED), events.toString());
+        assertTrue(events.contains(EventType.RESUMED), events.toString());
+        assertTrue(events.contains(EventType.REMOVED), events.toString());
     }
 
     /**
@@ -194,16 +193,16 @@ public class CronSchedulerTests {
         await(latch);
         future.cancel(true);
 
-        assertEquals("the backlog must not be replayed", 1, ranAt.size());
-        assertTrue(ranAt.get(0) + " is not at or after " + before,
-                !ranAt.get(0).isBefore(before.minusSeconds(1)));
+        assertEquals(1, ranAt.size(), "the backlog must not be replayed");
+        assertTrue(!ranAt.get(0).isBefore(before.minusSeconds(1)), ranAt.get(0) + " is not at or after " + before);
     }
 
     /**
      * Getting there must not cost one iteration per elapsed second either, so submitting the task
      * has to return promptly however far back the start time lies.
      */
-    @Test(timeout = 30_000L)
+    @Test
+    @org.junit.jupiter.api.Timeout(value = 30000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testSchedulingAPastStartTimeIsPrompt() {
         LocalDateTime longAgo = LocalDate.now().minusYears(5).withDayOfMonth(1).atStartOfDay();
         long startedAt = System.currentTimeMillis();
@@ -214,7 +213,7 @@ public class CronSchedulerTests {
         if (future != null) {
             future.cancel(true);
         }
-        assertTrue("submitting took " + elapsed + "ms", elapsed < 5_000L);
+        assertTrue(elapsed < 5_000L, "submitting took " + elapsed + "ms");
     }
 
     @Test
@@ -229,13 +228,16 @@ public class CronSchedulerTests {
         assertEquals(0, scheduler.countOfTasks());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSchedulingTheSameTaskTwiceIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> {
         CronScheduler scheduler = new CronBuilder().everySecond(1).scheduler(scheduledExecutorService);
         Runnable task = () -> {
         };
         scheduler.runTask(task, 10);
         scheduler.runTask(task, 10);
+    
+        });
     }
 
     @Test

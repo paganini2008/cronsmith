@@ -1,10 +1,10 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
 
@@ -24,16 +24,16 @@ public class CronExpressionParserTagTests {
     /** Parses the expression and walks a few occurrences, which is what really exercises a tag. */
     private static CronExpression assertUsable(String cron) {
         CronExpression cronExpression = CRON.parse(cron);
-        assertNotNull(cron, cronExpression);
-        assertNotNull(cron, cronExpression.toString());
+        assertNotNull(cronExpression, cron);
+        assertNotNull(cronExpression.toString(), cron);
         LocalDateTime[] previous = new LocalDateTime[1];
         cronExpression.consume(ldt -> {
             if (previous[0] != null) {
-                assertTrue(cron + ": " + previous[0] + " -> " + ldt, ldt.isAfter(previous[0]));
+                assertTrue(ldt.isAfter(previous[0]), cron + ": " + previous[0] + " -> " + ldt);
             }
             previous[0] = ldt;
         }, 5);
-        assertNotNull(cron + " never fired", previous[0]);
+        assertNotNull(previous[0], cron + " never fired");
         return cronExpression;
     }
 

@@ -1,11 +1,11 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -98,7 +98,7 @@ public class CronExpressionSyncTests {
             for (LocalDateTime target : targets) {
                 LocalDateTime fast = factory.apply(start).sync(target).getTime();
                 LocalDateTime stepped = syncByStepping(factory.apply(start), target);
-                assertEquals("start=" + start + " target=" + target, stepped, fast);
+                assertEquals(stepped, fast, "start=" + start + " target=" + target);
             }
         }
     }
@@ -126,7 +126,8 @@ public class CronExpressionSyncTests {
      * flaky benchmark while still catching a return to linear stepping, which was several orders of
      * magnitude slower.
      */
-    @Test(timeout = 30_000L)
+    @Test
+    @org.junit.jupiter.api.Timeout(value = 30000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testCatchingUpOnAnOldStartTimeIsFast() {
         LocalDateTime longAgo = LocalDate.now(CronTestSupport.BUILDER_ZONE).minusYears(10)
                 .withDayOfMonth(1).atStartOfDay();
@@ -137,11 +138,12 @@ public class CronExpressionSyncTests {
         long elapsed = System.currentTimeMillis() - startedAt;
 
         assertNotNull(next);
-        assertTrue(next + " is not after " + now, next.isAfter(now));
-        assertTrue("catching up took " + elapsed + "ms", elapsed < 5_000L);
+        assertTrue(next.isAfter(now), next + " is not after " + now);
+        assertTrue(elapsed < 5_000L, "catching up took " + elapsed + "ms");
     }
 
-    @Test(timeout = 30_000L)
+    @Test
+    @org.junit.jupiter.api.Timeout(value = 30000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testCatchingUpIsFastForAParsedExpressionToo() {
         long startedAt = System.currentTimeMillis();
         CronExpression cronExpression = CRON.parse("*/5 * * * * ?");
@@ -151,7 +153,7 @@ public class CronExpressionSyncTests {
 
         assertNotNull(next);
         assertTrue(next.isAfter(target));
-        assertTrue("catching up took " + elapsed + "ms", elapsed < 5_000L);
+        assertTrue(elapsed < 5_000L, "catching up took " + elapsed + "ms");
     }
 
     @Test
@@ -164,7 +166,7 @@ public class CronExpressionSyncTests {
             LocalDateTime now = CronTestSupport.now();
             LocalDateTime next = cronExpression.getNextFiredDateTime(now);
             assertNotNull(next);
-            assertTrue(next + " is not after " + now, next.isAfter(now));
+            assertTrue(next.isAfter(now), next + " is not after " + now);
         }
     }
 

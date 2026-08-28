@@ -1,9 +1,9 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Random;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronBuilder;
 import com.github.cronsmith.cron.CronExpression;
@@ -44,11 +44,11 @@ public class CronRoundTripTests {
                 throw new AssertionError("CRON failed to parse its own render: [" + rendered + "]",
                         parseFailure);
             }
-            assertEquals("round-trip mismatch for [" + rendered + "]", rendered, reparsed);
-            assertEquals("[" + rendered + "]", CronType.CRON, built.getCronType());
+            assertEquals(rendered, reparsed, "round-trip mismatch for [" + rendered + "]");
+            assertEquals(CronType.CRON, built.getCronType(), "[" + rendered + "]");
             tested++;
         }
-        assertTrue("too few valid samples exercised: " + tested, tested > rounds / 2);
+        assertTrue(tested > rounds / 2, "too few valid samples exercised: " + tested);
     }
 
     private static CronExpression randomCron(Random r) {

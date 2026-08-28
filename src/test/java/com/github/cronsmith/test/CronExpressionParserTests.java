@@ -1,12 +1,12 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDateTime;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runners.MethodSorters;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.MethodOrderer;
 import com.github.cronsmith.CRON;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.parser.CronParserException;
@@ -25,7 +25,7 @@ import com.github.cronsmith.parser.CronParserException;
  * @Date: 09/03/2025
  * @Version 1.0.0
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class CronExpressionParserTests {
 
     private static final int Y = CronTestSupport.currentYear();
@@ -223,8 +223,8 @@ public class CronExpressionParserTests {
         for (String cron : new String[] {"0 0 12 * * ?", "*/5 * * * * ?", "0 15 10 ? * MON-FRI",
                 "0 0 12 L * ?", "0 0 12 LW * ?", "0 0 12 15W * ?", "0 0 12 1-10/2 JAN-DEC/3 ?"}) {
             LocalDateTime next = CRON.parse(cron).getNextFiredDateTime(now);
-            assertNotNull(cron, next);
-            assertTrue(cron + " -> " + next, next.isAfter(now));
+            assertNotNull(next, cron);
+            assertTrue(next.isAfter(now), cron + " -> " + next);
         }
     }
 
@@ -234,7 +234,7 @@ public class CronExpressionParserTests {
         LocalDateTime[] previous = new LocalDateTime[1];
         cronExpression.consume(ldt -> {
             if (previous[0] != null) {
-                assertTrue(previous[0] + " -> " + ldt, ldt.isAfter(previous[0]));
+                assertTrue(ldt.isAfter(previous[0]), previous[0] + " -> " + ldt);
             }
             previous[0] = ldt;
         }, 24);
@@ -249,34 +249,52 @@ public class CronExpressionParserTests {
     // Malformed input                                                    //
     // ------------------------------------------------------------------ //
 
-    @Test(expected = CronParserException.class)
+    @Test
     public void testUnknownDayOfMonthTagIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(CronParserException.class, () -> {
         CRON.parse("0 0 12 X * ?");
+    
+        });
     }
 
-    @Test(expected = CronParserException.class)
+    @Test
     public void testUnknownMonthNameIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(CronParserException.class, () -> {
         CRON.parse("0 0 12 1 XYZ ?");
+    
+        });
     }
 
-    @Test(expected = CronParserException.class)
+    @Test
     public void testUnknownDayOfWeekNameIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(CronParserException.class, () -> {
         CRON.parse("0 0 12 ? * XYZ");
+    
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testEmptyExpressionIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
         CRON.parse("");
+    
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGarbageIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> {
         CRON.parse("not a cron expression at all");
+    
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testPastYearIsRejected() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
         CRON.parse("0 0 12 * * ? " + (Y - 1));
+    
+        });
     }
 
     @Test

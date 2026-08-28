@@ -1,10 +1,10 @@
 package com.github.cronsmith.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.github.cronsmith.cron.TimeSlot;
 import com.github.cronsmith.parser.CronParserException;
 import com.github.cronsmith.parser.UnsupportedTagException;
@@ -41,8 +41,8 @@ public class CronUtilsTests {
     public void testDayOfWeekNamesRoundTrip() {
         for (DayOfWeek dayOfWeek : DayOfWeek.values()) {
             String name = AbbreviationUtils.getDayOfWeekName(dayOfWeek.getValue());
-            assertNotNull(dayOfWeek.name(), name);
-            assertEquals(name, dayOfWeek.getValue(), AbbreviationUtils.getDayOfWeekValue(name));
+            assertNotNull(name, dayOfWeek.name());
+            assertEquals(dayOfWeek.getValue(), AbbreviationUtils.getDayOfWeekValue(name), name);
         }
     }
 
@@ -50,8 +50,8 @@ public class CronUtilsTests {
     public void testMonthNamesRoundTrip() {
         for (Month month : Month.values()) {
             String name = AbbreviationUtils.getMonthName(month.getValue());
-            assertNotNull(month.name(), name);
-            assertEquals(name, month.getValue(), AbbreviationUtils.getMonthValue(name));
+            assertNotNull(name, month.name());
+            assertEquals(month.getValue(), AbbreviationUtils.getMonthValue(name), name);
         }
     }
 
@@ -80,9 +80,12 @@ public class CronUtilsTests {
         assertEquals("two", exchanged.get(2));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testMapExchangeRejectsNull() {
+        org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> {
         MapUtils.exchange(null);
+    
+        });
     }
 
     // ------------------------------------------------------------------ //
@@ -99,9 +102,12 @@ public class CronUtilsTests {
         assertEquals("abc", sb.toString());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testForEachRejectsNull() {
+        org.junit.jupiter.api.Assertions.assertThrows(NullPointerException.class, () -> {
         IteratorUtils.forEach(null);
+    
+        });
     }
 
     @Test
@@ -184,7 +190,7 @@ public class CronUtilsTests {
         for (TimeSlot slot : TimeSlot.values()) {
             try {
                 slot.adjust(ldt, 0);
-                org.junit.Assert.fail(slot + " accepted a span of 0");
+                org.junit.jupiter.api.Assertions.fail(slot + " accepted a span of 0");
             } catch (IllegalArgumentException e) {
                 // expected
             }

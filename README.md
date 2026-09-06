@@ -20,11 +20,18 @@ of `L` and `#` that none of them offer on their own.
 
 ```java
 // "the last Friday of every month at 18:00"
-CronExpression cron = new CronBuilder().everyMonth().lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).at(18, 0);
+CronExpression cron = new CronBuilder().everyMonth().lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).at(
+                18, 0);
 
-cron.toString();               // 0 0 18 ? * FRIL
-CRON.toAwsString(cron);        // 0 18 ? * FRIL *
-cron.getNextFiredDateTime();   // the next last-Friday-of-the-month, 18:00
+cron.
+
+toString();               // 0 0 18 ? * FRIL
+CRON.
+
+toAwsString(cron);        // 0 18 ? * FRIL *
+cron.
+
+getNextFiredDateTime();   // the next last-Friday-of-the-month, 18:00
 ```
 
 ---
@@ -32,11 +39,11 @@ cron.getNextFiredDateTime();   // the next last-Friday-of-the-month, 18:00
 ## Table of contents
 
 - [Features](#features)
-  - [1. Object-oriented builder](#1-object-oriented-cronexpression-builder)
-  - [2. Parsing and reverse engineering](#2-parsing-and-reverse-engineering)
-  - [3. Cross-scheduler output](#3-cross-scheduler-output)
-  - [4. Built-in scheduler](#4-built-in-scheduler)
-  - [5. Beyond standard cron](#5-beyond-standard-cron)
+    - [1. Object-oriented builder](#1-object-oriented-cronexpression-builder)
+    - [2. Parsing and reverse engineering](#2-parsing-and-reverse-engineering)
+    - [3. Cross-scheduler output](#3-cross-scheduler-output)
+    - [4. Built-in scheduler](#4-built-in-scheduler)
+    - [5. Beyond standard cron](#5-beyond-standard-cron)
 - [Stateful task scheduling](#stateful-task-scheduling)
 - [Cron syntax reference](#cron-syntax-reference)
 - [Best practices](#best-practices)
@@ -53,34 +60,138 @@ cron.getNextFiredDateTime();   // the next last-Friday-of-the-month, 18:00
 Build complex schedules by describing them, not by assembling strings.
 
 ```java
-new CronBuilder().everySecond(5);
+new CronBuilder().
+
+everySecond(5);
 // */5 * * * * ?
 
-new CronBuilder().everyMinute(5).second(5).andSecond(10).toSecond(30).andSecond(32).toSecond(59, 2);
+new
+
+CronBuilder().
+
+everyMinute(5).
+
+second(5).
+
+andSecond(10).
+
+toSecond(30).
+
+andSecond(32).
+
+toSecond(59,2);
 // 5,10-30,32/2 */5 * * * ?
 
-new CronBuilder().everyMonth().day(10).andDay(15).andDay(16).andLastDay().everyHour(2).everyMinute(5);
+new
+
+CronBuilder().
+
+everyMonth().
+
+day(10).
+
+andDay(15).
+
+andDay(16).
+
+andLastDay().
+
+everyHour(2).
+
+everyMinute(5);
 // 0 */5 */2 10,15,16,L * ?
 
-new CronBuilder().everyMonth(3).day(10).andLastWeekday().hour(12).minute(1).toMinute(15, 1);
+new
+
+CronBuilder().
+
+everyMonth(3).
+
+day(10).
+
+andLastWeekday().
+
+hour(12).
+
+minute(1).
+
+toMinute(15,1);
 // 0 1-15 12 10,LW */3 ?
 
-new CronBuilder().everyMonth().everyWeek().Mon().toFri().at(15, 10);
+new
+
+CronBuilder().
+
+everyMonth().
+
+everyWeek().
+
+Mon().
+
+toFri().
+
+at(15,10);
 // 0 10 15 ? * MON-FRI
 
-new CronBuilder().everyMonth().dayOfWeek(3, DayOfWeek.SATURDAY).everyHour(2);
+new
+
+CronBuilder().
+
+everyMonth().
+
+dayOfWeek(3,DayOfWeek.SATURDAY).
+
+everyHour(2);
 // 0 0 */2 ? * SAT#3
 
-new CronBuilder().everyMonth().lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).at(18, 0);
+new
+
+CronBuilder().
+
+everyMonth().
+
+lastDayOfWeek(DayOfWeek.FRIDAY.getValue()).
+
+at(18,0);
 // 0 0 18 ? * FRIL
 
-new CronBuilder().everyMonth().lastDay(3).at(23, 30);
+new
+
+CronBuilder().
+
+everyMonth().
+
+lastDay(3).
+
+at(23,30);
 // 0 30 23 L-3 * ?
 
-new CronBuilder().everyMonth().latestWeekday(15).at(9, 0);
+new
+
+CronBuilder().
+
+everyMonth().
+
+latestWeekday(15).
+
+at(9,0);
 // 0 0 9 15W * ?
 
-new CronBuilder().year().Mar().toSept().everyWeek().everyWeekday().at(9, 10);
+new
+
+CronBuilder().
+
+year().
+
+Mar().
+
+toSept().
+
+everyWeek().
+
+everyWeekday().
+
+at(9,10);
 // 0 10 9 ? MAR-SEP MON-FRI <year>      (year() is the year the builder starts in)
 ```
 
@@ -90,7 +201,9 @@ Every expression is also an `Iterator`, so you can look at the schedule instead 
 CronExpression cron = new CronBuilder()
         .setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
         .everyMonth().latestWeekday(15).at(9, 0);
-cron.consume(System.out::println, 5);
+cron.
+
+consume(System.out::println, 5);
 // 2027-01-15T09:00
 // 2027-02-15T09:00
 // 2027-03-15T09:00
@@ -107,23 +220,33 @@ expression itself and answers the first occurrence strictly after the reference 
 
 ```java
 CRON.parse("0 0 12 ? * FRIL");                    // 0 0 12 ? * FRIL
-CRON.parse("0 0 12 ? * TUE#2");                   // 0 0 12 ? * TUE#2
-CRON.parse("0 0 12 LW * ?");                      // 0 0 12 LW * ?
-CRON.parse("0 15 10 ? * MON-FRI 2027-2030");      // 0 15 10 ? * MON-FRI 2027-2030
+CRON.
+
+parse("0 0 12 ? * TUE#2");                   // 0 0 12 ? * TUE#2
+CRON.
+
+parse("0 0 12 LW * ?");                      // 0 0 12 LW * ?
+CRON.
+
+parse("0 15 10 ? * MON-FRI 2027-2030");      // 0 15 10 ? * MON-FRI 2027-2030
 ```
 
 The field count decides how the string is read:
 
-| Fields | Read as | Day-of-week numbering |
-|---|---|---|
-| 5 | Unix crontab (`min hour dom month dow`) | MON=1 … SAT=6, Sunday is 0 or 7 |
-| 6 | Quartz without a year (`sec min hour dom month dow`) | SUN=1 … SAT=7 |
-| 7 | Quartz with a year | SUN=1 … SAT=7 |
+| Fields | Read as                                              | Day-of-week numbering           |
+|--------|------------------------------------------------------|---------------------------------|
+| 5      | Unix crontab (`min hour dom month dow`)              | MON=1 … SAT=6, Sunday is 0 or 7 |
+| 6      | Quartz without a year (`sec min hour dom month dow`) | SUN=1 … SAT=7                   |
+| 7      | Quartz with a year                                   | SUN=1 … SAT=7                   |
 
 ```java
 CRON.parse("*/5 * * * *");        // 0 */5 * * * ?      a crontab line
-CRON.parse("0 9 * * 1-5");        // 0 0 9 ? * MON-FRI  crontab: 1 is Monday
-CRON.parse("0 0 12 ? * 1");       // 0 0 12 ? * SUN     Quartz:  1 is Sunday
+CRON.
+
+parse("0 9 * * 1-5");        // 0 0 9 ? * MON-FRI  crontab: 1 is Monday
+CRON.
+
+parse("0 0 12 ? * 1");       // 0 0 12 ? * SUN     Quartz:  1 is Sunday
 ```
 
 ### 3. Cross-Scheduler Output
@@ -134,28 +257,39 @@ is reported rather than silently rewritten into something that fires at differen
 ```java
 CronExpression daily = new CronBuilder().everyDay().at(9, 30);
 
-CRON.toQuartzString(daily);   // 0 30 9 * * ?
-CRON.toSpringString(daily);   // 0 30 9 * * ?
-CRON.toAwsString(daily);      // 30 9 * * ? *
-CRON.toUnixString(daily);     // 30 9 * * *
+CRON.
+
+toQuartzString(daily);   // 0 30 9 * * ?
+CRON.
+
+toSpringString(daily);   // 0 30 9 * * ?
+CRON.
+
+toAwsString(daily);      // 30 9 * * ? *
+CRON.
+
+toUnixString(daily);     // 30 9 * * *
 
 // or explicitly
-CRON.toCronString(daily, CronDialect.AWS);
+CRON.
+
+toCronString(daily, CronDialect.AWS);
 ```
 
-| Schedule | Quartz | Spring | AWS EventBridge | Unix crontab |
-|---|---|---|---|---|
-| every day 09:30 | `0 30 9 * * ?` | `0 30 9 * * ?` | `30 9 * * ? *` | `30 9 * * *` |
-| weekdays 09:00 | `0 0 9 ? * MON-FRI` | `0 0 9 ? * MON-FRI` | `0 9 ? * MON-FRI *` | `0 9 * * MON-FRI` |
-| every 15 minutes | `0 */15 * * * ?` | `0 */15 * * * ?` | `*/15 * * * ? *` | `*/15 * * * *` |
-| every 15 seconds | `*/15 * * * * ?` | `*/15 * * * * ?` | no seconds field | no seconds field |
-| last day of month | `0 59 23 L * ?` | `0 59 23 L * ?` | `59 23 L * ? *` | no `L` |
-| 2nd Tuesday | `0 0 10 ? * TUE#2` | `0 0 10 ? * TUE#2` | `0 10 ? * TUE#2 *` | no `#` |
-| 3rd-from-last day | `0 0 0 L-3 * ?` | no `L-n` | no `L-n` | no `L` |
-| restricted to 2027-2029 | `… 2027-2029` | no year field | `… 2027-2029` | no year field |
+| Schedule                | Quartz              | Spring              | AWS EventBridge     | Unix crontab      |
+|-------------------------|---------------------|---------------------|---------------------|-------------------|
+| every day 09:30         | `0 30 9 * * ?`      | `0 30 9 * * ?`      | `30 9 * * ? *`      | `30 9 * * *`      |
+| weekdays 09:00          | `0 0 9 ? * MON-FRI` | `0 0 9 ? * MON-FRI` | `0 9 ? * MON-FRI *` | `0 9 * * MON-FRI` |
+| every 15 minutes        | `0 */15 * * * ?`    | `0 */15 * * * ?`    | `*/15 * * * ? *`    | `*/15 * * * *`    |
+| every 15 seconds        | `*/15 * * * * ?`    | `*/15 * * * * ?`    | no seconds field    | no seconds field  |
+| last day of month       | `0 59 23 L * ?`     | `0 59 23 L * ?`     | `59 23 L * ? *`     | no `L`            |
+| 2nd Tuesday             | `0 0 10 ? * TUE#2`  | `0 0 10 ? * TUE#2`  | `0 10 ? * TUE#2 *`  | no `#`            |
+| 3rd-from-last day       | `0 0 0 L-3 * ?`     | no `L-n`            | no `L-n`            | no `L`            |
+| restricted to 2027-2029 | `… 2027-2029`       | no year field       | `… 2027-2029`       | no year field     |
 
 Day-of-week is always printed by name, because the numeric conventions disagree with one another —
-Quartz and AWS count `SUN=1`, Spring and crontab count `MON=1` — while `MON` means Monday everywhere.
+Quartz and AWS count `SUN=1`, Spring and crontab count `MON=1` — while `MON` means Monday
+everywhere.
 
 ### 4. Built-in Scheduler
 
@@ -168,7 +302,9 @@ CronFuture future = new CronBuilder()
         .setDebuged(false)
         .runTask(() -> System.out.println("tick"), 10);   // run ten times
 
-future.cancel(true);
+future.
+
+cancel(true);
 ```
 
 The scheduler exposes the whole task life cycle:
@@ -176,31 +312,47 @@ The scheduler exposes the whole task life cycle:
 ```java
 CronScheduler scheduler = new CronBuilder().everyMinute(5).scheduler(executor);
 
-scheduler.subscribe(new CronSchedulerListener() {
+scheduler.
+
+subscribe(new CronSchedulerListener() {
     @Override
-    public void onTaskFinished(CronScheduledEvent event) {
+    public void onTaskFinished (CronScheduledEvent event){
         System.out.println("next run: " + event.getNextFiredDateTime());
     }
 
     @Override
-    public void onTaskFailed(CronScheduledEvent event) {
+    public void onTaskFailed (CronScheduledEvent event){
         log.error("task failed", event.getReason());
     }
 });
 
 CronFuture future = scheduler.runTaskForEver(job);
-scheduler.pauseTask(job);
-scheduler.resumeTask(job);
-scheduler.removeTask(job);
+scheduler.
+
+pauseTask(job);
+scheduler.
+
+resumeTask(job);
+scheduler.
+
+removeTask(job);
 ```
 
 Other ways to bound a run:
 
 ```java
 scheduler.runTask(job, 10);                                  // ten times
-scheduler.runTask(job, LocalDateTime.now().plusHours(2));     // until a point in time
-scheduler.runTask(job, (task, reason) -> reason != null);     // until it first fails
-scheduler.runTaskForEver(job);
+scheduler.
+
+runTask(job, LocalDateTime.now().
+
+plusHours(2));     // until a point in time
+        scheduler.
+
+runTask(job, (task, reason) ->reason !=null);     // until it first fails
+        scheduler.
+
+runTaskForEver(job);
 ```
 
 ### 5. Beyond Standard Cron
@@ -212,9 +364,23 @@ instead of returning something misleading.
 **Day of the year**
 
 ```java
-new CronBuilder().setZoneId(ZoneId.of("UTC"))
-        .year(2027).day(208).andDay(330).toLastDay().at(12, 0)
-        .consume(System.out::println, 6);
+new CronBuilder().
+
+setZoneId(ZoneId.of("UTC"))
+        .
+
+year(2027).
+
+day(208).
+
+andDay(330).
+
+toLastDay().
+
+at(12,0)
+        .
+
+consume(System.out::println, 6);
 // 2027-07-27T12:00
 // 2027-11-26T12:00
 // 2027-11-27T12:00
@@ -226,9 +392,25 @@ new CronBuilder().setZoneId(ZoneId.of("UTC"))
 **Week of the year**
 
 ```java
-new CronBuilder().setZoneId(ZoneId.of("UTC"))
-        .everyYear().week(40).andWeek(45).Mon().toFri().at(12, 0)
-        .consume(System.out::println, 12);
+new CronBuilder().
+
+setZoneId(ZoneId.of("UTC"))
+        .
+
+everyYear().
+
+week(40).
+
+andWeek(45).
+
+Mon().
+
+toFri().
+
+at(12,0)
+        .
+
+consume(System.out::println, 12);
 // 2027-10-04T12:00 .. 2027-10-08T12:00
 // 2027-11-08T12:00 .. 2027-11-12T12:00
 // 2028-10-02T12:00 ...
@@ -241,10 +423,18 @@ now, then every interval thereafter.
 
 ```java
 CRON.setInterval("PT30S");                 // every 30 seconds
-CRON.setInterval("PT5M");                  // every 5 minutes
-CRON.setInterval("PT2H");                  // every 2 hours
-CRON.setInterval("P1D");                   // every day
-CRON.setInterval(Duration.ofHours(2));     // same as "PT2H"
+CRON.
+
+setInterval("PT5M");                  // every 5 minutes
+CRON.
+
+setInterval("PT2H");                  // every 2 hours
+CRON.
+
+setInterval("P1D");                   // every day
+CRON.
+
+setInterval(Duration.ofHours(2));     // same as "PT2H"
 ```
 
 A cron field steps within its own range, so the coarsest exact unit is chosen — `PT120M` becomes
@@ -255,14 +445,50 @@ rounded.
 **Multi-value `L` and `#`**
 
 ```java
-new CronBuilder().everyMonth()
-        .dayOfWeek(2, DayOfWeek.TUESDAY).and(3, DayOfWeek.WEDNESDAY).andLastFri().at(9, 0);
+new CronBuilder().
+
+everyMonth()
+        .
+
+dayOfWeek(2,DayOfWeek.TUESDAY).
+
+and(3,DayOfWeek.WEDNESDAY).
+
+andLastFri().
+
+at(9,0);
 // 0 0 9 ? * TUE#2,WED#3,FRIL
 
-new CronBuilder().everyMonth().week(1).andLastWeek().Mon().at(8, 0);
+new
+
+CronBuilder().
+
+everyMonth().
+
+week(1).
+
+andLastWeek().
+
+Mon().
+
+at(8,0);
 // 0 0 8 ? * MON#1,MONL
 
-new CronBuilder().everyMonth().day(10).andDay(15).andLatestWeekday(25).andLastDay().at(0, 0);
+new
+
+CronBuilder().
+
+everyMonth().
+
+day(10).
+
+andDay(15).
+
+andLatestWeekday(25).
+
+andLastDay().
+
+at(0,0);
 // 0 0 0 10,15,25W,L * ?
 ```
 
@@ -270,7 +496,8 @@ new CronBuilder().everyMonth().day(10).andDay(15).andLatestWeekday(25).andLastDa
 
 ## Stateful task scheduling
 
-The features above are about cron *expressions* — building, parsing and computing fire times. Cronsmith
+The features above are about cron *expressions* — building, parsing and computing fire times.
+Cronsmith
 also ships a lightweight in-process **`CronScheduler`** (see *Built-in Scheduler* above) that runs a
 schedule on a timing wheel, entirely in memory.
 
@@ -278,7 +505,8 @@ schedule on a timing wheel, entirely in memory.
 (in-memory, or a JDBC / jOOQ store on H2 · SQLite · MySQL · PostgreSQL), server-driven retries and
 timeouts, and a cluster that dispatches runs to executors — now lives in the
 **`cronsmith-spring-boot-starter`** (part of the
-[cronflower](https://github.com/paganini2008/cronflower) monorepo). Keeping it there lets this library
+[cronflower](https://github.com/paganini2008/cronflower) monorepo). Keeping it there lets this
+library
 stay a pure cron **parser / builder** toolkit with no database, HTTP or Spring dependency.
 
 ---
@@ -297,19 +525,19 @@ stay a pure cron **parser / builder** toolkit with no database, HTTP or Spring d
  * * * * * ? *
 ```
 
-| Tag | Field | Meaning |
-|---|---|---|
-| `*` | any | every value |
-| `?` | day-of-month, day-of-week | no restriction; exactly one of the two day fields must carry it |
-| `a-b` | any | a range |
-| `a/n` | any | from `a`, every `n`th value — `*/15` in seconds fires at :00, :15, :30, :45 |
-| `a,b,c` | any | a list; entries may themselves be ranges or steps |
-| `L` | day-of-month | the last day of the month |
-| `L-n` | day-of-month | `n` days before the last day |
-| `LW` | day-of-month | the last weekday of the month |
-| `nW` | day-of-month | the weekday nearest the `n`th, without leaving the month |
-| `<dow>L` | day-of-week | the last `<dow>` of the month, e.g. `FRIL` |
-| `<dow>#n` | day-of-week | the `n`th `<dow>` of the month, e.g. `TUE#2`; months without an `n`th are skipped |
+| Tag       | Field                     | Meaning                                                                           |
+|-----------|---------------------------|-----------------------------------------------------------------------------------|
+| `*`       | any                       | every value                                                                       |
+| `?`       | day-of-month, day-of-week | no restriction; exactly one of the two day fields must carry it                   |
+| `a-b`     | any                       | a range                                                                           |
+| `a/n`     | any                       | from `a`, every `n`th value — `*/15` in seconds fires at :00, :15, :30, :45       |
+| `a,b,c`   | any                       | a list; entries may themselves be ranges or steps                                 |
+| `L`       | day-of-month              | the last day of the month                                                         |
+| `L-n`     | day-of-month              | `n` days before the last day                                                      |
+| `LW`      | day-of-month              | the last weekday of the month                                                     |
+| `nW`      | day-of-month              | the weekday nearest the `n`th, without leaving the month                          |
+| `<dow>L`  | day-of-week               | the last `<dow>` of the month, e.g. `FRIL`                                        |
+| `<dow>#n` | day-of-week               | the `n`th `<dow>` of the month, e.g. `TUE#2`; months without an `n`th are skipped |
 
 `#` and `L` count **occurrences inside the month**, which is what Quartz, Spring and AWS all mean:
 `FRI#1` is the first Friday that falls in the month, and `FRI#5` only fires in months that have five
@@ -323,14 +551,28 @@ Fridays.
 so an expression carrying a year depends on when it was built. Tests and fixtures should say so:
 
 ```java
-new CronBuilder().setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay()).year().toYear(2030);
+new CronBuilder().
+
+setStartTime(LocalDate.of(2027, 1,1).
+
+atStartOfDay()).
+
+year().
+
+toYear(2030);
 ```
 
 **Set the zone the schedule is meant to be read in.** A cron expression is wall-clock time; the zone
 decides which instant "09:00" is. The default is UTC.
 
 ```java
-new CronBuilder().setZoneId(ZoneId.of("Europe/Berlin")).everyDay().at(9, 0);
+new CronBuilder().
+
+setZoneId(ZoneId.of("Europe/Berlin")).
+
+everyDay().
+
+at(9,0);
 ```
 
 Across a daylight-saving switch the wall clock stays put — 09:00 is always 09:00 — while the real
@@ -345,11 +587,12 @@ you are matching an existing expression character for character.
 outcome than a crontab entry that silently drops the `L` you needed:
 
 ```java
-try {
-    deploy(CRON.toUnixString(cron));
-} catch (UnsupportedOperationException e) {
-    // this schedule needs a Quartz-class scheduler
-}
+try{
+deploy(CRON.toUnixString(cron));
+        }catch(
+UnsupportedOperationException e){
+        // this schedule needs a Quartz-class scheduler
+        }
 ```
 
 **Store the expression, not the next fire time.** `CronExpression` is `Serializable`, so a schedule
@@ -360,16 +603,30 @@ byte[] snapshot = cron.serialize();
 CronExpression restored = CronExpression.deserialize(snapshot);
 ```
 
-Catching up from a snapshot taken long ago is O(1) per level rather than one step per elapsed second,
+Catching up from a snapshot taken long ago is O(1) per level rather than one step per elapsed
+second,
 so restoring a per-second schedule from last year is still instantaneous.
 
-**Use `consume(..)` to review a schedule before trusting it**, especially for `L`, `W` and `#`, where
+**Use `consume(..)` to review a schedule before trusting it**, especially for `L`, `W` and `#`,
+where
 month lengths and weekends change the answer:
 
 ```java
-new CronBuilder().setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
-        .everyMonth().dayOfWeek(5, DayOfWeek.FRIDAY).at(12, 0)
-        .consume(System.out::println, 5);
+new CronBuilder().
+
+setStartTime(LocalDate.of(2027, 1,1).
+
+atStartOfDay())
+        .
+
+everyMonth().
+
+dayOfWeek(5,DayOfWeek.FRIDAY).
+
+at(12,0)
+        .
+
+consume(System.out::println, 5);
 // 2027-01-29T12:00
 // 2027-04-30T12:00   <- February and March have no fifth Friday
 // 2027-07-30T12:00
@@ -444,16 +701,22 @@ CronExpression once = CRON.atFuture(LocalDateTime.of(2027, 12, 1, 12, 15, 0));
 **Fixed interval without writing cron at all**
 
 ```java
-CRON.setInterval(5, TimeUnit.MINUTES);          // 0 */5 * * * ?
-CRON.setInterval(LocalTime.of(23, 45, 30));     // 30 45 23 * * ?
+CRON.setInterval(5,TimeUnit.MINUTES);          // 0 */5 * * * ?
+CRON.
+
+setInterval(LocalTime.of(23, 45,30));     // 30 45 23 * * ?
 ```
 
 **Migrating an existing crontab line**
 
 ```java
 CronExpression cron = CRON.parse("15 10 * * MON-FRI");   // 0 15 10 ? * MON-FRI
-CRON.toQuartzString(cron);                               // 0 15 10 ? * MON-FRI
-CRON.toAwsString(cron);                                  // 15 10 ? * MON-FRI *
+CRON.
+
+toQuartzString(cron);                               // 0 15 10 ? * MON-FRI
+CRON.
+
+toAwsString(cron);                                  // 15 10 ? * MON-FRI *
 ```
 
 ---
@@ -463,10 +726,11 @@ CRON.toAwsString(cron);                                  // 15 10 ? * MON-FRI *
 Requires JDK 17 or later.
 
 ```xml
+
 <dependency>
     <groupId>com.github.paganini2008</groupId>
     <artifactId>cronsmith</artifactId>
-    <version>1.0.0-RC2</version>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -480,11 +744,11 @@ The core parser has no runtime dependencies beyond ANTLR. The
 [stateful task scheduler](#stateful-task-scheduling) uses a few libraries that are declared
 `optional`, so you only pull in what you actually use:
 
-| You want to…                                   | Add                                                         |
-| ---------------------------------------------- | ---------------------------------------------------------- |
-| run tasks in memory                            | nothing — it works out of the box                          |
-| persist tasks in a database                    | `org.jooq:jooq` **and** your JDBC driver (H2, SQLite, PostgreSQL, MySQL, …) |
-| use `SimpleTask` to call HTTP endpoints        | `com.squareup.okhttp3:okhttp` and `com.fasterxml.jackson.core:jackson-databind` |
+| You want to…                            | Add                                                                             |
+|-----------------------------------------|---------------------------------------------------------------------------------|
+| run tasks in memory                     | nothing — it works out of the box                                               |
+| persist tasks in a database             | `org.jooq:jooq` **and** your JDBC driver (H2, SQLite, PostgreSQL, MySQL, …)     |
+| use `SimpleTask` to call HTTP endpoints | `com.squareup.okhttp3:okhttp` and `com.fasterxml.jackson.core:jackson-databind` |
 
 ```xml
 <!-- example: persistence on PostgreSQL -->
@@ -494,9 +758,9 @@ The core parser has no runtime dependencies beyond ANTLR. The
     <version>3.19.15</version>
 </dependency>
 <dependency>
-    <groupId>org.postgresql</groupId>
-    <artifactId>postgresql</artifactId>
-    <version>42.7.4</version>
+<groupId>org.postgresql</groupId>
+<artifactId>postgresql</artifactId>
+<version>42.7.4</version>
 </dependency>
 ```
 
@@ -512,7 +776,8 @@ The core parser has no runtime dependencies beyond ANTLR. The
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for
+details.
 
 ## Download
 

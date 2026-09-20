@@ -16,6 +16,8 @@
 package com.github.cronsmith.parser;
 
 import com.github.cronsmith.cron.CronBuilder;
+import java.util.List;
+import java.util.ArrayList;
 import com.github.cronsmith.cron.CronExpression;
 import com.github.cronsmith.cron.Day;
 import com.github.cronsmith.cron.Hour;
@@ -269,7 +271,7 @@ public class HyphenTagVisitor implements TagVisitor {
             if (useNumber) {
                 // Numbers in the day-of-week field follow cron numbering, so the range has to be
                 // translated first; it only survives as a range when it stays contiguous.
-                java.util.List<Integer> expanded =
+                List<Integer> expanded =
                         cronNumbers(from, to, interval, context);
                 if (!isContiguous(expanded, interval)) {
                     return visitDayOfWeekRange(expanded, useNumber, context);
@@ -339,9 +341,9 @@ public class HyphenTagVisitor implements TagVisitor {
      * A range such as {@code 1-5} (SUN-THU) wraps around the end of the week once translated, so
      * it is listed day by day rather than kept as a range.
      */
-    private static java.util.List<Integer> cronNumbers(int from, int to, int interval,
+    private static List<Integer> cronNumbers(int from, int to, int interval,
             CronExpressionContext context) {
-        java.util.List<Integer> list = new java.util.ArrayList<>();
+        List<Integer> list = new ArrayList<>();
         for (int i = from; i <= to; i += interval) {
             list.add(context.toDayOfWeek(i));
         }
@@ -349,7 +351,7 @@ public class HyphenTagVisitor implements TagVisitor {
     }
 
     /** Whether the translated weekdays still form an evenly spaced, ascending run. */
-    private static boolean isContiguous(java.util.List<Integer> values, int interval) {
+    private static boolean isContiguous(List<Integer> values, int interval) {
         for (int i = 1; i < values.size(); i++) {
             if (values.get(i) - values.get(i - 1) != interval) {
                 return false;
@@ -359,7 +361,7 @@ public class HyphenTagVisitor implements TagVisitor {
     }
 
     /** Adds every weekday of an already expanded range to the expression being built. */
-    private static CronExpression visitDayOfWeekRange(java.util.List<Integer> daysOfWeek,
+    private static CronExpression visitDayOfWeekRange(List<Integer> daysOfWeek,
             boolean useNumber, CronExpressionContext context) {
         CronExpression cronExpression = context.getCronExpression();
         for (Integer dayOfWeek : daysOfWeek) {

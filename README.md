@@ -7,7 +7,7 @@
 [![crontab](https://img.shields.io/badge/Unix%20crontab-Compatible-brightgreen.svg)](https://man7.org/linux/man-pages/man5/crontab.5.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-**Build, parse and run cron in Java with a fluent API — never hand-type a cron string again.**
+**Build, parse and run cron in Java with a fluent API: never hand-type a cron string again.**
 
 Cronsmith lets you describe *when* something should happen in plain method calls and get back a cron
 expression, the exact date-times it fires at, or a running task. It speaks the dialects you already
@@ -28,19 +28,19 @@ cron.getNextFiredDateTime();  // the next last-Friday-of-the-month, 18:00
 
 | Capability | What it gives you |
 |------------|-------------------|
-| **Fluent OO builder** | Describe a schedule in method calls; get the string with `toString()` — no error-prone hand-typing |
+| **Fluent OO builder** | Describe a schedule in method calls, get the string with `toString()`: no error-prone hand-typing |
 | **Parse & reverse-engineer** | `CRON.parse(..)` turns any string back into an inspectable, iterable `CronExpression` |
-| **Cross-scheduler output** | One schedule printed for Quartz / Spring / AWS EventBridge / Unix crontab; anything a target can't express is **reported, not silently rewritten** |
-| **YCRON — year-based** | "the 100th day of the year", "Monday of ISO week 20", "every other year" — things month-based cron can't say |
+| **Cross-scheduler output** | One schedule printed for Quartz / Spring / AWS EventBridge / Unix crontab, anything a target can't express is **reported, not silently rewritten** |
+| **YCRON: year-based** | "the 100th day of the year", "Monday of ISO week 20", "every other year": things month-based cron can't say |
 | **Beyond standard cron** | ISO-8601 duration → cron, and multi-value `L` / `#` that Quartz/Spring/AWS allow only one at a time |
 | **Inspect before you trust** | Iterate the real fire times with `consume(..)` / `getNextFiredDateTime()` |
 | **Built-in scheduler** | Run a schedule in-process on a timing wheel, with the full task lifecycle |
-| **Serializable & durable** | `CronExpression` is `Serializable`; catching up from an old snapshot is O(1) per level |
+| **Serializable & durable** | `CronExpression` is `Serializable`, catching up from an old snapshot is O(1) per level |
 
 ## Requirements
 
 - **JDK 17+**
-- The core parser's only runtime dependency is **ANTLR** — no Spring, HTTP or database.
+- The core parser's only runtime dependency is **ANTLR**: no Spring, HTTP or database.
 
 ## Quick Start
 
@@ -65,7 +65,7 @@ weekdays9.getNextFiredDateTime();  // next weekday at 09:00
 
 ## Examples
 
-### Build — describe the schedule, don't assemble strings
+### Build: describe the schedule, don't assemble strings
 
 ```java
 new CronBuilder().everySecond(5);                                            // */5 * * * * ?
@@ -87,7 +87,7 @@ new CronBuilder().setStartTime(LocalDate.of(2027, 1, 1).atStartOfDay())
 // 2027-01-15T09:00 … 2027-05-14T09:00  <- the 15th is a Saturday, so it moves to the nearest weekday
 ```
 
-`consume(..)` walks a copy; `getNextFiredDateTime()` advances the expression and returns the first
+`consume(..)` walks a copy, `getNextFiredDateTime()` advances the expression and returns the first
 occurrence strictly after the reference time.
 
 ### Parse & reverse-engineer
@@ -107,10 +107,10 @@ The **field count** decides how a string is read:
 | 6 | Quartz without a year (`sec min hour dom month dow`) | SUN=1 … SAT=7 |
 | 7 | Quartz with a year | SUN=1 … SAT=7 |
 
-### YCRON — year-based schedules
+### YCRON: year-based schedules
 
 Seven fields: `<sec> <min> <hour> <day-of-week> <week-of-year> <day-of-year> [<year>]`. Pick the date by
-**day-of-week + week-of-year**, or by **day-of-year** alone; the unused field becomes `?`.
+**day-of-week + week-of-year**, or by **day-of-year** alone, the unused field becomes `?`.
 
 ```java
 new CronBuilder().year(2026).day(100).at(12, 0, 0);        // 0 0 12 ? ? 100 2026   (100th day)
@@ -211,11 +211,11 @@ numbering split never bites you.
 | `a-b` · `a/n` · `a,b,c` | any | range · step from `a` · list (entries may be ranges or steps) |
 | `L` · `L-n` · `LW` | day-of-month | last day · `n` days before last · last weekday |
 | `nW` | day-of-month | weekday nearest the `n`th, without leaving the month |
-| `<dow>L` · `<dow>#n` | day-of-week | last `<dow>` (`FRIL`) · `n`th `<dow>` (`TUE#2`; skipped in months without an `n`th) |
+| `<dow>L` · `<dow>#n` | day-of-week | last `<dow>` (`FRIL`) · `n`th `<dow>` (`TUE#2`, skipped in months without an `n`th) |
 
-**Best practices:** pin `setStartTime(..)` when a year-bearing result must be reproducible; set
-`setZoneId(..)` so "09:00" is the instant you mean (default UTC, DST-safe); prefer weekday names to
-numbers; call the target dialect (`toUnixString` throwing beats a crontab line that drops your `L`);
+**Best practices:** pin `setStartTime(..)` when a year-bearing result must be reproducible, set
+`setZoneId(..)` so "09:00" is the instant you mean (default UTC, DST-safe), prefer weekday names to
+numbers, call the target dialect (`toUnixString` throwing beats a crontab line that drops your `L`),
 and store the serialized `CronExpression`, not the next fire time.
 
 ## Documentation
@@ -223,9 +223,9 @@ and store the serialized `CronExpression`, not the next fire time.
 - **Distributed, persistent, clustered scheduling** (a `TaskManager` with JDBC/jOOQ stores, server-driven
   retries/timeouts, and a cluster that dispatches to executors) lives in
   **`cronsmith-spring-boot-starter`**, part of the [cronflower](https://github.com/paganini2008/cronflower) monorepo.
-- Guide: *Stop hand-writing cron — build and parse it in Java* (`docs/blogger/`).
+- Guide: *Stop hand-writing cron: build and parse it in Java* (`docs/blogger/`).
 
 ## Contributing & License
 
-Issues and PRs are welcome — open an issue to discuss a change first and keep PRs focused with tests.
-Licensed under the **Apache License 2.0**; see [`LICENSE`](LICENSE).
+Issues and PRs are welcome: open an issue to discuss a change first and keep PRs focused with tests.
+Licensed under the **Apache License 2.0**, see [`LICENSE`](LICENSE).

@@ -2,7 +2,7 @@
 
 **Cronsmith** is a Java library that builds, parses and runs cron through a fluent, object-oriented API
 instead of hand-typed strings. You describe *when* in plain method calls and get back a cron expression,
-the exact date-times it fires at, or a running task — across Quartz, Spring, AWS EventBridge and crontab.
+the exact date-times it fires at, or a running task: across Quartz, Spring, AWS EventBridge and crontab.
 
 ```java
 // "the last Friday of every month at 18:00" — readable, and it tells you the next fire
@@ -14,7 +14,7 @@ cron.getNextFiredDateTime();  // the next last-Friday-of-the-month, 18:00
 ## What problem does it solve?
 
 Quick, what does `0 0 18 ? * FRIL` fire at? Cron strings are write-only: easy to fumble, hard to review,
-and impossible to unit-test by eye. Worse, "cron" isn't one language — Quartz, Spring, AWS EventBridge
+and impossible to unit-test by eye. Worse, "cron" isn't one language: Quartz, Spring, AWS EventBridge
 and Unix crontab disagree on fields, on whether `1` is Sunday or Monday, and on which of `L` / `#` / `W`
 they even support. Copy a Quartz line into crontab and it can silently fire at a different time.
 
@@ -40,7 +40,7 @@ weekdays9.getNextFiredDateTime();  // next weekday at 09:00
 ## Requirements
 
 - **JDK 17+**
-- The core parser's only runtime dependency is **ANTLR** — no Spring, HTTP or database.
+- The core parser's only runtime dependency is **ANTLR**: no Spring, HTTP or database.
 
 ## How it works
 
@@ -55,7 +55,7 @@ CronBuilder  ──build──▶  CronExpression  ──┬── toString / to
 
 ## Code examples
 
-### Build — describe it, don't assemble strings
+### Build: describe it, don't assemble strings
 
 **Input → Output:**
 
@@ -87,7 +87,7 @@ CRON.parse("0 0 12 ? * 1");   // 0 0 12 ? * SUN     Quartz:  1 is Sunday
 
 The field count picks the reading: **5** = crontab, **6** = Quartz without a year, **7** = Quartz with a year.
 
-### YCRON — schedules month-based cron can't say
+### YCRON: schedules month-based cron can't say
 
 Seven fields: `<sec> <min> <hour> <day-of-week> <week-of-year> <day-of-year> [<year>]`.
 
@@ -106,7 +106,7 @@ ScheduledExecutorService exec = Executors.newScheduledThreadPool(4);
 CronFuture f = new CronBuilder().everySecond(5).scheduler(exec).runTask(() -> doWork(), 10); // run 10x
 ```
 
-## Configuration — syntax reference
+## Configuration: syntax reference
 
 ```
  sec min hour day-of-month month day-of-week [year]
@@ -151,9 +151,9 @@ CRON.toUnixString(daily);   // 30 9 * * *   (throws if the schedule needs L/#/se
 
 ## Summary
 
-- Build cron with a **fluent, readable API**; `toString()` for the string.
+- Build cron with a **fluent, readable API**, `toString()` for the string.
 - **Parse** any dialect back into an inspectable, iterable `CronExpression`.
-- **Port** one schedule to Quartz / Spring / AWS / crontab; unsupported features are reported.
+- **Port** one schedule to Quartz / Spring / AWS / crontab, unsupported features are reported.
 - **YCRON** expresses year-, week- and day-of-year schedules classic cron can't.
 - **Iterate** the real fire times (`consume` / `getNextFiredDateTime`) before you trust a schedule.
 - **Serializable**, with an in-process timing-wheel scheduler for simple runs.

@@ -11,7 +11,7 @@ cron.getNextFiredDateTime();  // 下一个「每月最后一个周五」18:00
 
 ## 它解决什么问题？
 
-快问快答：`0 0 18 ? * FRIL` 到底什么时候触发？cron 字符串是「只写不读」的：容易写错、难以 review、更没法用肉眼做单元测试。更糟的是，「cron」根本不是一种语言——Quartz、Spring、AWS EventBridge、Unix crontab 在字段、在「`1` 是周日还是周一」、在支不支持 `L` / `#` / `W` 上各执一词。把一行 Quartz 复制进 crontab，它可能在不同的时间悄悄触发。
+快问快答：`0 0 18 ? * FRIL` 到底什么时候触发？cron 字符串是「只写不读」的：容易写错、难以 review、更没法用肉眼做单元测试。更糟的是，「cron」根本不是一种语言::Quartz、Spring、AWS EventBridge、Unix crontab 在字段、在「`1` 是周日还是周一」、在支不支持 `L` / `#` / `W` 上各执一词。把一行 Quartz 复制进 crontab，它可能在不同的时间悄悄触发。
 
 Cronsmith 把排期变成**可读、可迭代、可移植的代码**：用方法调用构建它，按你要部署的目标打印它，并在信任它之前先问它接下来会在哪些时刻触发。
 
